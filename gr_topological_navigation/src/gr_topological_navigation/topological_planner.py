@@ -1,8 +1,10 @@
 #!/usr/bin/python
 import rospy
+import actionlib
 import networkx as nx
-from strands_navigation_msgs.srv import GetTopologicalMapRequest, GetTopologicalMap
 import matplotlib.pyplot as plt
+from strands_navigation_msgs.srv import GetTopologicalMapRequest, GetTopologicalMap
+from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 
 class TopologicalPlanner:
     def __init__(self, gui=False):
@@ -16,7 +18,12 @@ class TopologicalPlanner:
         #Topological Map parsed to a networkx Graph so functions can be used
         self.networkx_graph = nx.Graph()
         self.gui = gui
+        self.topological_plan = None
         self.create_graph(map)
+        self.action_client = actionlib.SimpleActionClient('topological_navigation', GotoNodeAction)
+        rospy.loginfo("Waiting for Action Server /topological_navigation")
+        self.action_client.wait_for_server()
+        rospy.loginfo("Action Server Found")
 
     def create_graph(self, map):
         for n in map.map.nodes:
@@ -31,6 +38,25 @@ class TopologicalPlanner:
             nx.draw(self.networkx_graph, with_labels=True, font_weight='bold')
             plt.show()
 
-    #TODO ask for current edge
-    def get_plan_list(self):
-        return list(nx.edge_dfs(self.networkx_graph))
+    #TODO ask for current edge or node
+    def generate_full_coverage_plan(self):
+        self.topological_plan = list(nx.edge_dfs(self.networkx_graph))
+
+    def get_next_transition(self):
+        if self.topological_plan is None:
+            rospy.logerr("Topological Plan not initialized")
+            return False
+        if len(self.topological_plan) == 0:
+            return False
+        next_node = self.topological_plan.pop(0)
+        return next_node
+
+    def command_robot_to_node(self,node_id):
+        rospy.loginfo("Commanding robot to %s", node_id)
+        navgoal = GotoNodeGoal()
+        navgoal.target = node_id
+        navgoal.no_orientation = True
+        self.action_client.send_goal(navgoal)
+        self.action_client.wait_for_result()
+        # Prints out the result of executing the action
+        print self.action_client.get_result()  # A FibonacciResul
