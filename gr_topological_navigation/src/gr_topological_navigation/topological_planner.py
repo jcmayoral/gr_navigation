@@ -58,5 +58,5 @@ class TopologicalPlanner:
         navgoal.no_orientation = True
         self.action_client.send_goal(navgoal)
         self.action_client.wait_for_result()
-        # Prints out the result of executing the action
-        print self.action_client.get_result()  # A FibonacciResul
+        rospy.logwarn("%d nodes still missing", len(self.topological_plan))
+        rospy.loginfo("Is node %s reached? %r", node_id,  self.action_client.get_result())  # A FibonacciResul

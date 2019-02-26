@@ -9,4 +9,4 @@ if __name__ == '__main__':
     next_transition = topological_planner.get_next_transition()
     while (next_transition):
         topological_planner.command_robot_to_node(next_transition[1])
-        next_transition = topological_planner.get_next_node()
+        next_transition = topological_planner.get_next_transition()
