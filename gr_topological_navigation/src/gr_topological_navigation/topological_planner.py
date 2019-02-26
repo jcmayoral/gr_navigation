@@ -54,6 +54,7 @@ class TopologicalPlanner:
             rospy.logerr("Topological Plan not initialized")
             return False
         if len(self.topological_plan) == 0:
+            rospy.loginfo("Full Coverage Topological Navigation is completed")
             return False
         next_node = self.topological_plan.pop(0)
         return next_node
