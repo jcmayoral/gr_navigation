@@ -7,6 +7,7 @@
   <license>MIT</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>gr_topological_navigation</exec_depend>
   <export>
     <metapackage/>
   </export>

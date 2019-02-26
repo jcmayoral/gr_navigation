@@ -8,6 +8,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>
+  <build_depend>strands_navigation_msgs</build_depend>
+  <build_depend>topological_navigation</build_depend>
   <exec_depend>rospy</exec_depend>
+  <exec_depend>strands_navigation_msgs</exec_depend>
+  <exec_depend>topological_navigation</exec_depend>
 
 </package>
