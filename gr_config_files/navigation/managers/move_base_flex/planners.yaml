@@ -1,0 +1,12 @@
+planners:
+  - name: 'GlobalPlanner'
+    type: 'global_planner/GlobalPlanner'
+  - name: 'SBPLLatticePlanner'
+    type: 'SBPLLatticePlanner'
+
+SBPLLatticePlanner:
+  planner_type: ARAPlanner
+  allocated_time: 1.0
+  initial_epsilon: 3.0
+  environment_type: XYThetaLattice
+  primitive_filename: /home/jose/ros_ws/src/my_own_thorvald/mprim/pr2.mprim
