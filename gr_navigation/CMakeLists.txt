@@ -1,4 +1,4 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(grassrobotics_navigation)
+project(gr_navigation)
 find_package(catkin REQUIRED)
 catkin_metapackage()
