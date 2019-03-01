@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="map" default="empty"/>
+  <arg name="maps_package" default="gr_config_files" />
+  <arg name="maps_folder" default="maps" />
+  <arg name="map_filename" default="map.yaml" />
+
+  <node pkg="gr_map_utils" type="multi_map_server"
+        name="multi_map_server" args="$(arg map)" output="screen" >
+      <param name="maps_package" type="str" value="$(arg maps_package)"/>
+      <param name="maps_folder" type="str" value="$(arg maps_folder)"/>
+      <param name="map_filename" type="str" value="$(arg map_filename)"/>
+  </node>
+</launch>
