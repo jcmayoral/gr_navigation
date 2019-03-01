@@ -80,6 +80,7 @@ class MultiMapServer
         //std::ifstream fin((fname + ".yaml").c_str());
         std::ifstream fin(fname.c_str());
         if (fin.fail()) {
+          ROS_ERROR("Map not found at %s ", fname.c_str());
           ROS_ERROR("Map_server could not open %s.", fname.c_str());
           return;//exit(-1);
         }
@@ -229,26 +230,28 @@ class MultiMapServer
 
 class Manager{
   public:
-    std::string fname;
     std::string path_;
     std::string map_name;
+    std::string folder_name;
+    std::string filename;
+
     double res;
     ros::Subscriber sub;
     bool isTriggered;
 
     void mapCB (const std_msgs::String::ConstPtr& msg){
-      if (map_name.compare(msg->data.c_str())){
-        fname = path_ + msg->data.c_str() + "/map.yaml";
-        isTriggered = true;
-        ROS_INFO_STREAM("New Map Path " << fname);
-        ROS_INFO_STREAM("New Map Name " << map_name);
-        map_name = msg->data.c_str();
-      }
+      map_name = msg->data.c_str();
+      ROS_INFO_STREAM("Requested Map Name " << map_name);
+      isTriggered = true;
     };
 
-    Manager(ros::NodeHandle nh, std::string path): fname(), res(), isTriggered(true){
+    std::string getFullPath(){
+      return path_+ "/" + map_name + "/" + filename;
+    }
+
+    Manager(ros::NodeHandle nh, std::string path, std::string folder_name, std::string filename): path_(path), res(0.05), folder_name(folder_name),
+                                                                                              isTriggered(true), filename(filename){
       ROS_INFO("Manager constructor");
-      path_ = path + "/";
       sub = nh.subscribe("map_name", 1000, &Manager::mapCB, this);
 
     };
@@ -267,24 +270,26 @@ int main(int argc, char **argv)
 
   MultiMapServer ms;
 
-  std::string package;
+  std::string package_name;
+  std::string package_path;
+  std::string maps_folder;
+  std::string map_filename;
 
-  nh.getParam("maps_package", package);
-  std::string path = ros::package::getPath(package);
-  std::cout << path;
-  Manager manager(nh, path);
-  ROS_INFO_STREAM("MAP SELECTED" << argv[1]);
+  nh.getParam("maps_package", package_name);
+  package_path = ros::package::getPath(package_name);
+  nh.getParam("maps_folder", maps_folder);
+  nh.getParam("map_filename", map_filename);
+
+  Manager manager(nh, package_path, maps_folder,  map_filename);
   manager.res = (argc == 2) ? 0.0 : atof(argv[2]);
-  manager.fname = argv[1];
-  ROS_INFO_STREAM("Path " << manager.fname);
   manager.map_name = argv[1];
   ROS_INFO_STREAM("Map Name " << manager.map_name);
+
   while (ros::ok()){
     try
     {
       if(manager.isTriggered){
-        ms.load(manager.fname, manager.res);
-        ROS_INFO("Initialized new map");
+        ms.load(manager.getFullPath(), manager.res);
         manager.isTriggered = false;
       }
       ros::spinOnce(); // this is where the magic happens!!

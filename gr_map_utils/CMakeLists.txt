@@ -23,9 +23,9 @@ catkin_package(
     CATKIN_DEPENDS
         roscpp
         map_server
-        roslib
-        std_msgs
         nav_msgs
+        std_msgs
+        roslib
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
