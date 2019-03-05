@@ -246,7 +246,7 @@ class Manager{
     };
 
     std::string getFullPath(){
-      return path_+ "/" + map_name + "/" + filename;
+      return path_+ "/" + folder_name + "/" + map_name + "/" + filename;
     }
 
     Manager(ros::NodeHandle nh, std::string path, std::string folder_name, std::string filename): path_(path), res(0.05), folder_name(folder_name),
