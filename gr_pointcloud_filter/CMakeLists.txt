@@ -7,8 +7,10 @@ find_package(catkin REQUIRED
     COMPONENTS
     geometry_msgs
     cv_bridge
-    fusion_msgs
+    sensor_msgs
     roscpp
+    pcl_ros
+    pcl_conversions
     dynamic_reconfigure
 )
 
@@ -19,6 +21,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 #generate_dynamic_reconfigure_options(
@@ -32,6 +35,8 @@ catkin_package(
     geometry_msgs
     cv_bridge
     roscpp
+    pcl_ros
+    pcl_conversions
     dynamic_reconfigure
 )
 
@@ -52,6 +57,7 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries( ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
   #${OpenCV_LIBRARIES}
 )
 
