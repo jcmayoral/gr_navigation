@@ -33,6 +33,7 @@ namespace gr_pointcloud_filter
    	  extraction_filter_.setInputCloud (cloud);
       extraction_filter_.setIndices (filter_inliers);
       extraction_filter_.filter(*cloud);
+
       //outliers removal filter
       outliers_filter_.setInputCloud (cloud);
       outliers_filter_.filter (*cloud);
