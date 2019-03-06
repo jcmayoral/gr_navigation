@@ -21,21 +21,7 @@ namespace gr_pointcloud_filter
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	ROS_INFO("applying filters");
 
-    	/*
-    	pcl::PCLPointCloud2 pcl_pc2;// = new pcl::PCLPointCloud2;
-    	//pcl::PCLPointCloud2 cloud_filtered;
-    	// Convert to PCL data type
-    	pcl_conversions::toPCL(msg, pcl_pc2);
-    	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-    	pcl::fromPCLPointCloud2(pcl_pc2,*cloud);
-    	 */
-
-
     	// Convert the sensor_msgs/PointCloud2(cloud2) object to pcl/pointcloud(cloud1) object with fromROSMsg()
-
-    	ROS_INFO("1");
-
-    	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg (msg, *cloud);
 
@@ -62,12 +48,7 @@ namespace gr_pointcloud_filter
     	seg.setMaxIterations (1000);
     	seg.setDistanceThreshold (0.01);
     	seg.setInputCloud(cloud);
-		//seg.setInputCloud (cloud);
-    	ROS_INFO("HERE");
    	    seg.segment (*inliers, *coefficients);
-    	ROS_INFO("tHERE");
-
-    	std::cout << "1";
 
    	    if (inliers->indices.size () == 0)
    	    {
@@ -79,8 +60,8 @@ namespace gr_pointcloud_filter
 		// Extract the inliers
    	    extract.setInputCloud (cloud);
 		extract.setIndices (inliers);
-		extract.setNegative (false);
-		//extract.filter(cloud);
+		extract.setNegative (true);
+		extract.filter(*cloud);
 
 
 

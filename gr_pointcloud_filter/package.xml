@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package>
   <name>gr_pointcloud_filter</name>
-  <version>0.0.2</version>
+  <version>0.0.3</version>
   <description>
-    The vision_utils ROS wrapper package
+    A set of filters applied to the velodyne_pointcloud
   </description>
 
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
