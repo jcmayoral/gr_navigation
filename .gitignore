@@ -5,14 +5,14 @@ bin/
 lib/
 msg_gen/
 srv_gen/
-msg/*Action.msg
-msg/*ActionFeedback.msg
-msg/*ActionGoal.msg
-msg/*ActionResult.msg
-msg/*Feedback.msg
-msg/*Goal.msg
-msg/*Result.msg
-msg/_*.py
+#msg/*Action.msg
+#msg/*ActionFeedback.msg
+#msg/*ActionGoal.msg
+#msg/*ActionResult.msg
+#msg/*Feedback.msg
+#msg/*Goal.msg
+#msg/*Result.msg
+#msg/_*.py
 build_isolated/
 devel_isolated/
 
@@ -27,6 +27,14 @@ devel_isolated/
 
 # eclipse stuff
 .project
+.project
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+Makefile
+catkin/
+catkin_generated
+gtest
 .cproject
 
 # qcreator stuff

@@ -1,15 +1,16 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>grassrobotics_navigation</name>
-  <version>0.0.2</version>
+  <name>gr_navigation</name>
+  <version>0.0.3</version>
   <description>grassrobotics_navigation package</description>
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <exec_depend>gr_map_utils</exec_depend>
   <exec_depend>gr_config_files</exec_depend>
-  <exec_depend>gr_topological_navigatio</exec_depend>
+  <exec_depend>gr_map_utils</exec_depend>
+  <exec_depend>gr_pointcloud_filter</exec_depend>
+  <exec_depend>gr_topological_navigation</exec_depend>
 
   <export>
     <metapackage/>
