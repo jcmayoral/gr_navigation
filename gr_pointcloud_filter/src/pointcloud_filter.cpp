@@ -9,71 +9,52 @@ PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 
 namespace gr_pointcloud_filter
 {
-	/*
-	MyNodeletClass::MyNodeletClass(){
-		ROS_INFO("My NodeletClass constructor");
-		ros::NodeHandle nh;
-		nh.subscribe("velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
-		ROS_INFO("Nodelet has been initialized");
-	}
-	*/
 
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
-    	ROS_INFO("applying filters");
-
-    	// Convert the sensor_msgs/PointCloud2(cloud2) object to pcl/pointcloud(cloud1) object with fromROSMsg()
+    	//Convering sensor_msg to pcl message
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg (msg, *cloud);
 
 
+    	//voxeling
+    	voxel_filter_.setInputCloud (cloud);
+    	voxel_filter_.filter (*cloud);
 
-    	// Downsample not used (Velodyne is already sparsed
-    	/*
-    	pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
-    	sor.setInputCloud (cloudPtr);
-    	sor.setLeafSize (0.1, 0.1, 0.1);
-    	sor.filter (cloud_filtered);
-		*/
+    	//segmentation of a plane
+    	pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
+    	pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
 
-    	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
-    	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-    	// Create the segmentation object
+    	segmentation_filter_.setInputCloud(cloud);
+   	    segmentation_filter_.segment (*filter_inliers, *filter_coefficients);
 
-    	pcl::SACSegmentation<pcl::PointXYZ> seg;
-    	// Optional
-    	seg.setOptimizeCoefficients (true);
-    	// Mandatory
-    	seg.setModelType (pcl::SACMODEL_PLANE);
-    	seg.setMethodType (pcl::SAC_RANSAC);
-    	seg.setMaxIterations (1000);
-    	seg.setDistanceThreshold (0.01);
-    	seg.setInputCloud(cloud);
-   	    seg.segment (*inliers, *coefficients);
-
-   	    if (inliers->indices.size () == 0)
+   	    if (filter_inliers->indices.size () == 0)
    	    {
    	    	return;
 		}
 
-    	// Create the filtering object
-    	pcl::ExtractIndices<pcl::PointXYZ> extract;
-		// Extract the inliers
-   	    extract.setInputCloud (cloud);
-		extract.setIndices (inliers);
-		extract.setNegative (true);
-		extract.filter(*cloud);
-
-
+    	//extracting inliers (removing ground)
+   	    extraction_filter_.setInputCloud (cloud);
+		extraction_filter_.setIndices (filter_inliers);
+		extraction_filter_.filter(*cloud);
 
     	// Convert to ROS data type
-    	sensor_msgs::PointCloud2 output;
-    	//pcl_conversions::fromPCL(cloud, output);
-
-
-    	//Convert pcl/pointcloud object(cloud1) to sensor_msgs/PointCloud2(cloud2) with toROSMsg()
-    	pcl::toROSMsg(*cloud, output);
+     	pcl::toROSMsg(*cloud, output_pointcloud_);
     	// Publish the data
-    	pointcloud_pub_.publish (output);
+    	pointcloud_pub_.publish (output_pointcloud_);
+    }
+
+    void MyNodeletClass::setFiltersParams(){
+    	//voxeling
+    	voxel_filter_.setLeafSize (1, 1, 1);
+    	//segmentating
+    	segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
+    	segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
+    	segmentation_filter_.setMaxIterations (1000);
+    	segmentation_filter_.setDistanceThreshold (0.01);
+    	segmentation_filter_.setOptimizeCoefficients (true);
+    	//extraction
+		extraction_filter_.setNegative (false);
+
     }
 
 
@@ -87,6 +68,9 @@ namespace gr_pointcloud_filter
 
     	ROS_INFO("My NodeletClass constructor");
 		ros::NodeHandle nh;
+
+    	setFiltersParams();
+
 		pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
 		pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 10);
 		NODELET_DEBUG("Initializing nodelet...");
