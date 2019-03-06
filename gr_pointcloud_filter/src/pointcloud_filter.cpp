@@ -23,47 +23,48 @@ namespace gr_pointcloud_filter
     	pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
 
     	segmentation_filter_.setInputCloud(cloud);
-   	  segmentation_filter_.segment (*filter_inliers, *filter_coefficients);
+    	segmentation_filter_.segment (*filter_inliers, *filter_coefficients);
 
-   	  if (filter_inliers->indices.size () == 0){
-        return;
-		  }
-
+    	if (filter_inliers->indices.size () == 0){
+    		return;
+		}
     	//extracting inliers (removing ground)
-   	  extraction_filter_.setInputCloud (cloud);
-      extraction_filter_.setIndices (filter_inliers);
-      extraction_filter_.filter(*cloud);
+    	extraction_filter_.setInputCloud (cloud);
+    	extraction_filter_.setIndices (filter_inliers);
+    	extraction_filter_.filter(*cloud);
 
-      //outliers removal filter
-      outliers_filter_.setInputCloud (cloud);
-      outliers_filter_.filter (*cloud);
+    	//outliers removal filter
+    	outliers_filter_.setInputCloud (cloud);
+    	outliers_filter_.filter (*cloud);
 
     	// Convert to ROS data type
-     	pcl::toROSMsg(*cloud, output_pointcloud_);
+    	pcl::toROSMsg(*cloud, output_pointcloud_);
     	// Publish the data
     	pointcloud_pub_.publish (output_pointcloud_);
     }
 
     void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
-      boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     	//voxeling
     	voxel_filter_.setLeafSize (config.leaf_size, config.leaf_size, config.leaf_size);
+
     	//segmentating
     	segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
     	segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     	segmentation_filter_.setMaxIterations (config.max_iterations);
     	segmentation_filter_.setDistanceThreshold (config.distance_threshold);
     	segmentation_filter_.setOptimizeCoefficients (config.optimize_coefficients);
+
     	//extraction
-      extraction_filter_.setNegative (config.set_negative);
-      //ouliers
-      outliers_filter_.setMeanK (config.mean_k);
-      outliers_filter_.setStddevMulThresh (config.std_threshold);
+    	extraction_filter_.setNegative (config.set_negative);
+
+    	//ouliers
+    	outliers_filter_.setMeanK (config.mean_k);
+    	outliers_filter_.setStddevMulThresh (config.std_threshold);
     }
 
 
     void MyNodeletClass::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
-    	ROS_DEBUG("Callback working");
     	applyFilters(*msg);
     }
 
