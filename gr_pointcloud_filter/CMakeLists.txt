@@ -17,16 +17,16 @@ find_package(catkin REQUIRED
 find_package(cmake_modules REQUIRED)
 find_package(OpenCV 3.2 REQUIRED)
 
+generate_dynamic_reconfigure_options(
+  cfg/Filters.cfg
+)
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
 )
-
-#generate_dynamic_reconfigure_options(
-#  cfg/fault_detection.cfg
-#)
 
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}
@@ -40,20 +40,12 @@ catkin_package(
     dynamic_reconfigure
 )
 
-#add_executable(vision_utils_ros_node
-#               src/vision_utils_ros_node.cpp
-#               src/frame_container.cpp
-#               src/ros_matcher.cpp
-#               src/ros_fault_detection.cpp
-#               src/ros_statistics_tools.cpp
-#)
-
 add_library(${PROJECT_NAME}
             src/pointcloud_filter.cpp
 )
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-#add_dependencies(vision_utils_ros_node ${PROJECT_NAME}_gencfg)
+add_dependencies(${PROJECT_NAME} gr_poincloud_filter_gencfg)
 
 target_link_libraries( ${PROJECT_NAME}
   ${catkin_LIBRARIES}
@@ -73,6 +65,6 @@ install(DIRECTORY include
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
-#install(DIRECTORY cfg
-#  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cfg
-#)
+install(DIRECTORY cfg
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cfg
+)

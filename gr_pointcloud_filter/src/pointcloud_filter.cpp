@@ -43,17 +43,17 @@ namespace gr_pointcloud_filter
     	pointcloud_pub_.publish (output_pointcloud_);
     }
 
-    void MyNodeletClass::setFiltersParams(){
+    void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
     	//voxeling
-    	voxel_filter_.setLeafSize (1, 1, 1);
+    	voxel_filter_.setLeafSize (config.leaf_size, config.leaf_size, config.leaf_size);
     	//segmentating
     	segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
     	segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
-    	segmentation_filter_.setMaxIterations (1000);
-    	segmentation_filter_.setDistanceThreshold (0.01);
-    	segmentation_filter_.setOptimizeCoefficients (true);
+    	segmentation_filter_.setMaxIterations (config.max_iterations);
+    	segmentation_filter_.setDistanceThreshold (config.distance_threshold);
+    	segmentation_filter_.setOptimizeCoefficients (config.optimize_coefficients);
     	//extraction
-		extraction_filter_.setNegative (false);
+		extraction_filter_.setNegative (config.set_negative);
 
     }
 
@@ -63,18 +63,22 @@ namespace gr_pointcloud_filter
     	applyFilters(*msg);
     }
 
+    void MyNodeletClass::dyn_reconfigureCB(gr_pointcloud_filter::FiltersConfig &config, uint32_t level){
+    	setFiltersParams(config);
+    }
+
     void MyNodeletClass::onInit()
     {
 
     	ROS_INFO("My NodeletClass constructor");
 		ros::NodeHandle nh;
 
-    	setFiltersParams();
+    	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
+		dyn_server_.setCallback(dyn_server_cb_);
 
 		pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
 		pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 10);
 		NODELET_DEBUG("Initializing nodelet...");
-		NODELET_INFO("Here");
 		//ros::spin();
     }
 }

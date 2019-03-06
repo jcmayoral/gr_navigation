@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>gr_pointcloud_filter</name>
-  <version>0.0.4</version>
+  <version>0.0.5</version>
   <description>
     A set of filters applied to the velodyne_pointcloud
   </description>
