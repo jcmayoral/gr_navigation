@@ -7,8 +7,11 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
+#include <pcl/filters/statistical_outlier_removal.h>
+
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/transforms.h>
+
 //dynamic_reconfigure
 #include <dynamic_reconfigure/server.h>
 #include <gr_pointcloud_filter/FiltersConfig.h>
@@ -25,6 +28,7 @@ namespace gr_pointcloud_filter
         	pcl::VoxelGrid<pcl::PointXYZ> voxel_filter_;
         	pcl::SACSegmentation<pcl::PointXYZ> segmentation_filter_;
         	pcl::ExtractIndices<pcl::PointXYZ> extraction_filter_;
+        	pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
 
         	//Dynamic Reconfigure
         	dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig> dyn_server_;
