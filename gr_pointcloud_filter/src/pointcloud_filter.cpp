@@ -27,7 +27,7 @@ namespace gr_pointcloud_filter
 
     	if (filter_inliers->indices.size () == 0){
     		return;
-		}
+      }
     	//extracting inliers (removing ground)
     	extraction_filter_.setInputCloud (cloud);
     	extraction_filter_.setIndices (filter_inliers);
