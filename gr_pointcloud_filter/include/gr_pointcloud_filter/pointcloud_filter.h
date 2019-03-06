@@ -18,8 +18,8 @@ namespace gr_pointcloud_filter
     		ros::Publisher pointcloud_pub_;
     	public:
             virtual void onInit();
-            void pointcloud_cb(sensor_msgs::PointCloud2ConstPtr msg);
-            void applyFilters(sensor_msgs::PointCloud2 msg);
+            void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg);
+            void applyFilters(const sensor_msgs::PointCloud2 msg);
 
     };
 

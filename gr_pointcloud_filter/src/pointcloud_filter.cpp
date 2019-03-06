@@ -18,7 +18,7 @@ namespace gr_pointcloud_filter
 	}
 	*/
 
-    void MyNodeletClass::applyFilters(sensor_msgs::PointCloud2 msg){
+    void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	ROS_INFO("applying filters");
 
     	/*
@@ -32,7 +32,11 @@ namespace gr_pointcloud_filter
 
 
     	// Convert the sensor_msgs/PointCloud2(cloud2) object to pcl/pointcloud(cloud1) object with fromROSMsg()
-    	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
+
+    	ROS_INFO("1");
+
+    	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
+    	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg (msg, *cloud);
 
 
@@ -45,9 +49,10 @@ namespace gr_pointcloud_filter
     	sor.filter (cloud_filtered);
 		*/
 
-    	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
-    	pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+    	pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients);
+    	pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
     	// Create the segmentation object
+
     	pcl::SACSegmentation<pcl::PointXYZ> seg;
     	// Optional
     	seg.setOptimizeCoefficients (true);
@@ -56,9 +61,13 @@ namespace gr_pointcloud_filter
     	seg.setMethodType (pcl::SAC_RANSAC);
     	seg.setMaxIterations (1000);
     	seg.setDistanceThreshold (0.01);
+    	seg.setInputCloud(cloud);
 		//seg.setInputCloud (cloud);
+    	ROS_INFO("HERE");
    	    seg.segment (*inliers, *coefficients);
+    	ROS_INFO("tHERE");
 
+    	std::cout << "1";
 
    	    if (inliers->indices.size () == 0)
    	    {
@@ -87,7 +96,7 @@ namespace gr_pointcloud_filter
     }
 
 
-    void MyNodeletClass::pointcloud_cb(sensor_msgs::PointCloud2ConstPtr msg){
+    void MyNodeletClass::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
     	ROS_DEBUG("Callback working");
     	applyFilters(*msg);
     }
