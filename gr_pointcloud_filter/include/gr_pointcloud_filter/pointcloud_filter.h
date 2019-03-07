@@ -39,6 +39,8 @@ namespace gr_pointcloud_filter
         pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
         pcl::RadiusOutlierRemoval<pcl::PointXYZ> radius_outliers_filter_;
         float eps_angle_;
+        float min_radius_;
+        int min_neighbours_;
 
         //Dynamic Reconfigure
         dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig> dyn_server_;

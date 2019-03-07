@@ -12,11 +12,11 @@ namespace gr_pointcloud_filter
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	//Convering sensor_msg to pcl message
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
-    	pcl::fromROSMsg (msg, *cloud);
+    	pcl::fromROSMsg(msg, *cloud);
 
     	//voxeling
-    	voxel_filter_.setInputCloud (cloud);
-    	voxel_filter_.filter (*cloud);
+    	voxel_filter_.setInputCloud(cloud);
+    	voxel_filter_.filter(*cloud);
 
     	//segmentation of a plane
     	pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
@@ -27,7 +27,7 @@ namespace gr_pointcloud_filter
     	segmentation_filter_.setEpsAngle(eps_angle_ * (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
 
     	segmentation_filter_.setInputCloud(cloud);
-    	segmentation_filter_.segment (*filter_inliers, *filter_coefficients);
+    	segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
 
     	if (filter_inliers->indices.size () == 0){
     		return;
@@ -36,34 +36,33 @@ namespace gr_pointcloud_filter
     	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
 
     	//extracting inliers (removing ground)
-    	extraction_filter_.setInputCloud (cloud);
-    	extraction_filter_.setIndices (filter_inliers);
+    	extraction_filter_.setInputCloud(cloud);
+    	extraction_filter_.setIndices(filter_inliers);
     	extraction_filter_.filter(*cloud);
 
     	//outliers removal filter
-    	outliers_filter_.setInputCloud (cloud);
-    	outliers_filter_.filter (*cloud);
+    	outliers_filter_.setInputCloud(cloud);
+    	outliers_filter_.filter(*cloud);
 
 
     	//radius outliers On progress
-        // build the filter
-        radius_outliers_filter_.setInputCloud(cloud);
-        radius_outliers_filter_.setRadiusSearch(0.11);
-        radius_outliers_filter_.setMinNeighborsInRadius (10);
-        // apply filter
-        radius_outliers_filter_.filter (*cloud);
-
+      // build the filter
+      radius_outliers_filter_.setInputCloud(cloud);
+      radius_outliers_filter_.setRadiusSearch(min_radius_);
+      radius_outliers_filter_.setMinNeighborsInRadius(min_neighbours_);
+      // apply filter
+      radius_outliers_filter_.filter(*cloud);
 
     	// Convert to ROS data type
     	pcl::toROSMsg(*cloud, output_pointcloud_);
     	// Publish the data
-    	pointcloud_pub_.publish (output_pointcloud_);
+    	pointcloud_pub_.publish(output_pointcloud_);
     }
 
     void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
     	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     	//voxeling
-    	voxel_filter_.setLeafSize (config.leaf_size, config.leaf_size, config.leaf_size);
+    	voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
 
     	//segmentating
     	//segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
@@ -72,17 +71,21 @@ namespace gr_pointcloud_filter
     	//segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
 
     	segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
-    	segmentation_filter_.setMaxIterations (config.max_iterations);
-    	segmentation_filter_.setDistanceThreshold (config.distance_threshold);
-    	segmentation_filter_.setOptimizeCoefficients (config.optimize_coefficients);
+    	segmentation_filter_.setMaxIterations(config.max_iterations);
+    	segmentation_filter_.setDistanceThreshold(config.distance_threshold);
+    	segmentation_filter_.setOptimizeCoefficients(config.optimize_coefficients);
     	//segmentation_filter_.setSamplesMaxDist(config.samples_max_dist);
 
     	//extraction
-    	extraction_filter_.setNegative (config.set_negative);
+    	extraction_filter_.setNegative(config.set_negative);
 
     	//ouliers
-    	outliers_filter_.setMeanK (config.mean_k);
-    	outliers_filter_.setStddevMulThresh (config.std_threshold);
+    	outliers_filter_.setMeanK(config.mean_k);
+    	outliers_filter_.setStddevMulThresh(config.std_threshold);
+
+      //radius_outliers
+      min_radius_ = config.min_radius_removal;
+      min_neighbours_ = config.min_neighbours;
     }
 
 
