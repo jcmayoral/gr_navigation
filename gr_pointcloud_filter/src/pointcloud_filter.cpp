@@ -1,6 +1,17 @@
 // this should really be in the implementation (.cpp file)
 #include <pluginlib/class_list_macros.h>
 
+
+//testing
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/search/search.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/segmentation/region_growing.h>
+
 // Include your header
 #include <gr_pointcloud_filter/pointcloud_filter.h>
 
@@ -15,13 +26,48 @@ namespace gr_pointcloud_filter
     	pcl::fromROSMsg (msg, *cloud);
 
     	//voxeling
-    	voxel_filter_.setInputCloud (cloud);
-    	voxel_filter_.filter (*cloud);
+    	//voxel_filter_.setInputCloud (cloud);
+    	//voxel_filter_.filter (*cloud);
 
     	//segmentation of a plane
-    	pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
-    	pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
+    	//pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
+    	//pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
 
+
+    	//On testing
+    	pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    	pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+    	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator;
+    	normal_estimator.setSearchMethod (tree);
+    	normal_estimator.setInputCloud (cloud);
+    	normal_estimator.setKSearch (50);
+    	normal_estimator.compute (*normals);
+
+    	pcl::IndicesPtr indices (new std::vector <int>);
+    	pcl::PassThrough<pcl::PointXYZ> pass;
+    	pass.setInputCloud (cloud);
+    	pass.setFilterFieldName ("z");
+    	pass.setFilterLimits (0.0, 1.0);
+    	pass.filter (*indices);
+
+    	pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
+    	reg.setMinClusterSize (50);
+    	reg.setMaxClusterSize (1000000);
+    	reg.setSearchMethod (tree);
+    	reg.setNumberOfNeighbours (100);
+    	reg.setInputCloud (cloud);
+    	//reg.setIndices (indices);
+    	reg.setInputNormals (normals);
+    	reg.setSmoothnessThreshold (3.0 / 180.0 * M_PI);
+    	reg.setCurvatureThreshold (1.0);
+
+
+    	std::vector <pcl::PointIndices> clusters;
+    	reg.extract (clusters);
+
+
+
+		/*
     	Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
     	segmentation_filter_.setAxis(axis);
     	segmentation_filter_.setEpsAngle(eps_angle_ * (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
@@ -37,13 +83,16 @@ namespace gr_pointcloud_filter
     	extraction_filter_.setInputCloud (cloud);
     	extraction_filter_.setIndices (filter_inliers);
     	extraction_filter_.filter(*cloud);
-
+*/
     	//outliers removal filter
-    	outliers_filter_.setInputCloud (cloud);
-    	outliers_filter_.filter (*cloud);
+    	//outliers_filter_.setInputCloud (cloud);
+    	//outliers_filter_.filter (*cloud);
 
     	// Convert to ROS data type
-    	pcl::toROSMsg(*cloud, output_pointcloud_);
+    	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud ();
+    	pcl::toROSMsg(*colored_cloud, output_pointcloud_);
+    	output_pointcloud_.header.frame_id = "laser_frame";
+    	output_pointcloud_.header.stamp = ros::Time::now();
     	// Publish the data
     	pointcloud_pub_.publish (output_pointcloud_);
     }
