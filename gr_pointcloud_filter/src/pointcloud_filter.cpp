@@ -32,7 +32,9 @@ namespace gr_pointcloud_filter
     	if (filter_inliers->indices.size () == 0){
     		return;
       }
+
     	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
+
     	//extracting inliers (removing ground)
     	extraction_filter_.setInputCloud (cloud);
     	extraction_filter_.setIndices (filter_inliers);
@@ -41,6 +43,16 @@ namespace gr_pointcloud_filter
     	//outliers removal filter
     	outliers_filter_.setInputCloud (cloud);
     	outliers_filter_.filter (*cloud);
+
+
+    	//radius outliers On progress
+        // build the filter
+        radius_outliers_filter_.setInputCloud(cloud);
+        radius_outliers_filter_.setRadiusSearch(0.11);
+        radius_outliers_filter_.setMinNeighborsInRadius (10);
+        // apply filter
+        radius_outliers_filter_.filter (*cloud);
+
 
     	// Convert to ROS data type
     	pcl::toROSMsg(*cloud, output_pointcloud_);
@@ -63,6 +75,7 @@ namespace gr_pointcloud_filter
     	segmentation_filter_.setMaxIterations (config.max_iterations);
     	segmentation_filter_.setDistanceThreshold (config.distance_threshold);
     	segmentation_filter_.setOptimizeCoefficients (config.optimize_coefficients);
+    	//segmentation_filter_.setSamplesMaxDist(config.samples_max_dist);
 
     	//extraction
     	extraction_filter_.setNegative (config.set_negative);
@@ -84,6 +97,8 @@ namespace gr_pointcloud_filter
     void MyNodeletClass::onInit(){
       ROS_INFO("My NodeletClass constructor");
       ros::NodeHandle nh;
+      segmentation_filter_ = pcl::SACSegmentation<pcl::PointXYZ> (true);
+
       dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
       dyn_server_.setCallback(dyn_server_cb_);
       pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
