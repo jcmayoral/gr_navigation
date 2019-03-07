@@ -22,12 +22,17 @@ namespace gr_pointcloud_filter
     	pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
     	pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
 
+    	Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
+    	segmentation_filter_.setAxis(axis);
+    	segmentation_filter_.setEpsAngle(eps_angle_ * (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
+
     	segmentation_filter_.setInputCloud(cloud);
     	segmentation_filter_.segment (*filter_inliers, *filter_coefficients);
 
     	if (filter_inliers->indices.size () == 0){
     		return;
       }
+    	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
     	//extracting inliers (removing ground)
     	extraction_filter_.setInputCloud (cloud);
     	extraction_filter_.setIndices (filter_inliers);
@@ -49,7 +54,11 @@ namespace gr_pointcloud_filter
     	voxel_filter_.setLeafSize (config.leaf_size, config.leaf_size, config.leaf_size);
 
     	//segmentating
-    	segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
+    	//segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
+    	segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+    	eps_angle_ = config.eps_angle;
+    	//segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
+
     	segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     	segmentation_filter_.setMaxIterations (config.max_iterations);
     	segmentation_filter_.setDistanceThreshold (config.distance_threshold);

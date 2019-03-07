@@ -19,6 +19,9 @@
 //recursive_mutex
 #include <boost/thread/recursive_mutex.hpp>
 
+//C++
+#include <string>
+
 namespace gr_pointcloud_filter
 {
 
@@ -32,6 +35,7 @@ namespace gr_pointcloud_filter
         pcl::SACSegmentation<pcl::PointXYZ> segmentation_filter_;
         pcl::ExtractIndices<pcl::PointXYZ> extraction_filter_;
         pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
+        float eps_angle_;
 
         //Dynamic Reconfigure
         dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig> dyn_server_;
