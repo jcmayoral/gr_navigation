@@ -19,7 +19,6 @@ endif(NEW_YAMLCPP_FOUND)
 
 
 catkin_package(
-    INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         roscpp
@@ -31,7 +30,6 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(gr_map_converter src/osm_to_topological_converter.cpp)
 
 add_executable(multi_map_server src/multi_map_server_node.cpp)
 target_link_libraries(multi_map_server
@@ -39,15 +37,8 @@ target_link_libraries(multi_map_server
     yaml-cpp
 )
 
-add_executable(osm_map_converter src/osm_to_topological_node.cpp)
-target_link_libraries(osm_map_converter 
-    ${catkin_LIBRARIES}
-    gr_map_converter
-)
-
-
 ## Install executables and/or libraries
-install(TARGETS multi_map_server osm_map_converter
+install(TARGETS multi_map_server
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
