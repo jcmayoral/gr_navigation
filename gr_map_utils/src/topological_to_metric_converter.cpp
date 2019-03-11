@@ -59,6 +59,7 @@ namespace gr_map_utils{
 
         created_map_.header.frame_id = "map"; //TODO this should be a param
         created_map_.info.resolution = 0.05;
+        float offset = 2; //TODO should be a parameter
 
         int nodes_number = 0;
         float center_x = 0.0;
@@ -71,6 +72,8 @@ namespace gr_map_utils{
 
         float node_x;
         float node_y;
+
+        std::vector<std::pair<int,int> > cells;
 
         for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
             node_x = it->pose.position.x;
@@ -97,17 +100,25 @@ namespace gr_map_utils{
             }
 
             nodes_number ++;
+            cells.emplace_back(int(node_x/created_map_.info.resolution),int(node_y/created_map_.info.resolution));
         }
 
-        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution );
-        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution );
+        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
+        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
         
         //TODO
         created_map_.data.resize(created_map_.info.width * created_map_.info.height);
 
+
+        //Update costs
+        for ( const std::pair<int,int>  &it : cells ){
+        //for ( std::vector < std::pair<int,int> >::const_iterator it = cells.begin() ; it != cells.end; it++){
+            created_map_.data[it.first + created_map_.info.width * it.second] = 255;
+        }
+
         geometry_msgs::Pose origin;
-        origin.position.x = min_x;
-        origin.position.y = min_y;
+        origin.position.x = min_x - offset/2;
+        origin.position.y = min_y - offset/2;
         origin.orientation.w = 1.0;
 
         created_map_.info.origin = origin;

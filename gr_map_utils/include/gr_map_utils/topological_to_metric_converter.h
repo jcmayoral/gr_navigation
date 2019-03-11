@@ -9,9 +9,6 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <ros/ros.h>
 
-// compute linear index for given map coords
-#define MAP_IDX(sx, i, j) ((sx) * (j) + (i))
-
 namespace gr_map_utils{
     
     class Topological2MetricMap : public MapConverterInterface{
