@@ -1,14 +1,13 @@
 #include <gr_map_utils/map_converter_interface.h>
 #include <mongodb_store/message_store.h>
 #include <boost/foreach.hpp>
+#include <mutex>
+#include <vector>
 #include <strands_navigation_msgs/TopologicalNode.h>
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <ros/ros.h>
-
-#include <vector>
-
 
 // compute linear index for given map coords
 #define MAP_IDX(sx, i, j) ((sx) * (j) + (i))
@@ -30,5 +29,6 @@ namespace gr_map_utils{
             ros::Publisher map_pub_;
             ros::Publisher metadata_pub_;
             ros::NodeHandle nh_;
+            std::mutex mutex_;
     };
 }

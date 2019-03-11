@@ -55,19 +55,64 @@ namespace gr_map_utils{
     }
 
     void Topological2MetricMap::convertTopologicalMap(){
-        nav_msgs::OccupancyGrid created_map;
+        std::unique_lock<std::mutex> lk(mutex_);
+
+        nav_msgs::OccupancyGrid created_map;        
         created_map.header.stamp = ros::Time::now();
         created_map.header.frame_id = "map"; //TODO this should be a param
 
         created_map.info.map_load_time = ros::Time::now();
         created_map.info.resolution = 0.05;
-        created_map.info.width = 400;//TODO
-        created_map.info.height = 400;
+
+        int nodes_number = 0;
+        float center_x = 0.0;
+        float center_y = 0.0;
+        float min_x = std::numeric_limits<float>::max();
+        float min_y = std::numeric_limits<float>::max();
+
+        float max_x = 0.0;
+        float max_y = 0.0;
+
+        float node_x;
+        float node_y;
+
+        for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
+            node_x = it->pose.position.x;
+            node_y = it->pose.position.y;
+
+            center_x += node_x;
+
+            if (node_x < min_x){
+                min_x = node_x;
+            }
+
+            if(node_x > max_x){
+                max_x = node_x;
+            }
+
+            center_y += node_y;
+
+            if (node_y < min_y){
+                min_y = node_y;
+            }
+
+            if(node_y > max_y){
+                max_y = node_y;
+            }
+
+            nodes_number ++;
+        }
+
+        created_map.info.width = int( (max_x - min_x)/created_map.info.resolution );//400;//TODO
+        created_map.info.height =  int( (max_y - min_y)/created_map.info.resolution );//400;//TODO
+        std::cout << created_map.info.height << ", " << created_map.info.width << std::endl; 
 
         //TODO
         created_map.data.resize(created_map.info.width * created_map.info.height);
 
         geometry_msgs::Pose origin;//TODO
+        origin.position.x = min_x;//center_x/nodes_number;
+        origin.position.y = min_y;//center_y/nodes_number;
         origin.orientation.w = 1.0;
 
         created_map.info.origin = origin;

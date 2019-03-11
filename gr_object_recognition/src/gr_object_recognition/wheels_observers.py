@@ -6,16 +6,23 @@ from sensor_msgs.msg import Imu
 from std_msgs.msg import Bool,String
 from fusion_msgs.msg import sensorFusionMsg
 
+#possible sources
+# thorvald_base/BaseState  -> joint_commands
+# thorvald_base/CANFrame -> can_frames_base_r can_frames_device_r
+
 class SVMObserver:
-    def __init__(self):
+    def __init__(self, id=0, one_observer=False):
         rospy.init_node('svm_imu_test')
         rospy.Subscriber('/VectorNav_IMU/imu', Imu, self.imuCB)
         self.is_training = True
-        self.event_publisher = rospy.Publisher("/collisions_0", sensorFusionMsg, queue_size=10)
+        self.event_publisher = rospy.Publisher("/observer_" + str(id), sensorFusionMsg, queue_size=10)
         self.clf = OneClassSVM(nu=0.5, kernel="poly", gamma=0.3)
+        self.id = "wheel_" + str(id)
         rospy.loginfo("Training period starting")
         rospy.Timer(rospy.Duration(10), self.timer_cb,oneshot=True)
-        rospy.spin()
+
+        if one_observer:
+            rospy.spin()
 
     def timer_cb(self, event):
         rospy.loginfo("Training period has ended")
@@ -30,7 +37,7 @@ class SVMObserver:
 
         else:
             fb_msg = sensorFusionMsg()
-            fb_msg.sensor_id.data = "sv_detector"
+            fb_msg.sensor_id.data = self.id
             fb_msg.data = X.flatten()
             detected_class = self.clf.predict(X)
 
