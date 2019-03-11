@@ -22,9 +22,11 @@ namespace gr_map_utils{
             virtual bool getMap();
             void getMapFromTopic();
             void convertTopologicalMap();
+            void publishMaps();
         private:
     		mongodb_store::MessageStoreProxy* message_store_;
             strands_navigation_msgs::TopologicalMap topological_map_;
+            nav_msgs::OccupancyGrid created_map_;        
             ros::Subscriber topological_map_sub_;
             ros::Publisher map_pub_;
             ros::Publisher metadata_pub_;

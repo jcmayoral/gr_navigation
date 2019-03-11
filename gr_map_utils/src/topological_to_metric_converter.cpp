@@ -57,12 +57,8 @@ namespace gr_map_utils{
     void Topological2MetricMap::convertTopologicalMap(){
         std::unique_lock<std::mutex> lk(mutex_);
 
-        nav_msgs::OccupancyGrid created_map;        
-        created_map.header.stamp = ros::Time::now();
-        created_map.header.frame_id = "map"; //TODO this should be a param
-
-        created_map.info.map_load_time = ros::Time::now();
-        created_map.info.resolution = 0.05;
+        created_map_.header.frame_id = "map"; //TODO this should be a param
+        created_map_.info.resolution = 0.05;
 
         int nodes_number = 0;
         float center_x = 0.0;
@@ -103,23 +99,30 @@ namespace gr_map_utils{
             nodes_number ++;
         }
 
-        created_map.info.width = int( (max_x - min_x)/created_map.info.resolution );//400;//TODO
-        created_map.info.height =  int( (max_y - min_y)/created_map.info.resolution );//400;//TODO
-        std::cout << created_map.info.height << ", " << created_map.info.width << std::endl; 
-
+        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution );
+        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution );
+        
         //TODO
-        created_map.data.resize(created_map.info.width * created_map.info.height);
+        created_map_.data.resize(created_map_.info.width * created_map_.info.height);
 
-        geometry_msgs::Pose origin;//TODO
-        origin.position.x = min_x;//center_x/nodes_number;
-        origin.position.y = min_y;//center_y/nodes_number;
+        geometry_msgs::Pose origin;
+        origin.position.x = min_x;
+        origin.position.y = min_y;
         origin.orientation.w = 1.0;
 
-        created_map.info.origin = origin;
+        created_map_.info.origin = origin;
+
+        ROS_INFO("Map Created");
+    }
+
+    void Topological2MetricMap::publishMaps(){
+        std::unique_lock<std::mutex> lk(mutex_);
+        created_map_.header.stamp = ros::Time::now();
+        created_map_.info.map_load_time = ros::Time::now();
 
         nav_msgs::MapMetaData meta_data_message;
-        meta_data_message = created_map.info;
-        map_pub_.publish(created_map);
+        meta_data_message = created_map_.info;
+        map_pub_.publish(created_map_);
         metadata_pub_.publish(meta_data_message);
     }
 }

@@ -14,10 +14,11 @@ int main(int argc, char **argv)
     if (false)
         map_converter.getMap();
     map_converter.getMapFromTopic();
+    map_converter.convertTopologicalMap();
     
     while (ros::ok()){
-        map_converter.convertTopologicalMap();
         loop_rate.sleep();
+        map_converter.publishMaps();
     }
 
     return 0;
