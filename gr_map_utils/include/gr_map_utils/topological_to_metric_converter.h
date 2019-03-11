@@ -1,6 +1,8 @@
 #include <gr_map_utils/map_converter_interface.h>
 #include <mongodb_store/message_store.h>
+#include <boost/foreach.hpp>
 #include <strands_navigation_msgs/TopologicalNode.h>
+#include <strands_navigation_msgs/TopologicalMap.h>
 #include <geometry_msgs/Pose.h>
 #include <ros/ros.h>
 
@@ -13,8 +15,11 @@ namespace gr_map_utils{
             ~Topological2MetricMap();
             virtual bool storeMap();
             virtual bool getMap();
+            void getMapFromTopic();
         private:
     		mongodb_store::MessageStoreProxy* message_store_;
-            strands_navigation_msgs::TopologicalNode topological_map_;
+            strands_navigation_msgs::TopologicalMap topological_map_;
+            ros::Subscriber topological_map_sub_;
+            ros::NodeHandle nh_;
     };
 }
