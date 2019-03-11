@@ -4,11 +4,17 @@
 #include <strands_navigation_msgs/TopologicalNode.h>
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <geometry_msgs/Pose.h>
+#include <nav_msgs/OccupancyGrid.h>
 #include <ros/ros.h>
 
 #include <vector>
 
+
+// compute linear index for given map coords
+#define MAP_IDX(sx, i, j) ((sx) * (j) + (i))
+
 namespace gr_map_utils{
+    
     class Topological2MetricMap : public MapConverterInterface{
         public:
             Topological2MetricMap(ros::NodeHandle nh);
@@ -16,10 +22,13 @@ namespace gr_map_utils{
             virtual bool storeMap();
             virtual bool getMap();
             void getMapFromTopic();
+            void convertTopologicalMap();
         private:
     		mongodb_store::MessageStoreProxy* message_store_;
             strands_navigation_msgs::TopologicalMap topological_map_;
             ros::Subscriber topological_map_sub_;
+            ros::Publisher map_pub_;
+            ros::Publisher metadata_pub_;
             ros::NodeHandle nh_;
     };
 }
