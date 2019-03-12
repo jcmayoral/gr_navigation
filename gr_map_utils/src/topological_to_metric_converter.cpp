@@ -119,9 +119,22 @@ namespace gr_map_utils{
         float range_x = max_x - min_x;
         float range_y = max_y - min_y;
 
+        int neighbor=3;
+        int col;
+        int row;
+
         for ( const std::pair<int,int>  &it : cells ){
-            index = int(-it.first/res + (created_map_.info.width * it.second)/res);// Somehow the cell (0,0) does not match the origin
-            created_map_.data[index] = 255;
+            row = -it.first/res;
+            col = it.second/res;
+            
+            for (auto i = row-neighbor; i< row+neighbor; ++i){
+                for (auto j = col-neighbor; j< col+neighbor; ++j){
+                    index = int(i + created_map_.info.width *j);// Somehow the cell (0,0) does not match the origin
+                    created_map_.data[index] = 255;
+                }
+            }
+            //index = int(row + (created_map_.info.width * it.second)/res);// Somehow the cell (0,0) does not match the origin
+            //created_map_.data[index] = 255;
         }
 
         geometry_msgs::Pose origin;
