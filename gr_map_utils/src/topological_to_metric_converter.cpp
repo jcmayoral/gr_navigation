@@ -3,6 +3,7 @@
 namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh){
             ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
+            gr_tf_publisher_ = new gr_map_utils::TfFramePublisher();
             message_store_ = new mongodb_store::MessageStoreProxy(nh);
             map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
             metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
@@ -150,5 +151,8 @@ namespace gr_map_utils{
         meta_data_message = created_map_.info;
         map_pub_.publish(created_map_);
         metadata_pub_.publish(meta_data_message);
+
+        //TODO CHECK feasibility
+        gr_tf_publisher_->publishTfTransform();
     }
 }

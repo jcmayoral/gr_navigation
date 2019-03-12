@@ -13,6 +13,8 @@ find_package(catkin REQUIRED
             mongodb_store
             geometry_msgs
             strands_navigation_msgs
+            tf2
+            tf2_ros
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -40,10 +42,13 @@ catkin_package(
         mongodb_store
         geometry_msgs
         strands_navigation_msgs
+        tf2
+        tf2_ros
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
+add_library(gr_tf_utils src/tf_frame_publisher.cpp)
 
 add_executable(multi_map_server src/multi_map_server_node.cpp)
 target_link_libraries(multi_map_server
@@ -58,13 +63,13 @@ target_link_libraries(osm_map_converter
     ${catkin_LIBRARIES}
 )
 
-add_executable(topological_map_converter src/topological_to_metric_node.cpp src/topological_to_metric_converter.cpp)
+add_executable(topological_map_converter src/topological_to_metric_node.cpp src/topological_to_metric_converter.cpp  src/tf_frame_publisher.cpp)
+# check why library is not working ${gr_tf_utils})
+
 add_dependencies(topological_map_converter ${catkin_EXPORTED_TARGETS})
 target_link_libraries(topological_map_converter
     ${catkin_LIBRARIES}
-    ${Boost_LIBRARIES}
 )
-
 
 ## Install executables and/or libraries
 install(TARGETS multi_map_server osm_map_converter topological_map_converter

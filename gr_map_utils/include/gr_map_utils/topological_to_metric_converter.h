@@ -1,4 +1,6 @@
 #include <gr_map_utils/map_converter_interface.h>
+#include <gr_map_utils/tf_frame_publisher.h>
+
 #include <mongodb_store/message_store.h>
 #include <boost/foreach.hpp>
 #include <mutex>
@@ -29,5 +31,7 @@ namespace gr_map_utils{
             ros::Publisher metadata_pub_;
             ros::NodeHandle nh_;
             std::mutex mutex_;
+
+            TfFramePublisher* gr_tf_publisher_;
     };
 }
