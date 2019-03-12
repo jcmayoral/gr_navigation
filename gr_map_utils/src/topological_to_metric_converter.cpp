@@ -58,7 +58,7 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
 
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.05;
+        created_map_.info.resolution = 0.1;
         float offset = 2; //TODO should be a parameter
         int neighbors = 3;// TODO
 
@@ -75,7 +75,6 @@ namespace gr_map_utils{
         float node_y;
 
         std::vector<std::pair<int,int> > cells;
-        float offset_cells = offset/created_map_.info.resolution;
 
         for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
             node_x = it->pose.position.x;
@@ -105,37 +104,6 @@ namespace gr_map_utils{
             cells.emplace_back(node_x, node_y);
         }
 
-        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
-        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
-        
-        std::cout << created_map_.info.width << std::endl;
-        std::cout << created_map_.info.height << std::endl;
-        //TODO
-        created_map_.data.resize(created_map_.info.width * created_map_.info.height);
-
-        float res = created_map_.info.resolution;
-        //Update costs
-        int index;
-        float range_x = max_x - min_x;
-        float range_y = max_y - min_y;
-
-        int neighbor=3;
-        int col;
-        int row;
-
-        for ( const std::pair<int,int>  &it : cells ){
-            row = -it.first/res;
-            col = it.second/res;
-            
-            for (auto i = row-neighbor; i< row+neighbor; ++i){
-                for (auto j = col-neighbor; j< col+neighbor; ++j){
-                    index = int(i + created_map_.info.width *j);// Somehow the cell (0,0) does not match the origin
-                    created_map_.data[index] = 255;
-                }
-            }
-            //index = int(row + (created_map_.info.width * it.second)/res);// Somehow the cell (0,0) does not match the origin
-            //created_map_.data[index] = 255;
-        }
 
         geometry_msgs::Pose origin;
         origin.position.x = min_x - offset/2;
@@ -143,6 +111,32 @@ namespace gr_map_utils{
         origin.orientation.w = 1.0;
 
         created_map_.info.origin = origin;
+        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
+        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
+        
+        created_map_.data.resize(created_map_.info.width * created_map_.info.height);
+
+        float res = created_map_.info.resolution;
+
+        //Update costs
+        float range_x = max_x - min_x;
+        float range_y = max_y - min_y;
+
+        int index;
+        int col;
+        int row;
+
+        for ( const std::pair<int,int>  &it : cells ){
+            row = (it.first - origin.position.x)/res; //new_coordinate frame ...TODO Orientation
+            col = (it.second - origin.position.y)/res;
+            
+            for (auto i = row-neighbors; i< row+neighbors; ++i){
+                for (auto j = col-neighbors; j< col+neighbors; ++j){
+                    index = int(i + created_map_.info.width *j);
+                    created_map_.data[index] = 127;
+                }
+            }
+        }
 
         ROS_INFO("Map Created");
     }
