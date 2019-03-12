@@ -5,16 +5,17 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED
         COMPONENTS
-            roscpp
-            map_server
-            nav_msgs
-            std_msgs
-            roslib
-            mongodb_store
-            geometry_msgs
-            strands_navigation_msgs
-            tf2
-            tf2_ros
+        roscpp
+        map_server
+        nav_msgs
+        std_msgs
+        roslib
+        mongodb_store
+        geometry_msgs
+        sensor_msgs
+        strands_navigation_msgs
+        tf2
+        tf2_ros
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -41,6 +42,7 @@ catkin_package(
         roslib
         mongodb_store
         geometry_msgs
+        sensor_msgs
         strands_navigation_msgs
         tf2
         tf2_ros
