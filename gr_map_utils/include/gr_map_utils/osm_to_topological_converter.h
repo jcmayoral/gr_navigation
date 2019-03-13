@@ -19,12 +19,13 @@ namespace gr_map_utils{
             virtual void transformMap();
             virtual void publishMaps();
 
-            void osm_map_cb(visualization_msgs::MarkerArray::ConstPtr map);
+            void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
         private:
             visualization_msgs::MarkerArray osm_map_;
             strands_navigation_msgs::TopologicalMap topological_map_;
             ros::Publisher topological_map_pub_;
             ros::Subscriber osm_map_sub_;
+            ros::NodeHandle nh_;
             std::mutex mutex_;
     };
 }
