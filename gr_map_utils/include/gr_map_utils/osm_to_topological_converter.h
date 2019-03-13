@@ -1,6 +1,7 @@
 #include <gr_map_utils/map_converter_interface.h>
 #include <boost/foreach.hpp>
 #include <mutex>
+#include <vector>
 
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -16,9 +17,14 @@ namespace gr_map_utils{
             virtual bool getMap();
             virtual void getMapFromTopic();
             virtual void transformMap();
+            virtual void publishMaps();
+
+            void osm_map_cb(visualization_msgs::MarkerArray::ConstPtr map);
         private:
             visualization_msgs::MarkerArray osm_map_;
+            strands_navigation_msgs::TopologicalMap topological_map_;
             ros::Publisher topological_map_pub_;
+            ros::Subscriber osm_map_sub_;
             std::mutex mutex_;
     };
 }

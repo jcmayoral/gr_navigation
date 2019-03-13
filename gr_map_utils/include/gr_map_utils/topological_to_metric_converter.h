@@ -17,7 +17,7 @@ namespace gr_map_utils{
             virtual bool getMap();
             virtual void getMapFromTopic();
             virtual void transformMap();
-            void publishMaps();
+            virtual void publishMaps();
         private:
             strands_navigation_msgs::TopologicalMap topological_map_;
             nav_msgs::OccupancyGrid created_map_;        

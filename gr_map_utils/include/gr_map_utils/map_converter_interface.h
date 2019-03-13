@@ -8,6 +8,7 @@ namespace gr_map_utils{
             virtual bool getMap() = 0;
             virtual void getMapFromTopic() = 0;
             virtual void transformMap() = 0;
+            virtual void publishMaps() = 0;
             virtual ~MapConverterInterface(){}
         protected:
         	mongodb_store::MessageStoreProxy* message_store_;
