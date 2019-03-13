@@ -65,7 +65,7 @@ target_link_libraries(multi_map_server
 )
 
 
-add_executable(osm_map_converter src/osm_to_topological_node.cpp src/osm_to_topological_converter.cpp)
+add_executable(osm_map_converter src/osm_to_topological_node.cpp src/osm_to_topological_converter.cpp src/tf_frame_publisher.cpp)
 add_dependencies(osm_map_converter ${catkin_EXPORTED_TARGETS})
 target_link_libraries(osm_map_converter
     ${catkin_LIBRARIES}

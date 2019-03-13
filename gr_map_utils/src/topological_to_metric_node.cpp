@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     if (false)
         map_converter.getMap();
     map_converter.getMapFromTopic();
-    map_converter.convertTopologicalMap();
+    map_converter.transformMap();
     
     while (ros::ok()){
         loop_rate.sleep();
