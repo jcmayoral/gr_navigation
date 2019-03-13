@@ -36,13 +36,17 @@ namespace gr_map_utils{
     }
 
     void TfFramePublisher::transformGPSToProjection(sensor_msgs::NavSatFix gps_msg, float& x, float& y){
-        float R = 6371000;
-        float lat = gps_msg.latitude* M_PI /180;
-        float lon = gps_msg.longitude * M_PI /180;
-        x = R*cos(lon) * cos(lat);
-        y = R*sin(lon) * cos(lat);
-        float z = R*sin(lat);
-        std::cout << "Z " << z << std::endl;
+        
+        geographic_msgs::GeoPoint from;
+        from.latitude = gps_msg.latitude;
+        from.longitude = gps_msg.longitude;         
+
+        geodesy::UTMPoint to;
+        geodesy::fromMsg(from, to);
+
+        x = to.easting;
+        y = to.northing;
+
     }
 
 };

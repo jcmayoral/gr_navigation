@@ -13,9 +13,12 @@ find_package(catkin REQUIRED
         mongodb_store
         geometry_msgs
         sensor_msgs
+        visualization_msgs
+        geographic_msgs
         strands_navigation_msgs
         tf2
         tf2_ros
+        geodesy
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -43,9 +46,12 @@ catkin_package(
         mongodb_store
         geometry_msgs
         sensor_msgs
+        visualization_msgs
+        geographic_msgs
         strands_navigation_msgs
         tf2
         tf2_ros
+        geodesy
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})

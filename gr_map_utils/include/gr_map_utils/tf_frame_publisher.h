@@ -6,6 +6,7 @@
 #include <sensor_msgs/NavSatFix.h>
 #include <ros/ros.h>
 #include <math.h>
+#include <geodesy/utm.h>
 
 namespace gr_map_utils{
     class TfFramePublisher{

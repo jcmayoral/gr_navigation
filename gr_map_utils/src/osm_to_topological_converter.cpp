@@ -2,8 +2,10 @@
 
 namespace gr_map_utils{
 
-    Osm2TopologicalMap::Osm2TopologicalMap(){
-
+    Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh){
+        message_store_ = new mongodb_store::MessageStoreProxy(nh);
+        //gr_tf_publisher_ = new TfFramePublisher();
+        //nh.subscriber("visualization_marker_arrat", )
     }
 
     Osm2TopologicalMap::~Osm2TopologicalMap(){
