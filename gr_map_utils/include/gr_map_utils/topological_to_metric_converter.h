@@ -1,9 +1,7 @@
 #include <gr_map_utils/map_converter_interface.h>
-
 #include <boost/foreach.hpp>
 #include <mutex>
 #include <vector>
-#include <strands_navigation_msgs/TopologicalNode.h>
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -17,8 +15,8 @@ namespace gr_map_utils{
             ~Topological2MetricMap();
             virtual bool storeMap();
             virtual bool getMap();
-            void getMapFromTopic();
-            void convertTopologicalMap();
+            virtual void getMapFromTopic();
+            virtual void transformMap();
             void publishMaps();
         private:
             strands_navigation_msgs::TopologicalMap topological_map_;

@@ -55,7 +55,7 @@ namespace gr_map_utils{
         }
     }
 
-    void Topological2MetricMap::convertTopologicalMap(){
+    void Topological2MetricMap::transformMap(){
         std::unique_lock<std::mutex> lk(mutex_);
 
         created_map_.header.frame_id = "map"; //TODO this should be a param
