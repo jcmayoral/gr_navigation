@@ -1,7 +1,7 @@
 #include <gr_map_utils/topological_to_metric_converter.h>
 
 namespace gr_map_utils{
-    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh){
+    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_){
             ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
             gr_tf_publisher_ = new TfFramePublisher();
             message_store_ = new mongodb_store::MessageStoreProxy(nh);
@@ -76,10 +76,23 @@ namespace gr_map_utils{
         float node_y;
 
         std::vector<std::pair<int,int> > cells;
+        geometry_msgs::TransformStamped to_map_transform; // My frames are named "base_link" and "leap_motion"
+        geometry_msgs::PoseStamped out;
+        geometry_msgs::PoseStamped in;
 
         for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
-            node_x = it->pose.position.x;
-            node_y = it->pose.position.y;
+            
+            in.header.frame_id = "map";//todo topological map should include frame_id
+            in.pose.position.x = it->pose.position.x;
+            in.pose.position.y = it->pose.position.y;
+            in.pose.orientation.w = 1.0;
+            to_map_transform = tf_buffer_.lookupTransform("map", "map", ros::Time(0), ros::Duration(1.0) );
+            tf2::doTransform(in, out, to_map_transform);
+            
+            node_x = out.pose.position.x;
+            node_y = out.pose.position.y;
+
+            std::cout << "x " << node_x;
 
             center_x += node_x;
 
@@ -152,7 +165,7 @@ namespace gr_map_utils{
         map_pub_.publish(created_map_);
         metadata_pub_.publish(meta_data_message);
 
-        //TODO CHECK feasibility
-        gr_tf_publisher_->publishTfTransform();
+        //TODO CHECK feasibility condition if already exists do nothing
+        //gr_tf_publisher_->publishTfTransform();
     }
 }

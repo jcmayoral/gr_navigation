@@ -6,6 +6,8 @@
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <ros/ros.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
 
 namespace gr_map_utils{
     
@@ -26,5 +28,7 @@ namespace gr_map_utils{
             ros::Publisher metadata_pub_;
             ros::NodeHandle nh_;
             std::mutex mutex_;
+            tf2_ros::Buffer tf_buffer_;
+            tf2_ros::TransformListener tf2_listener_;
     };
 }

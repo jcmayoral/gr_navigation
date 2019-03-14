@@ -29,5 +29,6 @@ namespace gr_map_utils{
             ros::Subscriber osm_map_sub_;
             ros::NodeHandle nh_;
             std::mutex mutex_;
+            float distance_to_origin_;
     };
 }
