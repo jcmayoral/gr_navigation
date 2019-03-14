@@ -1,7 +1,7 @@
 #include <gr_map_utils/tf_frame_publisher.h>
 
 namespace gr_map_utils{
-    TfFramePublisher::TfFramePublisher(){
+    TfFramePublisher::TfFramePublisher(): origin_x_(0.0), origin_y_(0.0){
         
         static_transformStamped_.header.frame_id = "world";
         static_transformStamped_.child_frame_id = "map";
@@ -11,14 +11,11 @@ namespace gr_map_utils{
         boost::shared_ptr<sensor_msgs::NavSatFix const> gps_msg;
         gps_msg =  ros::topic::waitForMessage<sensor_msgs::NavSatFix>("android/fix");
         ROS_INFO("GPS topic received");
-        float x = 0.0;
-        float y = 0.0;
-        transformGPSToProjection(*gps_msg,x,y);
-        std::cout << "X " << x << std::endl;
-        std::cout << "Y " << y << std::endl;
 
-        static_transformStamped_.transform.translation.x = x;
-        static_transformStamped_.transform.translation.y = y;
+        transformGPSToProjection(*gps_msg,origin_x_,origin_y_);
+
+        static_transformStamped_.transform.translation.x = origin_x_;
+        static_transformStamped_.transform.translation.y = origin_y_;
         static_transformStamped_.transform.translation.z = 0;;
         
         
