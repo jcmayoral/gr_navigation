@@ -6,7 +6,8 @@ namespace gr_map_utils{
         public:
             virtual bool storeMap() = 0;
             virtual bool getMap() = 0;
-            virtual void getMapFromTopic() = 0;
+            virtual bool getMapFromTopic() = 0;
+            virtual bool getMapFromService() = 0;
             virtual void transformMap() = 0;
             virtual void publishMaps() = 0;
             virtual ~MapConverterInterface(){}

@@ -21,19 +21,36 @@ namespace gr_map_utils{
     }
 
     bool Osm2TopologicalMap::getMap(){
+
+        if (getMapFromTopic()){
+            ROS_INFO("Retrieving map from topic");
+            return true;
+        }
+
+        if(getMapFromService()){
+            ROS_INFO("Retrieving map from service");
+            return true;
+        }
+
         return false;
     }
 
 
-    void Osm2TopologicalMap::getMapFromTopic(){
+    bool Osm2TopologicalMap::getMapFromTopic(){
         std::unique_lock<std::mutex> lk(mutex_);
         boost::shared_ptr<visualization_msgs::MarkerArray const> osm_map;
-        osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>("visualization_marker_array");
+        osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>("visualization_marker_array", ros::Duration(3.0));
         if (osm_map != NULL){
             osm_map_ = *osm_map;
             ROS_INFO("OSM Map gotten");
+            return true;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
         }
+        return false;
+    }
+
+    bool Osm2TopologicalMap::getMapFromService(){
+        return false;
     }
 
     void Osm2TopologicalMap::transformMap(){

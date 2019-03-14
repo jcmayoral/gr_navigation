@@ -15,7 +15,8 @@ namespace gr_map_utils{
             ~Osm2TopologicalMap();
             virtual bool storeMap();
             virtual bool getMap();
-            virtual void getMapFromTopic();
+            virtual bool getMapFromTopic();
+            virtual bool getMapFromService();
             virtual void transformMap();
             virtual void publishMaps();
 

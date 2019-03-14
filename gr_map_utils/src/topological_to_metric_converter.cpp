@@ -7,6 +7,7 @@ namespace gr_map_utils{
             message_store_ = new mongodb_store::MessageStoreProxy(nh);
             map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
             metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
+            map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
     }
 
     Topological2MetricMap::~Topological2MetricMap(){
@@ -23,9 +24,9 @@ namespace gr_map_utils{
     bool Topological2MetricMap::getMap(){
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results;
 
-        std::string id(message_store_->insertNamed("simulation_map", topological_map_));
+        std::string id(message_store_->insertNamed("utm_topological_map", topological_map_));
 
-        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>("simulation_map", results)) {
+        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>("utm_topological_map", results)) {
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> topological_map_,  results){
                 ROS_INFO_STREAM("Got by name: " << *topological_map_);
                 return true;
@@ -41,18 +42,33 @@ namespace gr_map_utils{
             return true;
         }
 
-        ROS_ERROR("Map not gotten");
+        if (getMapFromTopic()){
+            ROS_INFO("Retrieving map from topic");
+            return true;
+        }
+
+        if(getMapFromService()){
+            ROS_INFO("Retrieving map from service");
+            return true;
+        }
+
         return false;
     }
 
-    void Topological2MetricMap::getMapFromTopic(){
-        ROS_INFO("Wait map from topic");
+    bool Topological2MetricMap::getMapFromTopic(){
+        ROS_INFO("Wait map from topic.. timeout to 3 seconds");
         boost::shared_ptr<strands_navigation_msgs::TopologicalMap const> map;
-        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("topological_map");
+        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("topological_map", ros::Duration(3));
         if (map != NULL){
             topological_map_ = *map;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
+            return true;
         }
+        return false;
+    }
+
+    bool Topological2MetricMap::getMapFromService(){
+        return false;
     }
 
     void Topological2MetricMap::transformMap(){
