@@ -17,9 +17,9 @@ namespace gr_map_utils{
             Topological2MetricMap(ros::NodeHandle nh);
             ~Topological2MetricMap();
             virtual bool storeMap();
-            virtual bool getMap();
             virtual bool getMapFromTopic();
             virtual bool getMapFromService();
+            virtual bool getMapFromDatabase();
             virtual void transformMap();
             virtual void publishMaps();
         private:

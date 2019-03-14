@@ -21,7 +21,8 @@ namespace gr_map_utils{
         return true;
     }
 
-    bool Topological2MetricMap::getMap(){
+    bool Topological2MetricMap::getMapFromDatabase(){
+        ROS_INFO("Trying getting map from database");
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results;
 
         std::string id(message_store_->insertNamed("utm_topological_map", topological_map_));
@@ -42,18 +43,9 @@ namespace gr_map_utils{
             return true;
         }
 
-        if (getMapFromTopic()){
-            ROS_INFO("Retrieving map from topic");
-            return true;
-        }
-
-        if(getMapFromService()){
-            ROS_INFO("Retrieving map from service");
-            return true;
-        }
-
         return false;
     }
+
 
     bool Topological2MetricMap::getMapFromTopic(){
         ROS_INFO("Wait map from topic.. timeout to 3 seconds");
@@ -68,6 +60,7 @@ namespace gr_map_utils{
     }
 
     bool Topological2MetricMap::getMapFromService(){
+        ROS_INFO("Trying getting Map from Service");
         return false;
     }
 

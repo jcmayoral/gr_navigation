@@ -20,21 +20,9 @@ namespace gr_map_utils{
         return false;
     }
 
-    bool Osm2TopologicalMap::getMap(){
-
-        if (getMapFromTopic()){
-            ROS_INFO("Retrieving map from topic");
-            return true;
-        }
-
-        if(getMapFromService()){
-            ROS_INFO("Retrieving map from service");
-            return true;
-        }
-
+    bool Osm2TopologicalMap::getMapFromDatabase(){
         return false;
     }
-
 
     bool Osm2TopologicalMap::getMapFromTopic(){
         std::unique_lock<std::mutex> lk(mutex_);
