@@ -22,7 +22,7 @@ namespace gr_map_utils{
             }
 
             float getEuclideanDistanceToOrigin(float x, float y){
-                return sqrt(pow(origin_x_-x,2) + pow(origin_y_-y,2));
+                return sqrt(pow(x,2) + pow(y,2));
             }
 
             float getOriginX(){

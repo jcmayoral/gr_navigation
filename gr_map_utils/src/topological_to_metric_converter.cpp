@@ -68,7 +68,7 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
 
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.1;
+        created_map_.info.resolution = 1.0;
         float offset = 2; //TODO should be a parameter
         int neighbors = 3;// TODO
 
@@ -95,14 +95,10 @@ namespace gr_map_utils{
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
             in.pose.orientation.w = 1.0;
-            to_map_transform = tf_buffer_.lookupTransform("map", "map", ros::Time(0), ros::Duration(1.0) );
-            tf2::doTransform(in, out, to_map_transform);
-            
+            to_map_transform = tf_buffer_.lookupTransform("map", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
+            tf2::doTransform(in, out, to_map_transform);            
             node_x = out.pose.position.x;
             node_y = out.pose.position.y;
-
-            std::cout << "x " << node_x;
-
             center_x += node_x;
 
             if (node_x < min_x){
@@ -156,6 +152,8 @@ namespace gr_map_utils{
             for (auto i = row-neighbors; i< row+neighbors; ++i){
                 for (auto j = col-neighbors; j< col+neighbors; ++j){
                     index = int(i + created_map_.info.width *j);
+                    if (index > created_map_.data.size())
+                        continue;
                     created_map_.data[index] = 127;
                 }
             }
