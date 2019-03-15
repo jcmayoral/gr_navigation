@@ -68,7 +68,7 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
 
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 1.0;
+        created_map_.info.resolution = 0.10;
         float offset = 2; //TODO should be a parameter
         int neighbors = 3;// TODO
 

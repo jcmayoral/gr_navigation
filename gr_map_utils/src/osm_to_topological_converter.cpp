@@ -55,49 +55,63 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped in;
 
 
+        char* needle = "buildings_osm";
+        char* hack = "others_osm";
+
         for (std::vector<visualization_msgs::Marker>::iterator it = osm_map_.markers.begin(); it != osm_map_.markers.end(); ++it){
             visualization_msgs::Marker marker(*it);
-            marker.header.frame_id = "map";
-            
+
+            hack =  &marker.ns[0u];
+            //if (std::strcmp(needle, hack) == 0){
+            //    continue;
+            //}
 
             //transform world to map
-            in.header.frame_id = it->header.frame_id;//todo topological map should include frame_id
+            in.header.frame_id = "world";//it->header.frame_id;//todo topological map should include frame_id
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
             in.pose.orientation.w = 1.0;
             to_map_transform = tf_buffer_.lookupTransform("map", it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
             tf2::doTransform(in, out, to_map_transform);
+            marker.header = out.header;
             marker.pose = out.pose; //visualization_msgs "OSM Map"
-            node.pose = out.pose; //strands_nav "topological map"
+            node.pose = in.pose; //strands_nav "topological map"
 
 
             //transform poses as well
+            /*
             for (std::vector<geometry_msgs::Point>::iterator it_point = marker.points.begin() ; it_point != marker.points.end(); ++it_point){
                 in.pose.position.x = it_point->x;
                 in.pose.position.y = it_point->y;
-                to_map_transform = tf_buffer_.lookupTransform("map", it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
+                to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) ) ; //it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
                 tf2::doTransform(in, out, to_map_transform);
                 it_point->x = out.pose.position.x;
                 it_point->y = out.pose.position.y;
 
             }
+            */
 
+            //if (true){
             if(gr_tf_publisher_->getEuclideanDistanceToOrigin(marker.pose.position.x , marker.pose.position.y) < distance_to_origin_){
                 count ++;
-                if (true){
-                //if (it->type == visualization_msgs::Marker::LINE_STRIP){
-                    node.pose.position.x = node.pose.position.x;
-                    node.pose.position.y = node.pose.position.y;
-                    topological_map_.nodes.emplace_back(node);
+                
+                if (std::strcmp(needle, hack) == 0){
+                    marker.header.frame_id = "world";
                     filtered_map_.markers.emplace_back(marker);
+                    topological_map_.nodes.emplace_back(node);
+                }
 
-                    for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
-                        node.pose.position.x = it_point->x;
-                        node.pose.position.y = it_point->y;
+                for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
+                    if (std::strcmp(needle, hack) == 0){
+                        in.pose.position.x = it_point->x;
+                        in.pose.position.y = it_point->y;
+                        to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) ) ; //it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
+                        tf2::doTransform(in, out, to_map_transform);
+                        node.pose.position.x = out.pose.position.x;
+                        node.pose.position.y = out.pose.position.y;
                         topological_map_.nodes.emplace_back(node);
                     }
                 }
-
             }
         }
         //std::cout<< count ;
