@@ -54,7 +54,6 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped out;
         geometry_msgs::PoseStamped in;
 
-
         char* needle = "buildings_osm";
         char* hack = "others_osm";
 
@@ -97,6 +96,8 @@ namespace gr_map_utils{
 
             bool static_map = false;
             //if (true){
+            geometry_msgs::Point first_point, second_point;
+            bool init = false;
 
             if(gr_tf_publisher_->getEuclideanDistanceToOrigin(marker.pose.position.x , marker.pose.position.y) < distance_to_origin_){
                 marker.header.frame_id = "map";
@@ -105,27 +106,54 @@ namespace gr_map_utils{
                 if (std::strcmp(needle, hack) == 0){
                     static_topological_map_.nodes.emplace_back(node);
                     static_map = true;
+                    std::cout << it->points.size() << std::endl;
                 }
                 else{
                     topological_map_.nodes.emplace_back(node);
                 }
 
+
                 for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
-                    in.pose.position.x = it_point->x;
-                    in.pose.position.y = it_point->y;
-                    to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) ) ; //it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
-                    tf2::doTransform(in, out, to_map_transform);
-                    node.pose.position.x = out.pose.position.x;
-                    node.pose.position.y = out.pose.position.y;
-                    
-                    if (static_map)
+
+                     if (gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x , it_point->y) > 10000){//osm server has some issues with frames
+                        in.pose.position.x = it_point->x;
+                        in.pose.position.y = it_point->y;
+                        to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
+                        tf2::doTransform(in, out, to_map_transform);
+                        node.pose.position.x = out.pose.position.x;
+                        node.pose.position.y = out.pose.position.y;
+                     }
+
+                    if (static_map){
                         static_topological_map_.nodes.emplace_back(node);
+                    }
                     else 
                         topological_map_.nodes.emplace_back(node);
-                }
-            }
-        }
-        //std::cout<< count ;
+                    
+                    if(!init){
+                        first_point.x = node.pose.position.x;
+                        first_point.y = node.pose.position.y;
+                        init = true;
+                    }
+                    else{
+                        second_point.x = node.pose.position.x;
+                        second_point.y = node.pose.position.y;
+                        float resolution_x = (second_point.x - first_point.x)/5;
+                        float resolution_y = (second_point.y - first_point.y)/5;
+                        for(int i = 0; i < 3; i++){
+                            ROS_INFO("in");
+                            node.pose.position.x = first_point.x + i*resolution_x;
+                            node.pose.position.y = first_point.y + i*resolution_y;
+                            if (static_map)
+                                static_topological_map_.nodes.emplace_back(node);
+                        }
+                        ROS_INFO("out");
+                        first_point.x = second_point.x;
+                        first_point.y = second_point.y;
+                    }//else
+                }//for it_point
+            }//if
+        } //for it
     }
 
     void Osm2TopologicalMap::osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map){
