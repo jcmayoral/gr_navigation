@@ -11,9 +11,12 @@ int main(int argc, char **argv)
     if (false) //TODO
         map_converter.storeMap();
     
-    if (false)
-        map_converter.getMap();
-    map_converter.getMapFromTopic();
+
+    if (!map_converter.getMap()){
+        ROS_ERROR("Map not gotten");
+        return 1;
+    }
+
     map_converter.transformMap();
     
     while (ros::ok()){

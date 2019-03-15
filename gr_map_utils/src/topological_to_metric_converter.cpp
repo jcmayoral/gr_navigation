@@ -7,6 +7,7 @@ namespace gr_map_utils{
             message_store_ = new mongodb_store::MessageStoreProxy(nh);
             map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
             metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
+            map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
     }
 
     Topological2MetricMap::~Topological2MetricMap(){
@@ -20,12 +21,13 @@ namespace gr_map_utils{
         return true;
     }
 
-    bool Topological2MetricMap::getMap(){
+    bool Topological2MetricMap::getMapFromDatabase(){
+        ROS_INFO("Trying getting map from database");
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results;
 
-        std::string id(message_store_->insertNamed("simulation_map", topological_map_));
+        std::string id(message_store_->insertNamed("utm_topological_map", topological_map_));
 
-        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>("simulation_map", results)) {
+        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>("utm_topological_map", results)) {
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> topological_map_,  results){
                 ROS_INFO_STREAM("Got by name: " << *topological_map_);
                 return true;
@@ -41,25 +43,32 @@ namespace gr_map_utils{
             return true;
         }
 
-        ROS_ERROR("Map not gotten");
         return false;
     }
 
-    void Topological2MetricMap::getMapFromTopic(){
-        ROS_INFO("Wait map from topic");
+
+    bool Topological2MetricMap::getMapFromTopic(){
+        ROS_INFO("Wait map from topic.. timeout to 3 seconds");
         boost::shared_ptr<strands_navigation_msgs::TopologicalMap const> map;
-        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("topological_map");
+        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("topological_map", ros::Duration(3));
         if (map != NULL){
             topological_map_ = *map;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
+            return true;
         }
+        return false;
+    }
+
+    bool Topological2MetricMap::getMapFromService(){
+        ROS_INFO("Trying getting Map from Service");
+        return false;
     }
 
     void Topological2MetricMap::transformMap(){
         std::unique_lock<std::mutex> lk(mutex_);
 
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.1;
+        created_map_.info.resolution = 1.0;
         float offset = 2; //TODO should be a parameter
         int neighbors = 3;// TODO
 
@@ -86,14 +95,10 @@ namespace gr_map_utils{
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
             in.pose.orientation.w = 1.0;
-            to_map_transform = tf_buffer_.lookupTransform("map", "map", ros::Time(0), ros::Duration(1.0) );
-            tf2::doTransform(in, out, to_map_transform);
-            
+            to_map_transform = tf_buffer_.lookupTransform("map", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
+            tf2::doTransform(in, out, to_map_transform);            
             node_x = out.pose.position.x;
             node_y = out.pose.position.y;
-
-            std::cout << "x " << node_x;
-
             center_x += node_x;
 
             if (node_x < min_x){
@@ -147,6 +152,8 @@ namespace gr_map_utils{
             for (auto i = row-neighbors; i< row+neighbors; ++i){
                 for (auto j = col-neighbors; j< col+neighbors; ++j){
                     index = int(i + created_map_.info.width *j);
+                    if (index > created_map_.data.size())
+                        continue;
                     created_map_.data[index] = 127;
                 }
             }

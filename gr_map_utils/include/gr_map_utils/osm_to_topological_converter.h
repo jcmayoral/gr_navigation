@@ -6,6 +6,8 @@
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <ros/ros.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
 
 namespace gr_map_utils{
     
@@ -14,8 +16,9 @@ namespace gr_map_utils{
             Osm2TopologicalMap(ros::NodeHandle nh);
             ~Osm2TopologicalMap();
             virtual bool storeMap();
-            virtual bool getMap();
-            virtual void getMapFromTopic();
+            virtual bool getMapFromTopic();
+            virtual bool getMapFromService();
+            virtual bool getMapFromDatabase();
             virtual void transformMap();
             virtual void publishMaps();
 
@@ -29,6 +32,8 @@ namespace gr_map_utils{
             ros::Subscriber osm_map_sub_;
             ros::NodeHandle nh_;
             std::mutex mutex_;
+            tf2_ros::Buffer tf_buffer_;
+            tf2_ros::TransformListener tf2_listener_;
             float distance_to_origin_;
     };
 }

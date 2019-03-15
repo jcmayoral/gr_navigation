@@ -9,8 +9,10 @@ int main(int argc, char **argv)
 
     ros::Rate loop_rate(10);
 
-    if (false){ //osm publish on different frecuency
-        map_converter.getMapFromTopic();
+    
+    if (!map_converter.getMap()){
+        ROS_ERROR("Map not gotten");
+        return 1;
     }
 
     while (ros::ok()){
