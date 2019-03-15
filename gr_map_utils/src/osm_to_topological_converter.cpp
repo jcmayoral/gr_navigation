@@ -5,9 +5,9 @@ namespace gr_map_utils{
     Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_){
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh);
+        static_topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
         topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("topological_map", 1, true);
-        topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("topological_map_2", 1, true); 
-
+        topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("filtered_topological_map", 1, true); 
         osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2TopologicalMap::osm_map_cb, this);
     }
 
@@ -67,16 +67,20 @@ namespace gr_map_utils{
             //}
 
             //transform world to map
+
             in.header.frame_id = "world";//it->header.frame_id;//todo topological map should include frame_id
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
             in.pose.orientation.w = 1.0;
-            to_map_transform = tf_buffer_.lookupTransform("map", it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
-            tf2::doTransform(in, out, to_map_transform);
-            marker.header = out.header;
-            marker.pose = out.pose; //visualization_msgs "OSM Map"
             node.pose = in.pose; //strands_nav "topological map"
 
+            if (gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
+                to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
+                tf2::doTransform(in, out, to_map_transform);
+                marker.header = out.header;
+                marker.pose = out.pose; //visualization_msgs "OSM Map"
+                node.pose  = out.pose;
+            }
 
             //transform poses as well
             /*
@@ -91,26 +95,33 @@ namespace gr_map_utils{
             }
             */
 
+            bool static_map = false;
             //if (true){
+
             if(gr_tf_publisher_->getEuclideanDistanceToOrigin(marker.pose.position.x , marker.pose.position.y) < distance_to_origin_){
-                count ++;
-                
+                marker.header.frame_id = "map";
+                filtered_map_.markers.emplace_back(marker);
+                    
                 if (std::strcmp(needle, hack) == 0){
-                    marker.header.frame_id = "world";
-                    filtered_map_.markers.emplace_back(marker);
+                    static_topological_map_.nodes.emplace_back(node);
+                    static_map = true;
+                }
+                else{
                     topological_map_.nodes.emplace_back(node);
                 }
 
                 for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
-                    if (std::strcmp(needle, hack) == 0){
-                        in.pose.position.x = it_point->x;
-                        in.pose.position.y = it_point->y;
-                        to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) ) ; //it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
-                        tf2::doTransform(in, out, to_map_transform);
-                        node.pose.position.x = out.pose.position.x;
-                        node.pose.position.y = out.pose.position.y;
+                    in.pose.position.x = it_point->x;
+                    in.pose.position.y = it_point->y;
+                    to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) ) ; //it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
+                    tf2::doTransform(in, out, to_map_transform);
+                    node.pose.position.x = out.pose.position.x;
+                    node.pose.position.y = out.pose.position.y;
+                    
+                    if (static_map)
+                        static_topological_map_.nodes.emplace_back(node);
+                    else 
                         topological_map_.nodes.emplace_back(node);
-                    }
                 }
             }
         }
@@ -125,6 +136,7 @@ namespace gr_map_utils{
         //std::cout << "NODES " << topological_map_.nodes.size() << std::endl;
         topological_marker_pub_.publish(filtered_map_);
         topological_map_pub_.publish(topological_map_);
+        static_topological_map_pub_.publish(static_topological_map_);
         gr_tf_publisher_->publishTfTransform();
     }
 

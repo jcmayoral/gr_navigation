@@ -26,8 +26,10 @@ namespace gr_map_utils{
         private:
             visualization_msgs::MarkerArray osm_map_;
             visualization_msgs::MarkerArray filtered_map_;
+            strands_navigation_msgs::TopologicalMap static_topological_map_;
             strands_navigation_msgs::TopologicalMap topological_map_;
             ros::Publisher topological_map_pub_;
+            ros::Publisher static_topological_map_pub_;
             ros::Publisher topological_marker_pub_;
             ros::Subscriber osm_map_sub_;
             ros::NodeHandle nh_;
