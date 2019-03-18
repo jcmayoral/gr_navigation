@@ -1,4 +1,6 @@
 #include <gr_map_utils/map_converter_interface.h>
+#include <gr_map_utils/MapConverterConfig.h>
+
 #include <boost/foreach.hpp>
 #include <mutex>
 #include <vector>
@@ -8,6 +10,7 @@
 #include <ros/ros.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
+#include <dynamic_reconfigure/server.h>
 
 namespace gr_map_utils{
     
@@ -23,6 +26,7 @@ namespace gr_map_utils{
             virtual void publishMaps();
 
             void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
+            void dyn_reconfigureCB(MapConverterConfig &config, uint32_t level);
         private:
             visualization_msgs::MarkerArray osm_map_;
             visualization_msgs::MarkerArray filtered_map_;
@@ -37,5 +41,7 @@ namespace gr_map_utils{
             tf2_ros::Buffer tf_buffer_;
             tf2_ros::TransformListener tf2_listener_;
             float distance_to_origin_;
+            dynamic_reconfigure::Server<MapConverterConfig> dyn_server_;
+            dynamic_reconfigure::Server<MapConverterConfig>::CallbackType dyn_server_cb_;
     };
 }

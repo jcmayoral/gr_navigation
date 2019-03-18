@@ -6,6 +6,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED
         COMPONENTS
         roscpp
+        dynamic_reconfigure
         map_server
         nav_msgs
         std_msgs
@@ -35,10 +36,16 @@ endif(NEW_YAMLCPP_FOUND)
 
 add_definitions(-Wno-deprecated-declarations)
 
+
+generate_dynamic_reconfigure_options(
+  cfg/MapConverter.cfg
+)
+
 catkin_package(
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS
         roscpp
+        dynamic_reconfigure
         map_server
         nav_msgs
         std_msgs
@@ -66,7 +73,7 @@ target_link_libraries(multi_map_server
 
 
 add_executable(osm_map_converter src/osm_to_topological_node.cpp src/osm_to_topological_converter.cpp src/tf_frame_publisher.cpp)
-add_dependencies(osm_map_converter ${catkin_EXPORTED_TARGETS})
+add_dependencies(osm_map_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg)
 target_link_libraries(osm_map_converter
     ${catkin_LIBRARIES}
 )
@@ -74,7 +81,7 @@ target_link_libraries(osm_map_converter
 add_executable(topological_map_converter src/topological_to_metric_node.cpp src/topological_to_metric_converter.cpp  src/tf_frame_publisher.cpp)
 # check why library is not working ${gr_tf_utils})
 
-add_dependencies(topological_map_converter ${catkin_EXPORTED_TARGETS})
+add_dependencies(topological_map_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg)
 target_link_libraries(topological_map_converter
     ${catkin_LIBRARIES}
 )

@@ -12,16 +12,19 @@ namespace gr_map_utils{
             bool getMap(){
                 if (getMapFromDatabase()){
                     ROS_INFO("Retrieving map from database");
+                    is_map_received_ = true;
                     return true;
                 }
 
                 if (getMapFromTopic()){
                     ROS_INFO("Retrieving map from topic");
+                    is_map_received_ = true;
                     return true;
                 }
 
                 if(getMapFromService()){
                     ROS_INFO("Retrieving map from service");
+                    is_map_received_ = true;
                     return true;
                 }
                 return false;
@@ -33,5 +36,6 @@ namespace gr_map_utils{
         protected:
         	mongodb_store::MessageStoreProxy* message_store_;
             TfFramePublisher* gr_tf_publisher_;
+            bool is_map_received_;            
     };
 };
