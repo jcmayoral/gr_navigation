@@ -8,10 +8,17 @@ namespace gr_map_utils{
             map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
             metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
             map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
+            update_map_service_ = nh_.advertiseService("update_metric_map", &Topological2MetricMap::updateMap, this);
     }
 
     Topological2MetricMap::~Topological2MetricMap(){
 
+    }
+
+    bool Topological2MetricMap::updateMap(UpdateMap::Request &req, UpdateMap::Response &resp){
+        transformMap();
+        resp.success = true;
+        return true;
     }
 
     bool Topological2MetricMap::storeMap(){

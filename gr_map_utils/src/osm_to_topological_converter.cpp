@@ -19,11 +19,12 @@ namespace gr_map_utils{
     }
 
     void Osm2TopologicalMap::dyn_reconfigureCB(MapConverterConfig &config, uint32_t level){
+        ROS_INFO("aaaa");
         if (!is_map_received_){
             ROS_WARN("Map not received");
             return;
         }
-
+        ROS_INFO("updating Map");
         //Update values
         distance_to_origin_ = config.distance_to_origin;
         transformMap();
@@ -59,7 +60,7 @@ namespace gr_map_utils{
         //Ensure World frame exists
         gr_tf_publisher_->publishTfTransform();
 
-        std::unique_lock<std::mutex> lk(mutex_);
+        //std::unique_lock<std::mutex> lk(mutex_);
         int count = 0;
         strands_navigation_msgs::TopologicalNode node;
         filtered_map_.markers.clear();
@@ -104,7 +105,7 @@ namespace gr_map_utils{
                 if (std::strcmp(needle.c_str(), hack.c_str()) == 0){// if building then pass to static map
                     static_topological_map_.nodes.emplace_back(node);
                     static_map = true;
-                    std::cout << it->points.size() << std::endl;
+                    //std::cout << it->points.size() << std::endl;
                 }
                 else{
                     topological_map_.nodes.emplace_back(node);
