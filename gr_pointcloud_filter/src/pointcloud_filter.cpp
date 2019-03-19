@@ -10,9 +10,17 @@ PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 namespace gr_pointcloud_filter
 {
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
-    	//Convering sensor_msg to pcl message
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
+		
+		//Convering sensor_msg to pcl message
+		if (!filters_enabled_){
+			// Convert to ROS data type
+			pcl::toROSMsg(*cloud, output_pointcloud_);
+    		// Publish the data
+    		pointcloud_pub_.publish(output_pointcloud_);
+    		return;
+		}
 
     	//voxeling
     	voxel_filter_.setInputCloud(cloud);
@@ -69,12 +77,15 @@ namespace gr_pointcloud_filter
 
     void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
     	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+		//Enable
+		filters_enabled_ = config.enable_filters;
+
     	//voxeling
     	voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
 
 		//condition
-		conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, 0.1)));
-    	conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 10.0)));
+		conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, config.min_height)));
+    	conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, config.max_height)));
 		condition_removal_.setCondition (conditional_filter_);
 
     	//segmentating

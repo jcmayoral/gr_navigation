@@ -48,6 +48,7 @@ namespace gr_pointcloud_filter
             //Dynamic Reconfigure
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig> dyn_server_;
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig>::CallbackType dyn_server_cb_;
+            bool filters_enabled_;
 
     	public:
             virtual void onInit();
