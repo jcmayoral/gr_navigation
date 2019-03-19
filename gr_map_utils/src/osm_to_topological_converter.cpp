@@ -59,7 +59,12 @@ namespace gr_map_utils{
     void Osm2TopologicalMap::transformMap(){
         //Ensure World frame exists
         gr_tf_publisher_->publishTfTransform();
+        static_topological_map_.nodes.clear();
+        topological_map_.nodes.clear();
+        filtered_map_.markers.clear();
+        
 
+        std::cout << static_topological_map_.nodes.size()<< std::endl;
         //std::unique_lock<std::mutex> lk(mutex_);
         int count = 0;
         strands_navigation_msgs::TopologicalNode node;
@@ -153,6 +158,7 @@ namespace gr_map_utils{
                 }
             }
         }
+                std::cout << static_topological_map_.nodes.size()<< std::endl;
     }
 
     void Osm2TopologicalMap::osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map){

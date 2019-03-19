@@ -2,13 +2,13 @@
 
 namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_){
-            ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
-            gr_tf_publisher_ = new TfFramePublisher();
-            message_store_ = new mongodb_store::MessageStoreProxy(nh);
-            map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
-            metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
-            map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
-            update_map_service_ = nh_.advertiseService("update_metric_map", &Topological2MetricMap::updateMap, this);
+        ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
+        gr_tf_publisher_ = new TfFramePublisher();
+        message_store_ = new mongodb_store::MessageStoreProxy(nh);
+        map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
+        metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
+        map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");\
+        timer_publisher_ = nh_.createTimer(ros::Duration(0.1), &Topological2MetricMap::timer_cb, this);
     }
 
     Topological2MetricMap::~Topological2MetricMap(){
@@ -16,6 +16,9 @@ namespace gr_map_utils{
     }
 
     bool Topological2MetricMap::updateMap(UpdateMap::Request &req, UpdateMap::Response &resp){
+        //std::unique_lock<std::mutex> lk(mutex_);
+        ROS_INFO("Inside Service CB");
+        getMap();
         transformMap();
         resp.success = true;
         return true;
@@ -72,8 +75,8 @@ namespace gr_map_utils{
     }
 
     void Topological2MetricMap::transformMap(){
-        std::unique_lock<std::mutex> lk(mutex_);
-
+        //std::unique_lock<std::mutex> lk(mutex_);
+        created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
         created_map_.info.resolution = 0.20;
         float offset = 2; //TODO should be a parameter
@@ -170,7 +173,6 @@ namespace gr_map_utils{
     }
 
     void Topological2MetricMap::publishMaps(){
-        std::unique_lock<std::mutex> lk(mutex_);
         created_map_.header.stamp = ros::Time::now();
         created_map_.info.map_load_time = ros::Time::now();
 
@@ -181,5 +183,9 @@ namespace gr_map_utils{
 
         //TODO CHECK feasibility condition if already exists do nothing
         //gr_tf_publisher_->publishTfTransform();
+    }
+
+    void Topological2MetricMap::timer_cb(const ros::TimerEvent& event){
+        publishMaps();
     }
 }

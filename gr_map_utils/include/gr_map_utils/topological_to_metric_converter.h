@@ -24,6 +24,7 @@ namespace gr_map_utils{
             virtual void transformMap();
             virtual void publishMaps();
             bool updateMap(UpdateMap::Request &req, UpdateMap::Response &resp);
+            void timer_cb(const ros::TimerEvent& event);
 
         private:
             strands_navigation_msgs::TopologicalMap topological_map_;
@@ -36,7 +37,6 @@ namespace gr_map_utils{
             tf2_ros::Buffer tf_buffer_;
             tf2_ros::TransformListener tf2_listener_;
             ros::ServiceClient map_srv_client_;
-            ros::ServiceServer update_map_service_;
-
+            ros::Timer timer_publisher_;
     };
 }
