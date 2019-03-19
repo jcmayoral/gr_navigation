@@ -18,6 +18,11 @@ namespace gr_pointcloud_filter
     	voxel_filter_.setInputCloud(cloud);
     	voxel_filter_.filter(*cloud);
 
+		//conditional_filter
+    	condition_removal_.setInputCloud (cloud);
+    	condition_removal_.setKeepOrganized(false);
+    	condition_removal_.filter (*cloud);
+
     	//segmentation of a plane
     	pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
     	pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
@@ -30,8 +35,12 @@ namespace gr_pointcloud_filter
     	segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
 
     	if (filter_inliers->indices.size () == 0){
+			// Convert to ROS data type
+			pcl::toROSMsg(*cloud, output_pointcloud_);
+    		// Publish the data
+    		pointcloud_pub_.publish(output_pointcloud_);
     		return;
-      }
+		}
 
     	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
 
@@ -43,7 +52,6 @@ namespace gr_pointcloud_filter
     	//outliers removal filter
     	outliers_filter_.setInputCloud(cloud);
     	outliers_filter_.filter(*cloud);
-
 
     	//radius outliers On progress
 		// build the filter
@@ -63,6 +71,11 @@ namespace gr_pointcloud_filter
     	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     	//voxeling
     	voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
+
+		//condition
+		conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, 0.1)));
+    	conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 10.0)));
+		condition_removal_.setCondition (conditional_filter_);
 
     	//segmentating
     	//segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
@@ -101,6 +114,7 @@ namespace gr_pointcloud_filter
 		ROS_INFO("My NodeletClass constructor");
       	ros::NodeHandle nh;
       	segmentation_filter_ = pcl::SACSegmentation<pcl::PointXYZ> (true);
+		conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
 
       	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);

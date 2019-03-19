@@ -9,7 +9,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/radius_outlier_removal.h>
-
+#include <pcl/filters/conditional_removal.h>
 
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/transforms.h>
@@ -38,6 +38,9 @@ namespace gr_pointcloud_filter
             pcl::ExtractIndices<pcl::PointXYZ> extraction_filter_;
             pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
             pcl::RadiusOutlierRemoval<pcl::PointXYZ> radius_outliers_filter_;
+            pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_;
+      		pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
+
             float eps_angle_;
             float min_radius_;
             int min_neighbours_;
