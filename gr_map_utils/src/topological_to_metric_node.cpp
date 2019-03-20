@@ -6,23 +6,20 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     gr_map_utils::Topological2MetricMap map_converter(nh);
 
-    ros::Rate loop_rate(10);
-
     if (false) //TODO
         map_converter.storeMap();
     
-
     if (!map_converter.getMap()){
         ROS_ERROR("Map not gotten");
         return 1;
     }
 
     map_converter.transformMap();
-    
-    while (ros::ok()){
-        loop_rate.sleep();
-        map_converter.publishMaps();
-    }
+    ros::ServiceServer update_map_service_ = nh.advertiseService("update_metric_map", &gr_map_utils::Topological2MetricMap::updateMap, &map_converter);
+    ros::spin();
+    //while (ros::ok()){
+    //    ROS_INFO_ONCE("WORK");
+    //}
 
     return 0;
 }

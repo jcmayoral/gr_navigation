@@ -10,13 +10,26 @@ PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 namespace gr_pointcloud_filter
 {
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
-    	//Convering sensor_msg to pcl message
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
+		
+		//Convering sensor_msg to pcl message
+		if (!filters_enabled_){
+			// Convert to ROS data type
+			pcl::toROSMsg(*cloud, output_pointcloud_);
+    		// Publish the data
+    		pointcloud_pub_.publish(output_pointcloud_);
+    		return;
+		}
 
     	//voxeling
     	voxel_filter_.setInputCloud(cloud);
     	voxel_filter_.filter(*cloud);
+
+		//conditional_filter
+    	condition_removal_.setInputCloud (cloud);
+    	condition_removal_.setKeepOrganized(false);
+    	condition_removal_.filter (*cloud);
 
     	//segmentation of a plane
     	pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
@@ -30,8 +43,12 @@ namespace gr_pointcloud_filter
     	segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
 
     	if (filter_inliers->indices.size () == 0){
+			// Convert to ROS data type
+			pcl::toROSMsg(*cloud, output_pointcloud_);
+    		// Publish the data
+    		pointcloud_pub_.publish(output_pointcloud_);
     		return;
-      }
+		}
 
     	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
 
@@ -44,14 +61,13 @@ namespace gr_pointcloud_filter
     	outliers_filter_.setInputCloud(cloud);
     	outliers_filter_.filter(*cloud);
 
-
     	//radius outliers On progress
-      // build the filter
-      radius_outliers_filter_.setInputCloud(cloud);
-      radius_outliers_filter_.setRadiusSearch(min_radius_);
-      radius_outliers_filter_.setMinNeighborsInRadius(min_neighbours_);
-      // apply filter
-      radius_outliers_filter_.filter(*cloud);
+		// build the filter
+      	radius_outliers_filter_.setInputCloud(cloud);
+      	radius_outliers_filter_.setRadiusSearch(min_radius_);
+      	radius_outliers_filter_.setMinNeighborsInRadius(min_neighbours_);
+      	// apply filter
+      	radius_outliers_filter_.filter(*cloud);
 
     	// Convert to ROS data type
     	pcl::toROSMsg(*cloud, output_pointcloud_);
@@ -61,8 +77,16 @@ namespace gr_pointcloud_filter
 
     void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
     	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+		//Enable
+		filters_enabled_ = config.enable_filters;
+
     	//voxeling
     	voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
+
+		//condition
+		conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, config.min_height)));
+    	conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, config.max_height)));
+		condition_removal_.setCondition (conditional_filter_);
 
     	//segmentating
     	//segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
@@ -83,9 +107,9 @@ namespace gr_pointcloud_filter
     	outliers_filter_.setMeanK(config.mean_k);
     	outliers_filter_.setStddevMulThresh(config.std_threshold);
 
-      //radius_outliers
-      min_radius_ = config.min_radius_removal;
-      min_neighbours_ = config.min_neighbours;
+      	//radius_outliers
+      	min_radius_ = config.min_radius_removal;
+      	min_neighbours_ = config.min_neighbours;
     }
 
 
@@ -98,14 +122,15 @@ namespace gr_pointcloud_filter
     }
 
     void MyNodeletClass::onInit(){
-      ROS_INFO("My NodeletClass constructor");
-      ros::NodeHandle nh;
-      segmentation_filter_ = pcl::SACSegmentation<pcl::PointXYZ> (true);
+		ROS_INFO("My NodeletClass constructor");
+      	ros::NodeHandle nh;
+      	segmentation_filter_ = pcl::SACSegmentation<pcl::PointXYZ> (true);
+		conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
 
-      dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
-      dyn_server_.setCallback(dyn_server_cb_);
-      pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
-      pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 10);
-      NODELET_DEBUG("Initializing nodelet...");
+      	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
+      	dyn_server_.setCallback(dyn_server_cb_);
+      	pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
+      	pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 10);
+      	NODELET_DEBUG("Initializing nodelet...");
     }
 }

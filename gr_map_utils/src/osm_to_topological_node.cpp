@@ -15,9 +15,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    map_converter.transformMap();
+
     while (ros::ok()){
         loop_rate.sleep();
-        map_converter.transformMap();
         map_converter.publishMaps();
         ros::spinOnce();
     }

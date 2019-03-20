@@ -5,14 +5,29 @@ namespace gr_map_utils{
     Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_){
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh);
+        is_map_received_ = false;
+        static_topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
         topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("topological_map", 1, true);
-        topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("topological_map_2", 1, true); 
-
+        topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("filtered_topological_map", 1, true); 
         osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2TopologicalMap::osm_map_cb, this);
+        dyn_server_cb_ = boost::bind(&Osm2TopologicalMap::dyn_reconfigureCB, this, _1, _2);
+      	dyn_server_.setCallback(dyn_server_cb_);
     }
 
     Osm2TopologicalMap::~Osm2TopologicalMap(){
 
+    }
+
+    void Osm2TopologicalMap::dyn_reconfigureCB(MapConverterConfig &config, uint32_t level){
+        ROS_INFO("aaaa");
+        if (!is_map_received_){
+            ROS_WARN("Map not received");
+            return;
+        }
+        ROS_INFO("updating Map");
+        //Update values
+        distance_to_origin_ = config.distance_to_origin;
+        transformMap();
     }
 
 
@@ -44,8 +59,13 @@ namespace gr_map_utils{
     void Osm2TopologicalMap::transformMap(){
         //Ensure World frame exists
         gr_tf_publisher_->publishTfTransform();
+        static_topological_map_.nodes.clear();
+        topological_map_.nodes.clear();
+        filtered_map_.markers.clear();
+        
 
-        std::unique_lock<std::mutex> lk(mutex_);
+        std::cout << static_topological_map_.nodes.size()<< std::endl;
+        //std::unique_lock<std::mutex> lk(mutex_);
         int count = 0;
         strands_navigation_msgs::TopologicalNode node;
         filtered_map_.markers.clear();
@@ -54,53 +74,91 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped out;
         geometry_msgs::PoseStamped in;
 
+        std::string needle = "buildings_osm";
+        std::string hack = "others_osm";
 
         for (std::vector<visualization_msgs::Marker>::iterator it = osm_map_.markers.begin(); it != osm_map_.markers.end(); ++it){
             visualization_msgs::Marker marker(*it);
-            marker.header.frame_id = "map";
-            
 
+            hack =  &marker.ns[0u];
             //transform world to map
-            in.header.frame_id = it->header.frame_id;//todo topological map should include frame_id
+            //topological topic does not contain frame_id
+            in.header.frame_id = "world";
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
             in.pose.orientation.w = 1.0;
-            to_map_transform = tf_buffer_.lookupTransform("map", it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
-            tf2::doTransform(in, out, to_map_transform);
-            marker.pose = out.pose; //visualization_msgs "OSM Map"
-            node.pose = out.pose; //strands_nav "topological map"
+            node.pose = in.pose; //strands_nav "topological map"
 
-
-            //transform poses as well
-            for (std::vector<geometry_msgs::Point>::iterator it_point = marker.points.begin() ; it_point != marker.points.end(); ++it_point){
-                in.pose.position.x = it_point->x;
-                in.pose.position.y = it_point->y;
-                to_map_transform = tf_buffer_.lookupTransform("map", it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
+            //osm server has some issues with frames some points come on world frame so quick fix(distance to origin > 10000) is implemented but must be changed
+            if (gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
+                to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
                 tf2::doTransform(in, out, to_map_transform);
-                it_point->x = out.pose.position.x;
-                it_point->y = out.pose.position.y;
-
+                marker.header = out.header;
+                marker.pose = out.pose; //visualization_msgs "OSM Map"
+                node.pose  = out.pose;
             }
 
+            bool static_map = false;
+            geometry_msgs::Point first_point, second_point;
+            bool init = false;
+            
+            //find relevant point which are close to the origin
             if(gr_tf_publisher_->getEuclideanDistanceToOrigin(marker.pose.position.x , marker.pose.position.y) < distance_to_origin_){
-                count ++;
-                if (true){
-                //if (it->type == visualization_msgs::Marker::LINE_STRIP){
-                    node.pose.position.x = node.pose.position.x;
-                    node.pose.position.y = node.pose.position.y;
+                marker.header.frame_id = "map";
+                filtered_map_.markers.emplace_back(marker);
+                    
+                if (std::strcmp(needle.c_str(), hack.c_str()) == 0){// if building then pass to static map
+                    static_topological_map_.nodes.emplace_back(node);
+                    static_map = true;
+                    //std::cout << it->points.size() << std::endl;
+                }
+                else{
                     topological_map_.nodes.emplace_back(node);
-                    filtered_map_.markers.emplace_back(marker);
-
-                    for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
-                        node.pose.position.x = it_point->x;
-                        node.pose.position.y = it_point->y;
-                        topological_map_.nodes.emplace_back(node);
-                    }
                 }
 
+
+                for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
+                    //osm server has some issues with frames some points come on world frame so quick fix(distance to origin > 10000) is implemented but must be changed
+                     if (gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x , it_point->y) > 10000){//world coordinate detected
+                        in.pose.position.x = it_point->x;
+                        in.pose.position.y = it_point->y;
+                        to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
+                        tf2::doTransform(in, out, to_map_transform);
+                        node.pose.position.x = out.pose.position.x;
+                        node.pose.position.y = out.pose.position.y;
+                     }
+
+                    if (static_map){//add point to static
+                        static_topological_map_.nodes.emplace_back(node);
+                    }
+                    else //add point to global
+                        topological_map_.nodes.emplace_back(node);
+                    
+                    if(!init){//first point
+                        first_point.x = node.pose.position.x;
+                        first_point.y = node.pose.position.y;
+                        init = true;
+                    }
+                    else{//add more point between vertices
+                        second_point.x = node.pose.position.x;
+                        second_point.y = node.pose.position.y;
+                        float resolution_x = (second_point.x - first_point.x)/5;
+                        float resolution_y = (second_point.y - first_point.y)/5;
+                        float distance = sqrt(pow(second_point.x - first_point.x,2) + pow(second_point.y - first_point.y,2));
+                        for(int i = 0; i < 3; i++){
+                            node.pose.position.x = first_point.x + i*resolution_x;
+                            node.pose.position.y = first_point.y + i*resolution_y;
+                            if (static_map)
+                                static_topological_map_.nodes.emplace_back(node);
+                        }
+                        //update vertexes
+                        first_point.x = second_point.x;
+                        first_point.y = second_point.y;
+                    }
+                }
             }
         }
-        //std::cout<< count ;
+                std::cout << static_topological_map_.nodes.size()<< std::endl;
     }
 
     void Osm2TopologicalMap::osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map){
@@ -111,6 +169,7 @@ namespace gr_map_utils{
         //std::cout << "NODES " << topological_map_.nodes.size() << std::endl;
         topological_marker_pub_.publish(filtered_map_);
         topological_map_pub_.publish(topological_map_);
+        static_topological_map_pub_.publish(static_topological_map_);
         gr_tf_publisher_->publishTfTransform();
     }
 

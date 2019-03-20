@@ -1,4 +1,5 @@
 #include <gr_map_utils/map_converter_interface.h>
+#include <gr_map_utils/UpdateMap.h>
 #include <boost/foreach.hpp>
 #include <mutex>
 #include <vector>
@@ -22,6 +23,9 @@ namespace gr_map_utils{
             virtual bool getMapFromDatabase();
             virtual void transformMap();
             virtual void publishMaps();
+            bool updateMap(UpdateMap::Request &req, UpdateMap::Response &resp);
+            void timer_cb(const ros::TimerEvent& event);
+
         private:
             strands_navigation_msgs::TopologicalMap topological_map_;
             nav_msgs::OccupancyGrid created_map_;        
@@ -33,5 +37,6 @@ namespace gr_map_utils{
             tf2_ros::Buffer tf_buffer_;
             tf2_ros::TransformListener tf2_listener_;
             ros::ServiceClient map_srv_client_;
+            ros::Timer timer_publisher_;
     };
 }
