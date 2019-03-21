@@ -27,10 +27,32 @@ namespace gr_safety_monitors
 	  //pcl2 to pclxyzrgba
     pcl::copyPointCloud(cloud,rgb_cloud);
 
+    //color
+    for (int i = 0; i < rgb_cloud.points.size(); i++) {
+      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){
+        rgb_cloud.points[i].r = 255;
+      }
+
+      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 1){
+        rgb_cloud.points[i].b = 255;
+      }
+
+      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 2){
+        rgb_cloud.points[i].g = 255;
+      }
+
+    }
+
     // Convert to ROS data type
     pcl::toROSMsg(rgb_cloud, output_pointcloud);
     // Publish the data
     pointcloud_pub_.publish(output_pointcloud);
+  }
+
+  int ProximityMonitor::getRing(float x, float y){
+    float distance = 0.0;
+    distance = sqrt(pow(x,2) + pow(y,2));
+    return int(distance/region_radius_);
   }
 
   ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5), regions_number_(3)
