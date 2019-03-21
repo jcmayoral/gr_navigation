@@ -6,16 +6,20 @@ find_package(catkin REQUIRED
         COMPONENTS
         dynamic_reconfigure
         roscpp
+        pcl_ros
         fusion_msgs
         pluginlib
         fault_core
-        )
+        visualization_msgs
+)
 
 find_package(OpenCV REQUIRED)
 
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
-                    ${OpenCV_INCLUDE_DIRS} )
+                    ${OpenCV_INCLUDE_DIRS}
+                    ${PCL_INCLUDE_DIRS}
+)
 
 
 catkin_package(
@@ -24,17 +28,21 @@ catkin_package(
     CATKIN_DEPENDS
         dynamic_reconfigure
         roscpp
+        pcl_ros
         fusion_msgs
         pluginlib
         fault_core
+        visualization_msgs
 )
 
 add_library(gr_safety_monitors src/proximity_monitor.cpp)
 add_executable(proximity_monitor_node src/proximity_monitor_node.cpp)
 
-target_link_libraries(gr_safety_monitors ${catkin_LIBRARIES})
+target_link_libraries(gr_safety_monitors ${catkin_LIBRARIES}  ${PCL_LIBRARIES}
+)
 target_link_libraries(proximity_monitor_node gr_safety_monitors)
 
+add_dependencies(gr_safety_monitors ${catkin_EXPORTED_TARGETS})
 add_dependencies(proximity_monitor_node gr_safety_monitors)
 
 ### INSTALLS

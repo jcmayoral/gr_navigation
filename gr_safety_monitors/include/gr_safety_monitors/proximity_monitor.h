@@ -9,6 +9,7 @@
 #include <std_msgs/String.h>
 #include <geometry_msgs/AccelStamped.h>
 #include <fusion_msgs/sensorFusionMsg.h>
+#include <visualization_msgs/Marker.h>
 
 namespace gr_safety_monitors
 {
@@ -25,11 +26,13 @@ namespace gr_safety_monitors
       bool detectFault();
       void isolateFault();
       void diagnoseFault();
+      void publishTopics();
       fault_core::FaultTopology getFault();
 
     private:
       std::vector<ros::Subscriber> array_subscribers_;
       bool is_obstacle_detected_;
+      ros::Publisher marker_pub_;
   };
 
 }

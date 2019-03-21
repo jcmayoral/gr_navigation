@@ -13,6 +13,7 @@ namespace gr_safety_monitors
 {
 
   void ProximityMonitor::instantiateServices(ros::NodeHandle nh){
+    marker_pub_ = nh.advertise<visualization_msgs::Marker>("proximity_visualization", 1);
 
 
   }
@@ -23,7 +24,7 @@ namespace gr_safety_monitors
     fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
     //Define Fault Cause as Unknown
     fault_.cause_ = FaultTopology::UNKNOWN;
-    ROS_INFO("Constructor SimpleCollisionDetector");
+    ROS_INFO("Constructor ProximityMonitor");
   }
 
 
@@ -40,13 +41,33 @@ namespace gr_safety_monitors
   //This function is called on the navigation_manager, register n number of subscribers
   void ProximityMonitor::initialize(int sensor_number)
   {
-    ros::NodeHandle nh;
-    ROS_INFO_STREAM("initializing " << sensor_number << " sensors");
+    ROS_WARN("Function initialized deprecated for proximity_monitor");
+  }
+
+  void ProximityMonitor::publishTopics()
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "base_link";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "proximity_regions";
+    marker.type = visualization_msgs::Marker::CYLINDER;
+    marker.lifetime = ros::Duration(0.0);
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.pose.position.x = 0;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = 10.0;
+    marker.scale.y = 10.0;
+    marker.scale.z = 10;
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+
+    marker_pub_.publish(marker);
   }
 
   bool ProximityMonitor::detectFault()
   {
-    ROS_DEBUG("SimpleCollisionDetector Detect Fault");
     if (is_obstacle_detected_){
       isolateFault();
     }
