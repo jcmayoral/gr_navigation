@@ -48,18 +48,35 @@ namespace gr_safety_monitors
     marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
     marker.ns = "proximity_regions"+std::to_string(level);
-    marker.type = visualization_msgs::Marker::CYLINDER;
+    marker.type = visualization_msgs::Marker::LINE_STRIP;
     marker.lifetime = ros::Duration(1.0);
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position.x = 0;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = region_radius_ * level;
-    marker.scale.y = region_radius_ * level;
-    marker.scale.z = 0.05;
+    marker.scale.x = 0.1;//region_radius_ * level;
+    //marker.scale.y = region_radius_ * level;
+    //marker.scale.z = 0.05;
     marker.color.r = 1.0f /level;
     marker.color.g = 1.0f /level;
     marker.color.b = 0.0f;
     marker.color.a = 1.0;
+
+    geometry_msgs::Point circumference;
+    float r_2 = pow(region_radius_*level,2);
+    marker.points.clear();
+
+    for (float y= -region_radius_*level; y<=region_radius_*level; y+=0.025 ){
+          circumference.x = sqrt(r_2 - pow(y,2));
+          circumference.y = y;
+          marker.points.push_back(circumference);
+    }
+    //mirror
+    for (float y= region_radius_*level; y>=-region_radius_*level; y-=0.025 ){
+          circumference.x = -sqrt(r_2 - pow(y,2));
+          circumference.y = y;
+          marker.points.push_back(circumference);
+    }
+
   }
 
   void ProximityMonitor::publishTopics()
