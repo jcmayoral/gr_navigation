@@ -11,6 +11,7 @@ find_package(catkin REQUIRED
         pluginlib
         fault_core
         visualization_msgs
+        sensor_msgs
 )
 
 find_package(OpenCV REQUIRED)
@@ -20,7 +21,6 @@ include_directories(include
                     ${OpenCV_INCLUDE_DIRS}
                     ${PCL_INCLUDE_DIRS}
 )
-
 
 catkin_package(
     INCLUDE_DIRS include
@@ -33,6 +33,7 @@ catkin_package(
         pluginlib
         fault_core
         visualization_msgs
+        sensor_msgs
 )
 
 add_library(gr_safety_monitors src/proximity_monitor.cpp)
