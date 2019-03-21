@@ -30,12 +30,21 @@ catkin_package(
 )
 
 add_library(gr_safety_monitors src/proximity_monitor.cpp)
+add_executable(proximity_monitor_node src/proximity_monitor_node.cpp)
+
 target_link_libraries(gr_safety_monitors ${catkin_LIBRARIES})
+target_link_libraries(proximity_monitor_node gr_safety_monitors)
+
+add_dependencies(proximity_monitor_node gr_safety_monitors)
 
 ### INSTALLS
 install(TARGETS gr_safety_monitors
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(TARGETS proximity_monitor_node
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES monitors_plugin.xml
