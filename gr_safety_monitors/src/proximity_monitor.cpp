@@ -13,12 +13,12 @@ namespace gr_safety_monitors
 {
 
   void ProximityMonitor::instantiateServices(ros::NodeHandle nh){
-    marker_pub_ = nh.advertise<visualization_msgs::Marker>("proximity_visualization", 1);
+    marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
 
 
   }
 
-  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false)
+  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(0.5), regions_number_(3)
   {
     //Define Fault Type as Unknown
     fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
@@ -44,26 +44,35 @@ namespace gr_safety_monitors
     ROS_WARN("Function initialized deprecated for proximity_monitor");
   }
 
-  void ProximityMonitor::publishTopics()
-  {
-    visualization_msgs::Marker marker;
+  void ProximityMonitor::updateMarker(visualization_msgs::Marker& marker, int level){
     marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
-    marker.ns = "proximity_regions";
+    marker.ns = "proximity_regions"+std::to_string(level);
     marker.type = visualization_msgs::Marker::CYLINDER;
-    marker.lifetime = ros::Duration(0.0);
+    marker.lifetime = ros::Duration(1.0);
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.position.x = 0;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = 10.0;
-    marker.scale.y = 10.0;
-    marker.scale.z = 10;
-    marker.color.r = 0.0f;
-    marker.color.g = 1.0f;
+    marker.scale.x = region_radius_ * level;
+    marker.scale.y = region_radius_ * level;
+    marker.scale.z = 0.05;
+    marker.color.r = 1.0f /level;
+    marker.color.g = 1.0f /level;
     marker.color.b = 0.0f;
     marker.color.a = 1.0;
+  }
 
-    marker_pub_.publish(marker);
+  void ProximityMonitor::publishTopics()
+  {
+    visualization_msgs::MarkerArray marker_array;
+    visualization_msgs::Marker marker;
+
+    for (auto i =1 ; i<=regions_number_; i++){
+      updateMarker(marker, i);
+      marker_array.markers.push_back(marker);
+    }
+    
+     marker_pub_.publish(marker_array);
   }
 
   bool ProximityMonitor::detectFault()
