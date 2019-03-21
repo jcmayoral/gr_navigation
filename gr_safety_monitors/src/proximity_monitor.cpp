@@ -19,25 +19,21 @@ namespace gr_safety_monitors
   }
 
   void ProximityMonitor::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
-    //pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    //pcl::fromROSMsg(pointcloud, *cloud);
-    //pcl::fromPCLPointCloud2(*pointcloud, *cloud);
-    pcl::PCLPointCloud2 pcl_pc;
-	  pcl_conversions::toPCL(*pointcloud, pcl_pc);
-  	pcl::PointCloud<pcl::PointXYZRGB> cloud;
-	  pcl::fromPCLPointCloud2(pcl_pc, cloud);
+    pcl::PointCloud<pcl::PointXYZ> cloud;
+ 	  pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
+    sensor_msgs::PointCloud2 output_pointcloud;
+
+    pcl::fromROSMsg(*pointcloud, cloud);
 	  //pcl2 to pclxyzrgba
-	  //pcl::PointCloud<PointXYZRGBA> input_cloud;
-	  //pcl::fromPCLPointCloud2(pcl_pc, input_cloud);
+    pcl::copyPointCloud(cloud,rgb_cloud);
 
     // Convert to ROS data type
-    sensor_msgs::PointCloud2 output_pointcloud;
-    pcl::toROSMsg(cloud, output_pointcloud);
+    pcl::toROSMsg(rgb_cloud, output_pointcloud);
     // Publish the data
     pointcloud_pub_.publish(output_pointcloud);
   }
 
-  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(25), regions_number_(3)
+  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5), regions_number_(3)
   {
     //Define Fault Type as Unknown
     fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
@@ -64,7 +60,7 @@ namespace gr_safety_monitors
   }
 
   void ProximityMonitor::updateMarker(visualization_msgs::Marker& marker, int level){
-    marker.header.frame_id = "velodyne";
+    marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
     marker.ns = "proximity_regions"+std::to_string(level);
     marker.type = visualization_msgs::Marker::LINE_STRIP;
