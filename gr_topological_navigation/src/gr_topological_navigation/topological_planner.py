@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from strands_navigation_msgs.srv import GetTopologicalMapRequest, GetTopologicalMap
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 from std_msgs.msg import String
-
 class TopologicalPlanner:
     def __init__(self, gui=False, start_node='cold_storage'):
         rospy.init_node("topological_full_coverage_planner")
@@ -22,6 +21,7 @@ class TopologicalPlanner:
         #Topological Map parsed to a networkx Graph so functions can be used
         self.networkx_graph = nx.Graph()
         self.gui = gui
+        self.is_task_initialized = False
         self.topological_plan = None
         self.create_graph(map)
         self.visited_edges = list()
@@ -33,13 +33,17 @@ class TopologicalPlanner:
 
     #Getting FB form topological navigation
     def current_edge_callback(self, edge_raw):
+
+        if not self.is_task_initialized:
+            return
+
         if edge_raw.data == 'none':
             return
         #remove map-name
         edge = edge_raw.data.split('--')[0]
         start = edge_raw.data.split('_')[0]
         end = edge_raw.data.split('_')[1]
-        rospy.loginfo("visiting edge %s", edge)
+        #rospy.loginfo("visiting edge %s", edge)
 
         if edge not in self.visited_edges:
             self.visited_edges.append(edge)
@@ -49,6 +53,8 @@ class TopologicalPlanner:
         for n in map.map.nodes:
             self.networkx_graph.add_node(n.name)
             for e in n.edges:
+                if self.networkx_graph.has_edge(e.node, n.name):
+                    continue
                 self.networkx_graph.add_edge(n.name, e.node, edge_id=e.edge_id, weight=1)
 
         rospy.loginfo("%d Nodes found", self.networkx_graph.number_of_nodes())
@@ -67,6 +73,7 @@ class TopologicalPlanner:
     def go_to_source(self):
         rospy.loginfo("Robot going to start node %s", self.start_node)
         self.command_robot_to_node(self.start_node, no_orientation=False)
+        self.is_task_initialized = True
 
     def get_next_transition(self):
         if self.topological_plan is None:
@@ -80,12 +87,12 @@ class TopologicalPlanner:
         suggested_edge = str(next_edge[0]+"_"+next_edge[1])
         inverted_edge = str(next_edge[1]+"_"+next_edge[0])
 
-        if len(self.visited_edges)> 0:
-            if suggested_edge in self.visited_edges:
-                rospy.logwarn("Revisiting edge %s", suggested_edge)
-            if inverted_edge in self.visited_edges:
-                rospy.logwarn("Revisiting edge %s", inverted_edge)
-
+        if suggested_edge in self.visited_edges:
+            rospy.logwarn("Revisiting edge %s", suggested_edge)
+            self.get_next_transition()
+        if inverted_edge in self.visited_edges:
+            rospy.logwarn("Revisiting edge %s", inverted_edge)
+            self.get_next_transition()
         return next_edge
 
     def command_robot_to_node(self,node_id, no_orientation=True):
