@@ -81,7 +81,7 @@ namespace gr_safety_monitors
     ROS_WARN("Function initialized deprecated for proximity_monitor");
   }
 
-  void ProximityMonitor::updateMarker(visualization_msgs::Marker& marker, int level){
+  void ProximityMonitor::createRingMarker(visualization_msgs::Marker& marker, int level){
     marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
     marker.ns = "proximity_regions"+std::to_string(level);
@@ -121,7 +121,7 @@ namespace gr_safety_monitors
     visualization_msgs::Marker marker;
 
     for (auto i =1 ; i<=regions_number_; i++){
-      updateMarker(marker, i);
+      createRingMarker(marker, i);
       marker_array.markers.push_back(marker);
     }
     

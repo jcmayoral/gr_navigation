@@ -34,7 +34,7 @@ namespace gr_safety_monitors
       void publishTopics();
       fault_core::FaultTopology getFault();
 
-      void updateMarker(visualization_msgs::Marker& marker, int level);
+      void createRingMarker(visualization_msgs::Marker& marker, int level);
       void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
       int getRing(float x, float y);
     private:
