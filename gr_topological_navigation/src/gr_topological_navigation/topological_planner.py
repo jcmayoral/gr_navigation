@@ -78,8 +78,8 @@ class TopologicalPlanner:
     #Add distance weight to the edges
     def generate_full_coverage_plan(self):
         #bfs_edges Not recommended
-        #self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.start_node, orientation='reverse'))
-        self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
+        self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.start_node, orientation='reverse'))
+        #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
         #self.topological_plan = list(nx.dfs_preorder_nodes(self.networkx_graph, source=self.start_node))
 
     def go_to_source(self):
