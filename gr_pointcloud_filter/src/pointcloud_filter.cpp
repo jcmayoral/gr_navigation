@@ -28,14 +28,29 @@ namespace gr_pointcloud_filter
 			voxel_filter_.filter(*cloud);
 		}
 
+		if(filters_enablers_[2]){
+			//outliers removal filter
+			outliers_filter_.setInputCloud(cloud);
+			outliers_filter_.filter(*cloud);
+		}
+
+		if(filters_enablers_[3]){
+			//radius outliers On progress
+			// build the filter
+			radius_outliers_filter_.setInputCloud(cloud);
+			// apply filter
+			radius_outliers_filter_.filter(*cloud);
+		}
+
 		//conditional_filter
-		if (filters_enablers_[2]){
+		if (filters_enablers_[4]){
 			condition_removal_.setInputCloud (cloud);
 			condition_removal_.filter (*cloud);
 		}
 
+
     	//segmentation of a plane
-		if (filters_enablers_[3]){
+		if (filters_enablers_[5]){
 			pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
 			pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
 			segmentation_filter_.setInputCloud(cloud);
@@ -49,20 +64,6 @@ namespace gr_pointcloud_filter
 			}
 		}
 
-		if(filters_enablers_[4]){
-			//outliers removal filter
-			outliers_filter_.setInputCloud(cloud);
-			outliers_filter_.filter(*cloud);
-		}
-
-		if(filters_enablers_[5]){
-			//radius outliers On progress
-			// build the filter
-			radius_outliers_filter_.setInputCloud(cloud);
-			// apply filter
-			radius_outliers_filter_.filter(*cloud);
-		}
-
     	// Convert to ROS data type
     	pcl::toROSMsg(*cloud, output_pointcloud_);
     	// Publish the data
@@ -74,15 +75,17 @@ namespace gr_pointcloud_filter
 		//Enable
 		filters_enablers_[0] = config.enable_filters;
 		filters_enablers_[1] = config.voxel_filter;
-		filters_enablers_[2] = config.conditional_filter;
-		filters_enablers_[3] = config.ground_removal;
-		filters_enablers_[4] = config.outlier_removal;
-		filters_enablers_[5] = config.radius_outlier_removal;
+		filters_enablers_[2] = config.outlier_removal;
+		filters_enablers_[3] = config.radius_outlier_removal;
+		filters_enablers_[4] = config.conditional_filter;
+		filters_enablers_[5] = config.ground_removal;
+
 
     	//voxeling
     	voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
 
 		//condition
+		conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
 		conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, config.min_height)));
     	conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, config.max_height)));
 		condition_removal_.setCondition (conditional_filter_);
