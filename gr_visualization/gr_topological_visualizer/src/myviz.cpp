@@ -38,19 +38,34 @@ MyViz::MyViz( QWidget* parent )
   : QWidget( parent )
 {
   // Construct and lay out labels and slider controls.
-  QLabel* thickness_label = new QLabel( "Line Thickness" );
-  QSlider* thickness_slider = new QSlider( Qt::Horizontal );
-  thickness_slider->setMinimum( 1 );
-  thickness_slider->setMaximum( 100 );
+  QLabel* width_cells_label = new QLabel( "Width Nodes" );
+  QSlider* width_slider = new QSlider( Qt::Horizontal );
+
+  QLabel* height_cells_label = new QLabel( "Height Nodes" );
+  QSlider* height_slider = new QSlider( Qt::Horizontal );
+
+  width_slider->setMinimum( 1 );
+  width_slider->setMaximum( 100 );
+
+  height_slider->setMinimum( 1 );
+  height_slider->setMaximum( 100 );
+
   QLabel* cell_size_label = new QLabel( "Cell Size" );
   QSlider* cell_size_slider = new QSlider( Qt::Horizontal );
   cell_size_slider->setMinimum( 1 );
   cell_size_slider->setMaximum( 100 );
+
+  QPushButton* save_topological_map = new QPushButton ("Save Topological Map");
+
   QGridLayout* controls_layout = new QGridLayout();
-  controls_layout->addWidget( thickness_label, 0, 0 );
-  controls_layout->addWidget( thickness_slider, 0, 1 );
-  controls_layout->addWidget( cell_size_label, 1, 0 );
-  controls_layout->addWidget( cell_size_slider, 1, 1 );
+  controls_layout->addWidget( width_cells_label, 0, 0 );
+  controls_layout->addWidget( width_slider, 0, 1 );
+  controls_layout->addWidget( height_cells_label, 1, 0 );
+  controls_layout->addWidget( height_slider, 1, 1 );
+  controls_layout->addWidget( cell_size_label, 2, 0 );
+  controls_layout->addWidget( cell_size_slider, 2, 1 );
+  controls_layout->addWidget( save_topological_map, 3, 0 );
+
 
   // Construct and lay out render panel.
   render_panel_ = new rviz::RenderPanel();
@@ -62,7 +77,8 @@ MyViz::MyViz( QWidget* parent )
   setLayout( main_layout );
 
   // Make signal/slot connections.
-  connect( thickness_slider, SIGNAL( valueChanged( int )), this, SLOT( setThickness( int )));
+  connect( width_slider, SIGNAL( valueChanged( int )), this, SLOT( setWidth( int )));
+  connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setHeigh( int )));
   connect( cell_size_slider, SIGNAL( valueChanged( int )), this, SLOT( setCellSize( int )));
 
   // Next we initialize the main RViz classes.
@@ -85,8 +101,8 @@ MyViz::MyViz( QWidget* parent )
   grid_->subProp( "Color" )->setValue( QColor( Qt::yellow ) );
 
   // Initialize the slider values.
-  thickness_slider->setValue( 25 );
-  cell_size_slider->setValue( 10 );
+  width_slider->setValue( 25 );
+  height_slider->setValue( 10 );
 }
 
 // Destructor.
@@ -98,11 +114,19 @@ MyViz::~MyViz()
 // This function is a Qt slot connected to a QSlider's valueChanged()
 // signal.  It sets the line thickness of the grid by changing the
 // grid's "Line Width" property.
-void MyViz::setThickness( int thickness_percent )
+void MyViz::setWidth( int width_cells )
 {
   if( grid_ != NULL )
   {
-    grid_->subProp( "Line Style" )->subProp( "Line Width" )->setValue( thickness_percent / 100.0f );
+    grid_->subProp( "Line Style" )->subProp( "Line Width" )->setValue( width_cells / 100.0f );
+  }
+}
+
+void MyViz::setHeight( int height_cells )
+{
+  if( grid_ != NULL )
+  {
+    grid_->subProp( "Line Style" )->subProp( "Line Width" )->setValue( height_cells / 100.0f );
   }
 }
 

@@ -33,6 +33,8 @@
 #include <QColor>
 #include <QSlider>
 #include <QLabel>
+#include <QPushButton>
+
 #include <QGridLayout>
 #include <QVBoxLayout>
 
@@ -55,7 +57,8 @@ namespace gr_topological_visualizer{
       virtual ~MyViz();
 
       private Q_SLOTS:
-      void setThickness( int thickness_percent );
+      void setWidth( int width_cells );
+      void setHeight( int height_cells );
       void setCellSize( int cell_size_percent );
 
     private:
