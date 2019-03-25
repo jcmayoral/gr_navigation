@@ -1,0 +1,22 @@
+<package>
+  <name>gr_topological_visualizer</name>
+  <version>0.0.1</version>
+  <description>
+     Based on the librviz_tutorial from William Woodall. This package allows an interaction to the topological map.
+  </description>
+  <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>qtbase5-dev</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rviz</build_depend>
+
+  <run_depend>libqt5-core</run_depend>
+  <run_depend>libqt5-gui</run_depend>
+  <run_depend>libqt5-widgets</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rviz</run_depend>
+
+</package>
