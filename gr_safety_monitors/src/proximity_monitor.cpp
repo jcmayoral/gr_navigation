@@ -129,37 +129,33 @@ namespace gr_safety_monitors
       createRingMarker(marker, i);
       marker_array.markers.push_back(marker);
     }
-    
+
      marker_pub_.publish(marker_array);
   }
 
   bool ProximityMonitor::detectFault()
   {
+    //The next condition is true when is obstacle not detected and
+    // and executer is initialized (obstacle not anymore on danger region)
+    if(action_executer_!= NULL && !is_obstacle_detected_){
+      action_executer_->stop();
+      action_executer_ = NULL;
+    }
     return is_obstacle_detected_;
   }
 
   void ProximityMonitor::isolateFault(){
    	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
-
-    ROS_WARN_ONCE("I know there is an obstacle but no idea what it is");
     diagnoseFault();
   }
 
   void ProximityMonitor::diagnoseFault(){
-    fault_.cause_ = FaultTopology::MISLOCALIZATION; // By default run MisLocalization Recovery Strategy
-    fault_.type_ = FaultTopology::COLLISION; // Classify the fault as a Collision
-    ROS_ERROR("I have not learned to do this");
+    fault_.cause_ = FaultTopology::DYNAMIC_OBSTACLE;
+    fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 
-    if (action_executer_ == NULL){
+    if (action_executer_ == NULL){ //if executer not initialized initialized it
       action_executer_ = new PublisherSafeAction(); 
-      action_executer_->execute();
     }
-    else{
-      action_executer_->stop();
-      //delete action_executer_;
-      action_executer_ = NULL;
-    }
-    is_obstacle_detected_ = false;
-    //delete action_executer_;
+    action_executer_->execute();
   }
 }
