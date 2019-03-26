@@ -6,7 +6,6 @@ namespace gr_safety_monitors{
         public:
             PublisherSafeAction();
             ~PublisherSafeAction();
-        protected:
             virtual void execute();
     };
 };

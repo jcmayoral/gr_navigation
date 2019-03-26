@@ -31,6 +31,9 @@ namespace gr_safety_monitors
     for (int i = 0; i < rgb_cloud.points.size(); i++) {
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){
         rgb_cloud.points[i].r = 255;
+        ROS_ERROR_THROTTLE(5, "Obstacle Detected on first safety ring");
+        is_obstacle_detected_ = true;
+
       }
 
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 1){
@@ -137,13 +140,16 @@ namespace gr_safety_monitors
   }
 
   void ProximityMonitor::isolateFault(){
-    ROS_INFO("Isolating Platform Collision");
+    ROS_WARN_ONCE("I know there is an obstacle but no idea what it is");
+    action_executer_ = new PublisherSafeAction();
     diagnoseFault();
   }
 
   void ProximityMonitor::diagnoseFault(){
     fault_.cause_ = FaultTopology::MISLOCALIZATION; // By default run MisLocalization Recovery Strategy
     fault_.type_ = FaultTopology::COLLISION; // Classify the fault as a Collision
-    ROS_ERROR_ONCE("Collision FOUND");
+    ROS_ERROR_ONCE("I have not learned to do this");
+    action_executer_->execute();
+    is_obstacle_detected_ = false;
   }
 }

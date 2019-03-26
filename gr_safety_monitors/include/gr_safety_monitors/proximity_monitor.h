@@ -16,6 +16,8 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <gr_safety_monitors/safe_actions/publisher_safe_action.h>
+
 namespace gr_safety_monitors
 {
 
@@ -45,6 +47,7 @@ namespace gr_safety_monitors
       ros::Subscriber pointcloud_sub_;
       double region_radius_;
       int regions_number_;
+      SafeAction* action_executer_;
   };
 
 }
