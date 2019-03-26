@@ -56,9 +56,9 @@ namespace gr_topological_visualizer{
       MyViz( QWidget* parent = 0 );
       virtual ~MyViz();
 
-      private Q_SLOTS:
-      void setWidth( int width_cells );
-      void setHeight( int height_cells );
+      private Q_SLOTS:      
+      void setNormalNodes( int normal_cells );
+      void setPlaneNodes( int plane_cells );
       void setCellSize( int cell_size_percent );
 
     private:
