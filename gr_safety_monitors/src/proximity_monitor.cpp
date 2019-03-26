@@ -137,6 +137,8 @@ namespace gr_safety_monitors
   {
     //The next condition is true when is obstacle not detected and
     // and executer is initialized (obstacle not anymore on danger region)
+    publishTopics();
+
     if(action_executer_!= NULL && !is_obstacle_detected_){
       action_executer_->stop();
       action_executer_ = NULL;

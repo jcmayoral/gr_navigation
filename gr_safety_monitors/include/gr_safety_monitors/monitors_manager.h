@@ -10,7 +10,9 @@ namespace gr_safety_monitors
             MonitorsManager();
             ~MonitorsManager();
             void addMonitor(fault_core::FaultDetector* new_monitor);
+            void monitor();
         private:
             std::vector<fault_core::FaultDetector*> monitors_;
+            ros::NodeHandle nh_;
     };
 }
