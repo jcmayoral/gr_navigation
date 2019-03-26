@@ -1,4 +1,5 @@
 #include <gr_safety_monitors/safe_actions/safe_action.h>
+#include <std_msgs/Bool.h>
 #include <ros/ros.h>
 
 namespace gr_safety_monitors{
@@ -7,5 +8,8 @@ namespace gr_safety_monitors{
             PublisherSafeAction();
             ~PublisherSafeAction();
             virtual void execute();
+            virtual void stop();
+        protected:
+            ros::Publisher topic_publisher_;
     };
 };

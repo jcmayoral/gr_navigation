@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
         fault_core
         visualization_msgs
         sensor_msgs
+        std_msgs
 )
 
 find_package(OpenCV REQUIRED)
@@ -34,6 +35,7 @@ catkin_package(
         fault_core
         visualization_msgs
         sensor_msgs
+        std_msgs
 )
 
 add_library(gr_safety_monitors src/proximity_monitor.cpp)

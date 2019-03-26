@@ -12,7 +12,7 @@ int main(int argc, char** argv){
 
     while(ros::ok()){
         if(monitor->detectFault()){
-            ROS_WARN("Proximity monitor activated");
+            //ROS_WARN("Proximity monitor activated");
             monitor->isolateFault();
         }
         if (i%10){
@@ -20,6 +20,7 @@ int main(int argc, char** argv){
             i=0;
         }
         ++i;
+        ros::Duration(0.5).sleep();
         ros::spinOnce();
     }
     return 1;

@@ -18,6 +18,8 @@
 
 #include <gr_safety_monitors/safe_actions/publisher_safe_action.h>
 
+#include <boost/thread/recursive_mutex.hpp>
+
 namespace gr_safety_monitors
 {
 
@@ -48,6 +50,7 @@ namespace gr_safety_monitors
       double region_radius_;
       int regions_number_;
       SafeAction* action_executer_;
+      boost::recursive_mutex mutex;
   };
 
 }
