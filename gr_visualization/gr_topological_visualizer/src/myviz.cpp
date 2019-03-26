@@ -38,10 +38,10 @@ MyViz::MyViz( QWidget* parent )
   : QWidget( parent )
 {
   // Construct and lay out labels and slider controls.
-  QLabel* normal_cells_label = new QLabel( "Width Nodes" );
+  QLabel* normal_cells_label = new QLabel( "Normal Nodes" );
   QSlider* normal_slider = new QSlider( Qt::Horizontal );
 
-  QLabel* plane_cells_label = new QLabel( "Height Nodes" );
+  QLabel* plane_cells_label = new QLabel( "Plane Nodes" );
   QSlider* plane_slider = new QSlider( Qt::Horizontal );
 
   normal_slider->setMinimum( 0 );
@@ -80,6 +80,7 @@ MyViz::MyViz( QWidget* parent )
   connect( normal_slider, SIGNAL( valueChanged( int )), this, SLOT( setNormalNodes( int )));
   connect( plane_slider, SIGNAL( valueChanged( int )), this, SLOT( setPlaneNodes( int )));
   connect( cell_size_slider, SIGNAL( valueChanged( int )), this, SLOT( setCellSize( int )));
+  connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
 
   // Next we initialize the main RViz classes.
   //
@@ -101,8 +102,8 @@ MyViz::MyViz( QWidget* parent )
   grid_->subProp( "Color" )->setValue( QColor( Qt::yellow ) );
 
   // Initialize the slider values.
-  normal_slider->setValue( 25 );
-  plane_slider->setValue( 10 );
+  normal_slider->setValue( 0 );
+  plane_slider->setValue( 3 );
 }
 
 // Destructor.
@@ -116,6 +117,7 @@ MyViz::~MyViz()
 // grid's "Line Width" property.
 void MyViz::setNormalNodes( int normal_cells )
 {
+  normal_cells_ = normal_cells;
   if( grid_ != NULL )
   {
     //grid_->subProp("Width") -> setValue(width_cells);
@@ -127,6 +129,7 @@ void MyViz::setNormalNodes( int normal_cells )
 
 void MyViz::setPlaneNodes( int plane_cells )
 {
+  plane_cells_ = plane_cells;
   if( grid_ != NULL )
   {
     grid_->subProp("Plane Cell Count") -> setValue(plane_cells);
@@ -139,8 +142,21 @@ void MyViz::setPlaneNodes( int plane_cells )
 // "Cell Size" Property.
 void MyViz::setCellSize( int cell_size_percent )
 {
+  cell_size_percent_ = cell_size_percent/10.0f;
+
   if( grid_ != NULL )
   {
     grid_->subProp( "Cell Size" )->setValue( cell_size_percent / 10.0f );
+  }
+}
+
+void MyViz::saveMap(){
+  std::cout << "IN"<< std::endl;
+  std::vector<std::pair<float,float> > vector;
+  
+  map_utils_->calculateCenters(vector, plane_cells_, normal_cells_, cell_size_percent_);
+
+  for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
+    std::printf("center %f %f \n",it->first,it->second);
   }
 }

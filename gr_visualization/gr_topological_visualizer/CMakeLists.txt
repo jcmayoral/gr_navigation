@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(gr_topological_visualizer)
 
-find_package(catkin REQUIRED COMPONENTS rviz roscpp)
+find_package(catkin REQUIRED COMPONENTS rviz roscpp visualization_msgs)
 
 include_directories(${catkin_INCLUDE_DIRS}
 )
@@ -9,7 +9,9 @@ include_directories(${catkin_INCLUDE_DIRS}
 catkin_package(
     CATKIN_DEPENDS
       rviz
-      roscpp)
+      roscpp
+      visualization_msgs
+)
 
 link_directories(${catkin_LIBRARY_DIRS})
 
@@ -37,12 +39,13 @@ add_definitions(-DQT_NO_KEYWORDS)
 ## Here we specify the list of source files.
 ## The generated MOC files are included automatically as headers.
 set(SRC_FILES
-  #src/myviz.cpp
+  src/myviz.cpp
+  src/nodes_visualizer.hpp
   src/main.cpp
 )
 
-add_library(${PROJECT_NAME}_lib src/myviz.cpp)
-target_link_libraries(${PROJECT_NAME}_lib ${QT_LIBRARIES} ${catkin_LIBRARIES})
+#add_library(${PROJECT_NAME}_lib src/myviz.cpp src/nodes_visualizer.hpp)
+#target_link_libraries(${PROJECT_NAME}_lib ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
 
 ## Add the "myviz" executable and specify the list of source files we
@@ -53,7 +56,7 @@ add_executable(myviz ${SRC_FILES})
 ## the ``find_package(Qt4 ...)`` line above, or by the
 ## ``set(QT_LIBRARIES Qt5::Widgets)``, and with whatever libraries
 ## catkin has included.
-target_link_libraries(myviz ${QT_LIBRARIES} ${catkin_LIBRARIES} ${PROJECT_NAME}_lib)
+target_link_libraries(myviz ${QT_LIBRARIES} ${catkin_LIBRARIES})
 add_dependencies(myviz ${PROJECT_NAME}_lib)
 
 

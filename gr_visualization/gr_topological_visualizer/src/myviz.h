@@ -42,6 +42,8 @@
 #include <rviz/render_panel.h>
 #include <rviz/display.h>
 
+#include "nodes_visualizer.hpp"
+
 namespace rviz
 {
 class Display;
@@ -61,10 +63,16 @@ namespace gr_topological_visualizer{
       void setPlaneNodes( int plane_cells );
       void setCellSize( int cell_size_percent );
 
+      void saveMap();
+
     private:
       rviz::VisualizationManager* manager_;
       rviz::RenderPanel* render_panel_;
       rviz::Display* grid_;
+      MapGenerator* map_utils_;
+      int plane_cells_;
+      int normal_cells_;
+      float cell_size_percent_;
   };
 };
   // END_TUTORIAL
