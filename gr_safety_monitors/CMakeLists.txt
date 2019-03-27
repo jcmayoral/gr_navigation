@@ -12,6 +12,7 @@ find_package(catkin REQUIRED
         fault_core
         visualization_msgs
         sensor_msgs
+        std_msgs
 )
 
 find_package(OpenCV REQUIRED)
@@ -34,18 +35,24 @@ catkin_package(
         fault_core
         visualization_msgs
         sensor_msgs
+        std_msgs
 )
 
-add_library(gr_safety_monitors src/proximity_monitor.cpp)
-add_library(gr_safe_actions src/safe_actions/publisher_safe_action.cpp)
+add_library(gr_safety_monitors src/proximity_monitor.cpp  src/monitors_manager.cpp)
+add_library(gr_safe_actions src/safe_actions/publisher_safe_action.cpp src/safe_actions/dynamic_reconfigure_safe_action.cpp)
 
 add_executable(proximity_monitor_node src/proximity_monitor_node.cpp)
+add_executable(monitors_manager_node src/monitors_manager_node.cpp)
 
 target_link_libraries(gr_safety_monitors ${catkin_LIBRARIES}  ${PCL_LIBRARIES})
 target_link_libraries(proximity_monitor_node gr_safety_monitors gr_safe_actions)
 
+target_link_libraries(monitors_manager_node gr_safety_monitors gr_safe_actions)
+
 add_dependencies(gr_safety_monitors ${catkin_EXPORTED_TARGETS})
 add_dependencies(proximity_monitor_node gr_safety_monitors gr_safe_actions)
+
+add_dependencies(monitors_manager_node gr_safety_monitors gr_safe_actions)
 
 ### INSTALLS
 install(TARGETS gr_safety_monitors

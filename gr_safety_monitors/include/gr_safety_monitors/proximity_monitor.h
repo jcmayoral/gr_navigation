@@ -16,6 +16,10 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <gr_safety_monitors/safe_actions/publisher_safe_action.h>
+
+#include <boost/thread/recursive_mutex.hpp>
+
 namespace gr_safety_monitors
 {
 
@@ -45,6 +49,8 @@ namespace gr_safety_monitors
       ros::Subscriber pointcloud_sub_;
       double region_radius_;
       int regions_number_;
+      SafeAction* action_executer_;
+      boost::recursive_mutex mutex;
   };
 
 }

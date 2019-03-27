@@ -27,10 +27,13 @@ namespace gr_safety_monitors
 	  //pcl2 to pclxyzrgba
     pcl::copyPointCloud(cloud,rgb_cloud);
 
+    bool is_detected = false;
     //color
     for (int i = 0; i < rgb_cloud.points.size(); i++) {
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){
         rgb_cloud.points[i].r = 255;
+        ROS_ERROR_THROTTLE(5, "Obstacle Detected on first safety ring");
+        is_detected = true;
       }
 
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 1){
@@ -42,6 +45,8 @@ namespace gr_safety_monitors
       }
 
     }
+
+    is_obstacle_detected_ = is_detected;
 
     // Convert to ROS data type
     pcl::toROSMsg(rgb_cloud, output_pointcloud);
@@ -55,7 +60,7 @@ namespace gr_safety_monitors
     return int(distance/region_radius_);
   }
 
-  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5), regions_number_(3)
+  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5), regions_number_(3), action_executer_(NULL)
   {
     //Define Fault Type as Unknown
     fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
@@ -67,7 +72,7 @@ namespace gr_safety_monitors
 
   ProximityMonitor::~ProximityMonitor()
   {
-
+    delete action_executer_;
   }
 
   fault_core::FaultTopology ProximityMonitor::getFault()
@@ -124,26 +129,35 @@ namespace gr_safety_monitors
       createRingMarker(marker, i);
       marker_array.markers.push_back(marker);
     }
-    
+
      marker_pub_.publish(marker_array);
   }
 
   bool ProximityMonitor::detectFault()
   {
-    if (is_obstacle_detected_){
-      isolateFault();
+    //The next condition is true when is obstacle not detected and
+    // and executer is initialized (obstacle not anymore on danger region)
+    publishTopics();
+
+    if(action_executer_!= NULL && !is_obstacle_detected_){
+      action_executer_->stop();
+      action_executer_ = NULL;
     }
     return is_obstacle_detected_;
   }
 
   void ProximityMonitor::isolateFault(){
-    ROS_INFO("Isolating Platform Collision");
+   	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     diagnoseFault();
   }
 
   void ProximityMonitor::diagnoseFault(){
-    fault_.cause_ = FaultTopology::MISLOCALIZATION; // By default run MisLocalization Recovery Strategy
-    fault_.type_ = FaultTopology::COLLISION; // Classify the fault as a Collision
-    ROS_ERROR_ONCE("Collision FOUND");
+    fault_.cause_ = FaultTopology::DYNAMIC_OBSTACLE;
+    fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
+
+    if (action_executer_ == NULL){ //if executer not initialized initialized it
+      action_executer_ = new PublisherSafeAction(); 
+    }
+    action_executer_->execute();
   }
 }
