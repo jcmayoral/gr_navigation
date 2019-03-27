@@ -60,3 +60,4 @@ CATKIN_IGNORE
 
 #CLion
 .idea
+cmake-build-debug/
