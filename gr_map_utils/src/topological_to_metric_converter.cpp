@@ -4,7 +4,7 @@ namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_){
         ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
-        message_store_ = new mongodb_store::MessageStoreProxy(nh);
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
         map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");\
@@ -25,57 +25,74 @@ namespace gr_map_utils{
     }
 
     bool Topological2MetricMap::storeMap(){
-        std::string name("my_map");
+        std::string name("testing_metric_map");
+        /*
+        topological_map_.name = name;
+        topological_map_.map = name;
         std::string id(message_store_->insertNamed(name, topological_map_));
-        message_store_->updateID(id, topological_map_);
+        ROS_INFO_STREAM("ID "<< id);
+        //message_store_->updateID(id, topological_map_);
+        */
         return true;
     }
 
     bool Topological2MetricMap::getMapFromDatabase(){
         ROS_INFO("Trying getting map from database");
-        std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results;
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalMap> > results_map;
-        strands_navigation_msgs::TopologicalNode map;
-        strands_navigation_msgs::TopologicalMap* tmap;
-       	mongodb_store::MessageStoreProxy message_store(nh_);
+        std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
+        
 
-        //std::string id(message_store_->insertNamed("topological_map", topological_map_));
-        std::string name("topological_maps");
-        //std::cout << "ID "<< id <<std::endl;
+        std::string name("simulation_map");
 
-        if(message_store.queryNamed<strands_navigation_msgs::TopologicalMap>(name, results_map, false,10)) {
+        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
             for (std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalMap> >::iterator it = results_map.begin();it!=results_map.end(); it++){
-                std::cout << "Name: " << (boost::static_pointer_cast<strands_navigation_msgs::TopologicalMap>(*it))->name << std::endl;    
-                
+                std::cout << "Name: " << (boost::static_pointer_cast<strands_navigation_msgs::TopologicalMap>(*it))->name << std::endl;
+
             }
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
                 ROS_INFO_STREAM("Got by name: " << *topological_map_);
             }
-            //return true; for testing
+            return true;
         }
 
+
+
+        std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results;
+        //On this version the map is stored by NAME Not anymore nodes stored
         ROS_WARN("QUERY NODES");
-        if(message_store.queryNamed<strands_navigation_msgs::TopologicalNode>(name, results, false,10)) {
-            for (std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> >::iterator it = results.begin();it!=results.end(); it++){
-                std::cout << "Name: " << (boost::static_pointer_cast<strands_navigation_msgs::TopologicalNode>(*it))->name << std::endl;    
+        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>(name,"map", results_node, false)) {
+            strands_navigation_msgs::TopologicalNode node;
+            ROS_INFO("2");
+            for (std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> >::iterator it = results_node.begin();it!=results_node.end(); it++){
+                std::cout << "Name: " << (boost::static_pointer_cast<strands_navigation_msgs::TopologicalNode>(*it))->name << std::endl;
                 
+            }
+            BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> node,  results_node){
+                ROS_DEBUG_STREAM("Got by name: " << *node);
+                topological_map_.nodes.push_back(*node);
+            }
+           return true;
+        }
+
+        //results.clear();
+        /*
+        if(message_store_->queryID<strands_navigation_msgs::TopologicalMap>("5c40a11a81c5d07de7bb289f", results_map)) {
+            ROS_INFO("1");
+            BOOST_FOREACH( boost::shared_ptr<strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
+                ROS_INFO_STREAM("Got by ID: " << *topological_map_);
+            }
+            return true;
+        }
+        if(message_store.queryID<strands_navigation_msgs::TopologicalNode>("5c40a11a81c5d07de7bb289f", results)) {
+            for (std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> >::iterator it = results.begin();it!=results.end(); it++){
+                std::cout << "Name: " << (boost::static_pointer_cast<strands_navigation_msgs::TopologicalNode>(*it))->name << std::endl;
+
             }
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> map,  results){
                 ROS_INFO_STREAM("Got by name: " << *map);
             }
             //return true; for testing
 
-        }
-
-        
-
-        //results.clear();
-        /*
-        if(message_store_->queryID<strands_navigation_msgs::TopologicalMap>("simulation_map", results_map)) {
-            BOOST_FOREACH( boost::shared_ptr<strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
-                ROS_INFO_STREAM("Got by ID: " << *topological_map_);
-            }
-            return true;
         }
         */
         return false;
@@ -125,13 +142,13 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped in;
 
         for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
-            
+
             in.header.frame_id = "map";//todo topological map should include frame_id
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
             in.pose.orientation.w = 1.0;
             to_map_transform = tf_buffer_.lookupTransform("map", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
-            tf2::doTransform(in, out, to_map_transform);            
+            tf2::doTransform(in, out, to_map_transform);
             node_x = out.pose.position.x;
             node_y = out.pose.position.y;
             center_x += node_x;
@@ -167,7 +184,7 @@ namespace gr_map_utils{
         created_map_.info.origin = origin;
         created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
         created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
-        
+
         created_map_.data.resize(created_map_.info.width * created_map_.info.height);
 
         float res = created_map_.info.resolution;
@@ -183,7 +200,7 @@ namespace gr_map_utils{
         for ( const std::pair<int,int>  &it : cells ){
             row = (it.first - origin.position.x)/res; //new_coordinate frame ...TODO Orientation
             col = (it.second - origin.position.y)/res;
-            
+
             for (auto i = row-neighbors; i< row+neighbors; ++i){
                 for (auto j = col-neighbors; j< col+neighbors; ++j){
                     index = int(i + created_map_.info.width *j);
