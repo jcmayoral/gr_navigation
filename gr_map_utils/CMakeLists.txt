@@ -40,7 +40,8 @@ add_definitions(-Wno-deprecated-declarations)
 
 
 generate_dynamic_reconfigure_options(
-  cfg/MapConverter.cfg
+  cfg/OSMMapConverter.cfg
+  cfg/TopologicalMapConverter.cfg
 )
 
 add_service_files(

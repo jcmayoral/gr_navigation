@@ -4,7 +4,7 @@ namespace gr_map_utils{
 
     Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_){
         gr_tf_publisher_ = new TfFramePublisher();
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps", false);
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         is_map_received_ = false;
         static_topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
         topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("topological_map", 1, true);
@@ -18,7 +18,7 @@ namespace gr_map_utils{
 
     }
 
-    void Osm2TopologicalMap::dyn_reconfigureCB(MapConverterConfig &config, uint32_t level){
+    void Osm2TopologicalMap::dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level){
         ROS_INFO("aaaa");
         if (!is_map_received_){
             ROS_WARN("Map not received");
