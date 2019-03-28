@@ -1,7 +1,9 @@
 #include <gr_map_utils/topological_to_metric_converter.h>
 
 namespace gr_map_utils{
-    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_), mark_nodes_(false), nodes_value_(127){
+    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_), 
+                                                                    mark_nodes_(false), nodes_value_(127),
+                                                                    inverted_costmap_(true){
         ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
@@ -20,6 +22,7 @@ namespace gr_map_utils{
     void Topological2MetricMap::dyn_reconfigureCB(TopologicalMapConverterConfig &config, uint32_t level){
         mark_nodes_ = config.mark_nodes;
         nodes_value_ = config.nodes_value;
+        inverted_costmap_ = config.invert_costmap;
         transformMap();
     }
 
@@ -185,7 +188,10 @@ namespace gr_map_utils{
         created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
         created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
 
-        created_map_.data.resize(created_map_.info.width * created_map_.info.height);
+        if (inverted_costmap_)
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
+        else
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height,255);
 
         float res = created_map_.info.resolution;
 
