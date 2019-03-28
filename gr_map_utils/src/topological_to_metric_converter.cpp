@@ -45,10 +45,6 @@ namespace gr_map_utils{
         std::string name("simulation_map");
 
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
-            for (std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalMap> >::iterator it = results_map.begin();it!=results_map.end(); it++){
-                std::cout << "Name: " << (boost::static_pointer_cast<strands_navigation_msgs::TopologicalMap>(*it))->name << std::endl;
-
-            }
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
                 ROS_INFO_STREAM("Got by name: " << *topological_map_);
             }
@@ -62,11 +58,6 @@ namespace gr_map_utils{
         ROS_WARN("QUERY NODES");
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>(name,"map", results_node, false)) {
             strands_navigation_msgs::TopologicalNode node;
-            ROS_INFO("2");
-            for (std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> >::iterator it = results_node.begin();it!=results_node.end(); it++){
-                std::cout << "Name: " << (boost::static_pointer_cast<strands_navigation_msgs::TopologicalNode>(*it))->name << std::endl;
-                
-            }
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> node,  results_node){
                 ROS_DEBUG_STREAM("Got by name: " << *node);
                 topological_map_.nodes.push_back(*node);

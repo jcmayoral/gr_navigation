@@ -4,7 +4,7 @@ namespace gr_map_utils{
 
     Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_){
         gr_tf_publisher_ = new TfFramePublisher();
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps", false);
         is_map_received_ = false;
         static_topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
         topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("topological_map", 1, true);
