@@ -48,5 +48,6 @@ namespace gr_map_utils{
             bool mark_nodes_;
             bool inverted_costmap_;
             int nodes_value_;
+            double map_yaw_;
     };
 }

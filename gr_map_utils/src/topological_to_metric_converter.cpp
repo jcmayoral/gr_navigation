@@ -3,7 +3,7 @@
 namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_), 
                                                                     mark_nodes_(false), nodes_value_(127),
-                                                                    inverted_costmap_(true){
+                                                                    inverted_costmap_(true), map_yaw_(0.0){
         ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
@@ -23,6 +23,7 @@ namespace gr_map_utils{
         mark_nodes_ = config.mark_nodes;
         nodes_value_ = config.nodes_value;
         inverted_costmap_ = config.invert_costmap;
+        map_yaw_ = config.map_orientation;
         transformMap();
     }
 
@@ -119,6 +120,7 @@ namespace gr_map_utils{
         return false;
     }
 
+
     void Topological2MetricMap::transformMap(){
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
@@ -182,7 +184,12 @@ namespace gr_map_utils{
         geometry_msgs::Pose origin;
         origin.position.x = min_x - offset/2;
         origin.position.y = min_y - offset/2;
-        origin.orientation.w = 1.0;
+
+        //No rule map must match orientation of map frame
+        tf2::Quaternion tmp_quaternion;
+        tmp_quaternion.setRPY( 0, 0, map_yaw_ );
+        // or for the other conversion direction
+        origin.orientation = tf2::toMsg(tmp_quaternion);
 
         created_map_.info.origin = origin;
         created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
