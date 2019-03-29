@@ -1,7 +1,2 @@
-#gr_navigation#
-
-[[/doc/master_plan.png]]
-![Optional Text](/doc/master_plan.png)
-
-
-![Alt text](/doc/master_plan.jpg?raw=true "Title")
+#gr_navigation
+![Master Plan Draft 29.03.19 (Not final)](/doc/master_plan.png)
