@@ -66,6 +66,9 @@ namespace gr_safety_monitors
     fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
     //Define Fault Cause as Unknown
     fault_.cause_ = FaultTopology::UNKNOWN;
+
+  	dyn_server_cb_ = boost::bind(&ProximityMonitor::dyn_reconfigureCB, this, _1, _2);
+   	dyn_server_.setCallback(dyn_server_cb_);
     ROS_INFO("Constructor ProximityMonitor");
   }
 
@@ -74,6 +77,19 @@ namespace gr_safety_monitors
   {
     delete action_executer_;
   }
+
+  void ProximityMonitor::dyn_reconfigureCB(gr_safety_monitors::ProximityMonitorConfig &config, uint32_t level){
+    region_radius_ = config.region_radius;
+
+    visualization_msgs::Marker marker;
+
+    marker_array_.markers.clear();
+    for (auto i =1 ; i<=regions_number_; i++){
+      createRingMarker(marker, i);
+      marker_array_.markers.push_back(marker);
+    }
+  }
+
 
   fault_core::FaultTopology ProximityMonitor::getFault()
   {
@@ -106,13 +122,17 @@ namespace gr_safety_monitors
     geometry_msgs::Point circumference;
     float r_2 = pow(region_radius_*level,2);
 
-    for (float y= -region_radius_*level; y<=region_radius_*level; y+=0.5 ){
+    for (float y= -region_radius_*level; y<=region_radius_*level; y+=0.1 ){
+          if (pow(y,2) > r_2)
+            continue;
           circumference.x = sqrt(r_2 - pow(y,2));
           circumference.y = y;
           marker.points.push_back(circumference);
     }
     //mirror
-    for (float y= region_radius_*level; y>=-region_radius_*level; y-=0.5 ){
+    for (float y= region_radius_*level; y>=-region_radius_*level; y-= 0.1 ){
+          if (pow(y,2) > r_2)
+            continue;
           circumference.x = -sqrt(r_2 - pow(y,2));
           circumference.y = y;
           marker.points.push_back(circumference);
@@ -122,15 +142,7 @@ namespace gr_safety_monitors
 
   void ProximityMonitor::publishTopics()
   {
-    visualization_msgs::MarkerArray marker_array;
-    visualization_msgs::Marker marker;
-
-    for (auto i =1 ; i<=regions_number_; i++){
-      createRingMarker(marker, i);
-      marker_array.markers.push_back(marker);
-    }
-
-     marker_pub_.publish(marker_array);
+     marker_pub_.publish(marker_array_);
   }
 
   bool ProximityMonitor::detectFault()

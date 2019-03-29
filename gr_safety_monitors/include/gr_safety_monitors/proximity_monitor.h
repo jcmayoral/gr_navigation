@@ -20,6 +20,9 @@
 
 #include <boost/thread/recursive_mutex.hpp>
 
+#include <dynamic_reconfigure/server.h>
+#include <gr_safety_monitors/ProximityMonitorConfig.h>
+
 namespace gr_safety_monitors
 {
 
@@ -41,16 +44,22 @@ namespace gr_safety_monitors
       void createRingMarker(visualization_msgs::Marker& marker, int level);
       void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
       int getRing(float x, float y);
+      void dyn_reconfigureCB(gr_safety_monitors::ProximityMonitorConfig &config, uint32_t level);
+
     private:
       std::vector<ros::Subscriber> array_subscribers_;
       bool is_obstacle_detected_;
       ros::Publisher marker_pub_;
       ros::Publisher pointcloud_pub_;
       ros::Subscriber pointcloud_sub_;
+      visualization_msgs::MarkerArray marker_array_;
+
       double region_radius_;
       int regions_number_;
       SafeAction* action_executer_;
       boost::recursive_mutex mutex;
+      dynamic_reconfigure::Server<gr_safety_monitors::ProximityMonitorConfig> dyn_server_;
+      dynamic_reconfigure::Server<gr_safety_monitors::ProximityMonitorConfig>::CallbackType dyn_server_cb_;
   };
 
 }
