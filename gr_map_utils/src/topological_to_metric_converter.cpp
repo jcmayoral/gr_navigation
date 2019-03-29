@@ -3,7 +3,9 @@
 namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_), 
                                                                     mark_nodes_(false), nodes_value_(127),
-                                                                    inverted_costmap_(true), map_yaw_(0.0){
+                                                                    inverted_costmap_(true), map_yaw_(0.0),
+                                                                    map_offset_(2.0), cells_neighbors_(3)
+{
         ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
@@ -24,6 +26,8 @@ namespace gr_map_utils{
         nodes_value_ = config.nodes_value;
         inverted_costmap_ = config.invert_costmap;
         map_yaw_ = config.map_orientation;
+        map_offset_ = config.map_offset;
+        cells_neighbors_ = config.node_inflation;
         transformMap();
     }
 
@@ -126,8 +130,6 @@ namespace gr_map_utils{
         created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
         created_map_.info.resolution = 0.20;
-        float offset = 2; //TODO should be a parameter
-        int neighbors = 3;// TODO
 
         int nodes_number = 0;
         float center_x = 0.0;
@@ -182,8 +184,8 @@ namespace gr_map_utils{
 
 
         geometry_msgs::Pose origin;
-        origin.position.x = min_x - offset/2;
-        origin.position.y = min_y - offset/2;
+        origin.position.x = min_x - map_offset_/2;
+        origin.position.y = min_y - map_offset_/2;
 
         //No rule map must match orientation of map frame
         tf2::Quaternion tmp_quaternion;
@@ -192,8 +194,8 @@ namespace gr_map_utils{
         origin.orientation = tf2::toMsg(tmp_quaternion);
 
         created_map_.info.origin = origin;
-        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
-        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(offset/created_map_.info.resolution);
+        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
+        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
 
         if (inverted_costmap_)
             created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
@@ -215,8 +217,8 @@ namespace gr_map_utils{
                 row = (it.first - origin.position.x)/res; //new_coordinate frame ...TODO Orientation
                 col = (it.second - origin.position.y)/res;
 
-                for (auto i = row-neighbors; i< row+neighbors; ++i){
-                    for (auto j = col-neighbors; j< col+neighbors; ++j){
+                for (auto i = row-cells_neighbors_; i< row+cells_neighbors_; ++i){
+                    for (auto j = col-cells_neighbors_; j< col+cells_neighbors_; ++j){
                         index = int(i + created_map_.info.width *j);
                         if (index > created_map_.data.size())
                             continue;
