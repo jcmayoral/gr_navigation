@@ -72,7 +72,7 @@ namespace gr_pointcloud_filter
 		filters_enablers_[5] = config.outlier_removal;
 
     	//voxeling
-    	voxel_filter_.setLeafSize(config.leaf_size/2, config.leaf_size/2, config.leaf_size/2);
+    	voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
 
 		//condition
 		conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
