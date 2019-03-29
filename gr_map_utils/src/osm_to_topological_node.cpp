@@ -16,6 +16,7 @@ int main(int argc, char **argv)
     }
 
     map_converter.transformMap();
+    map_converter.storeMap();
 
     while (ros::ok()){
         loop_rate.sleep();

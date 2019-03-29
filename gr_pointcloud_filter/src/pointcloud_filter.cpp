@@ -12,30 +12,15 @@ namespace gr_pointcloud_filter
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
-		
-		//Convering sensor_msg to pcl message
-		if (!filters_enablers_[0]){
-			// Convert to ROS data type
-			pcl::toROSMsg(*cloud, output_pointcloud_);
-    		// Publish the data
-    		pointcloud_pub_.publish(output_pointcloud_);
-    		return;
-		}
 
-    	//voxeling
+		//voxeling
 		if (filters_enablers_[1]){
 			voxel_filter_.setInputCloud(cloud);
 			voxel_filter_.filter(*cloud);
 		}
 
+    	//radius outliers On progress
 		if(filters_enablers_[2]){
-			//outliers removal filter
-			outliers_filter_.setInputCloud(cloud);
-			outliers_filter_.filter(*cloud);
-		}
-
-		if(filters_enablers_[3]){
-			//radius outliers On progress
 			// build the filter
 			radius_outliers_filter_.setInputCloud(cloud);
 			// apply filter
@@ -43,14 +28,13 @@ namespace gr_pointcloud_filter
 		}
 
 		//conditional_filter
-		if (filters_enablers_[4]){
+		if (filters_enablers_[3]){
 			condition_removal_.setInputCloud (cloud);
 			condition_removal_.filter (*cloud);
 		}
 
-
     	//segmentation of a plane
-		if (filters_enablers_[5]){
+		if (filters_enablers_[4]){
 			pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
 			pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
 			segmentation_filter_.setInputCloud(cloud);
@@ -64,6 +48,13 @@ namespace gr_pointcloud_filter
 			}
 		}
 
+		if(filters_enablers_[5]){
+			//outliers removal filter
+			outliers_filter_.setInputCloud(cloud);
+			outliers_filter_.filter(*cloud);
+		}
+
+
     	// Convert to ROS data type
     	pcl::toROSMsg(*cloud, output_pointcloud_);
     	// Publish the data
@@ -71,15 +62,14 @@ namespace gr_pointcloud_filter
     }
 
     void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
-    	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    	//boost::recursive_mutex::scoped_lock scoped_lock(mutex); //if params are bad the PC process takes too long and no way to change them
 		//Enable
 		filters_enablers_[0] = config.enable_filters;
 		filters_enablers_[1] = config.voxel_filter;
-		filters_enablers_[2] = config.outlier_removal;
-		filters_enablers_[3] = config.radius_outlier_removal;
-		filters_enablers_[4] = config.conditional_filter;
-		filters_enablers_[5] = config.ground_removal;
-
+		filters_enablers_[2] = config.radius_outlier_removal;
+		filters_enablers_[3] = config.conditional_filter;
+		filters_enablers_[4] = config.ground_removal;
+		filters_enablers_[5] = config.outlier_removal;
 
     	//voxeling
     	voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
@@ -98,7 +88,7 @@ namespace gr_pointcloud_filter
 		Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
 		segmentation_filter_.setAxis(axis);
 		segmentation_filter_.setEpsAngle(eps_angle_ * (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
-			
+
     	//segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
     	segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     	segmentation_filter_.setMaxIterations(config.max_iterations);
@@ -118,12 +108,17 @@ namespace gr_pointcloud_filter
       	min_neighbours_ = config.min_neighbours;
 		radius_outliers_filter_.setRadiusSearch(min_radius_);
       	radius_outliers_filter_.setMinNeighborsInRadius(min_neighbours_);
-      	
+
     }
 
 
     void MyNodeletClass::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
-    	applyFilters(*msg);
+		//Convering sensor_msg to pcl message
+		if (!filters_enablers_[0]){
+			pointcloud_pub_.publish(msg);
+			return;
+		}
+		applyFilters(*msg);
     }
 
     void MyNodeletClass::dyn_reconfigureCB(gr_pointcloud_filter::FiltersConfig &config, uint32_t level){

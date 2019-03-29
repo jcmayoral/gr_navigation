@@ -17,6 +17,10 @@ find_package(catkin REQUIRED
 
 find_package(OpenCV REQUIRED)
 
+generate_dynamic_reconfigure_options(
+  cfg/ProximityMonitor.cfg
+)
+
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
@@ -49,10 +53,10 @@ target_link_libraries(proximity_monitor_node gr_safety_monitors gr_safe_actions)
 
 target_link_libraries(monitors_manager_node gr_safety_monitors gr_safe_actions)
 
-add_dependencies(gr_safety_monitors ${catkin_EXPORTED_TARGETS})
-add_dependencies(proximity_monitor_node gr_safety_monitors gr_safe_actions)
+add_dependencies(gr_safety_monitors ${catkin_EXPORTED_TARGETS} gr_safety_monitors_gencfg)
+add_dependencies(proximity_monitor_node gr_safety_monitors gr_safe_actions gr_safety_monitors_gencfg)
 
-add_dependencies(monitors_manager_node gr_safety_monitors gr_safe_actions)
+add_dependencies(monitors_manager_node gr_safety_monitors gr_safe_actions gr_safety_monitors_gencfg)
 
 ### INSTALLS
 install(TARGETS gr_safety_monitors
