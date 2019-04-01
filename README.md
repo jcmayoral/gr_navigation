@@ -8,4 +8,6 @@ A sample of a hybrid map.
 
 Navigation over hybrid map (topologic + metric map).
 ![Hybrid Navigation 01.04.19](/doc/hybrid_map_navigation.png)
+
+##Proximity Monitor
 ![Proximity Monitor 01.04.19](/doc/proximity_monitor.png)
