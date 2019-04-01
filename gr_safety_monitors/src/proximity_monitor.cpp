@@ -129,6 +129,13 @@ namespace gr_safety_monitors
           circumference.y = y;
           marker.points.push_back(circumference);
     }
+
+
+    //For some value 0 is never reached
+    circumference.y = region_radius_*level;
+    circumference.x = 0.0;
+    marker.points.push_back(circumference);
+
     //mirror
     for (float y= region_radius_*level; y>=-region_radius_*level; y-= 0.1 ){
           if (pow(y,2) > r_2)
@@ -137,6 +144,11 @@ namespace gr_safety_monitors
           circumference.y = y;
           marker.points.push_back(circumference);
     }
+
+    //For some value 0 is never reached
+    circumference.y = -region_radius_*level;
+    circumference.x = 0.0;
+    marker.points.push_back(circumference);
 
   }
 
