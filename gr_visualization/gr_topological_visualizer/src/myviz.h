@@ -41,6 +41,7 @@
 #include <rviz/visualization_manager.h>
 #include <rviz/render_panel.h>
 #include <rviz/display.h>
+#include <rviz/default_plugin/marker_array_display.h>
 
 #include "nodes_visualizer.hpp"
 
@@ -69,6 +70,7 @@ namespace gr_topological_visualizer{
       rviz::VisualizationManager* manager_;
       rviz::RenderPanel* render_panel_;
       rviz::Display* grid_;
+      rviz::Display* marker_array_;
       MapGenerator* map_utils_;
       int plane_cells_;
       int normal_cells_;

@@ -35,7 +35,7 @@ using namespace gr_topological_visualizer;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
-  : QWidget( parent )
+  : QWidget( parent ), marker_array_()
 {
   // Construct and lay out labels and slider controls.
   QLabel* normal_cells_label = new QLabel( "Normal Nodes" );
@@ -90,20 +90,31 @@ MyViz::MyViz( QWidget* parent )
   // librviz.
   manager_ = new rviz::VisualizationManager( render_panel_ );
   render_panel_->initialize( manager_->getSceneManager(), manager_ );
-  manager_->initialize();
-  manager_->startUpdate();
 
   // Create a Grid display.
   grid_ = manager_->createDisplay( "rviz/Grid", "adjustable grid", true );
+  marker_array_ = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
   ROS_ASSERT( grid_ != NULL );
+  ROS_ASSERT( marker_array_ != NULL );
 
   // Configure the GridDisplay the way we like it.
   grid_->subProp( "Line Style" )->setValue( "Billboards" );
   grid_->subProp( "Color" )->setValue( QColor( Qt::yellow ) );
 
+  marker_array_->subProp( "Marker Topic" )->setValue("/1_topological_map_visualisation");
+
   // Initialize the slider values.
   normal_slider->setValue( 0 );
   plane_slider->setValue( 3 );
+
+  //marker_array_->subProp("Reference Frame")->setValue("map"); // This probably works by itself, I added the next line just in case
+  //marker_array_->initialize(visualization_manager_);
+  manager_->setFixedFrame("map");
+  manager_->initialize();
+  manager_->startUpdate();
+
+  std::cout <<"a"<<std::endl;
+
 }
 
 // Destructor.
@@ -153,7 +164,7 @@ void MyViz::setCellSize( int cell_size_percent )
 void MyViz::saveMap(){
   std::cout << "IN"<< std::endl;
   std::vector<std::pair<float,float> > vector;
-  
+
   map_utils_->calculateCenters(vector, plane_cells_, normal_cells_, cell_size_percent_);
 
   for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
