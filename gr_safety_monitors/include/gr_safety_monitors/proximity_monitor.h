@@ -1,3 +1,6 @@
+#ifndef PROXIMITY_MONITOR_H
+#define PROXIMITY_MONITOR_H
+
 #include <ros/ros.h>
 #include <string>
 #include <fault_core/fault_detector.h>
@@ -17,6 +20,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <gr_safety_monitors/safe_actions/publisher_safe_action.h>
+#include <gr_safety_monitors/safe_actions/dynamic_reconfigure_safe_action.h>
+#include <gr_safety_monitors/safe_actions/safe_action.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 
@@ -62,4 +67,6 @@ namespace gr_safety_monitors
       dynamic_reconfigure::Server<gr_safety_monitors::ProximityMonitorConfig>::CallbackType dyn_server_cb_;
   };
 
-}
+};
+
+#endif
