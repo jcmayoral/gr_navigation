@@ -1,3 +1,6 @@
+#ifndef SAFE_ACTION_H
+#define SAFE_ACTION_H
+
 #include <ros/ros.h>
 
 namespace gr_safety_monitors{
@@ -10,3 +13,5 @@ namespace gr_safety_monitors{
             virtual void stop()=0;
     };
 };
+
+#endif

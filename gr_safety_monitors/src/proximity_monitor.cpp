@@ -168,7 +168,8 @@ namespace gr_safety_monitors
     fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 
     if (action_executer_ == NULL){ //if executer not initialized initialized it
-      action_executer_ = new PublisherSafeAction(); 
+      //action_executer_ = new PublisherSafeAction(); 
+      action_executer_ = new DynamicReconfigureSafeAction();
     }
     action_executer_->execute();
   }
