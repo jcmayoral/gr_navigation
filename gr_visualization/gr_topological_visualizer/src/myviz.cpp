@@ -165,10 +165,12 @@ void MyViz::setCellSize( int cell_size_percent )
 
 void MyViz::visualizeMap(){
   std::cout << "IN"<< std::endl;
+
+  //Node Creation
   visualization_msgs::MarkerArray marker_array;
   visualization_msgs::Marker temporal_marker;
 
-  //For now this fields are constants
+  //For now this fields are constants FOR NODES
   temporal_marker.header.frame_id="map";
   temporal_marker.header.stamp = ros::Time::now();
   temporal_marker.ns = "topological_map"; //TODO maybe add segmentation layers
@@ -195,5 +197,32 @@ void MyViz::visualizeMap(){
     std::printf("center %f %f \n",it->first,it->second);
   }
 
+  //map_publisher_.publish(marker_array);
+
+  //For edges
+  geometry_msgs::Point temporal_point;
+  visualization_msgs::Marker temporal_edges;
+
+  temporal_edges.header.frame_id="map";
+  temporal_edges.header.stamp = ros::Time::now();
+  temporal_edges.ns = "topological_map"; //TODO maybe add segmentation layers
+  temporal_edges.type = visualization_msgs::Marker::LINE_STRIP;
+  temporal_edges.action = visualization_msgs::Marker::ADD;
+  temporal_edges.scale.x = 0.5;
+  temporal_edges.color.g = 1.0;
+  temporal_edges.color.a = 1.0;
+
+  temporal_edges.pose.orientation.w = 1.0;  
+
+  for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
+    
+    std::cout <<std::distance(vector.begin(), it) << std::endl;
+    temporal_edges.id = 100+std::distance(vector.begin(), it);
+    temporal_point.x = it->first;
+    temporal_point.y = it->second;
+    temporal_edges.points.push_back(temporal_point);
+  }
+
+  marker_array.markers.push_back(temporal_edges);
   map_publisher_.publish(marker_array);
 }
