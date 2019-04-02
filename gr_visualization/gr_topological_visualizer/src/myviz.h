@@ -45,6 +45,9 @@
 
 #include "nodes_visualizer.hpp"
 
+#include <ros/ros.h>
+#include <visualization_msgs/MarkerArray.h>
+
 namespace rviz
 {
 class Display;
@@ -64,7 +67,7 @@ namespace gr_topological_visualizer{
       void setPlaneNodes( int plane_cells );
       void setCellSize( int cell_size_percent );
 
-      void saveMap();
+      void visualizeMap();
 
     private:
       rviz::VisualizationManager* manager_;
@@ -75,6 +78,8 @@ namespace gr_topological_visualizer{
       int plane_cells_;
       int normal_cells_;
       float cell_size_percent_;
+      ros::NodeHandle nh_;
+      ros::Publisher map_publisher_;
   };
 };
   // END_TUTORIAL

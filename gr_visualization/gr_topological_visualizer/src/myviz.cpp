@@ -35,8 +35,10 @@ using namespace gr_topological_visualizer;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
-  : QWidget( parent ), marker_array_()
+  : QWidget( parent ), marker_array_(), nh_()
 {
+  map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
+  
   // Construct and lay out labels and slider controls.
   QLabel* normal_cells_label = new QLabel( "Normal Nodes" );
   QSlider* normal_slider = new QSlider( Qt::Horizontal );
@@ -55,7 +57,7 @@ MyViz::MyViz( QWidget* parent )
   cell_size_slider->setMinimum( 1 );
   cell_size_slider->setMaximum( 100 );
 
-  QPushButton* save_topological_map = new QPushButton ("Save Topological Map");
+  QPushButton* save_topological_map = new QPushButton ("Visualize Topological Map");
 
   QGridLayout* controls_layout = new QGridLayout();
   controls_layout->addWidget( normal_cells_label, 0, 0 );
@@ -80,7 +82,7 @@ MyViz::MyViz( QWidget* parent )
   connect( normal_slider, SIGNAL( valueChanged( int )), this, SLOT( setNormalNodes( int )));
   connect( plane_slider, SIGNAL( valueChanged( int )), this, SLOT( setPlaneNodes( int )));
   connect( cell_size_slider, SIGNAL( valueChanged( int )), this, SLOT( setCellSize( int )));
-  connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
+  connect( save_topological_map, SIGNAL( released( )), this, SLOT( visualizeMap( )));
 
   // Next we initialize the main RViz classes.
   //
@@ -101,7 +103,7 @@ MyViz::MyViz( QWidget* parent )
   grid_->subProp( "Line Style" )->setValue( "Billboards" );
   grid_->subProp( "Color" )->setValue( QColor( Qt::yellow ) );
 
-  marker_array_->subProp( "Marker Topic" )->setValue("/1_topological_map_visualisation");
+  marker_array_->subProp( "Marker Topic" )->setValue("temporal_topological_map");
 
   // Initialize the slider values.
   normal_slider->setValue( 0 );
@@ -161,13 +163,37 @@ void MyViz::setCellSize( int cell_size_percent )
   }
 }
 
-void MyViz::saveMap(){
+void MyViz::visualizeMap(){
   std::cout << "IN"<< std::endl;
+  visualization_msgs::MarkerArray marker_array;
+  visualization_msgs::Marker temporal_marker;
+
+  //For now this fields are constants
+  temporal_marker.header.frame_id="map";
+  temporal_marker.header.stamp = ros::Time::now();
+  temporal_marker.ns = "topological_map"; //TODO maybe add segmentation layers
+  temporal_marker.type = visualization_msgs::Marker::CYLINDER;
+  temporal_marker.action = visualization_msgs::Marker::ADD;
+  temporal_marker.scale.x = 1.0;
+  temporal_marker.scale.y = 1.0;
+  temporal_marker.color.r = 1.0;
+  temporal_marker.color.a = 1.0;
+
+  temporal_marker.pose.orientation.w = 1.0;  
+
   std::vector<std::pair<float,float> > vector;
 
   map_utils_->calculateCenters(vector, plane_cells_, normal_cells_, cell_size_percent_);
 
   for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
+    
+    std::cout <<std::distance(vector.begin(), it) << std::endl;
+    temporal_marker.id = std::distance(vector.begin(), it);
+    temporal_marker.pose.position.x = it->first;
+    temporal_marker.pose.position.y = it->second;
+    marker_array.markers.push_back(temporal_marker);
     std::printf("center %f %f \n",it->first,it->second);
   }
+
+  map_publisher_.publish(marker_array);
 }
