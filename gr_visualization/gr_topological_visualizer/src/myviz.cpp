@@ -108,6 +108,7 @@ MyViz::MyViz( QWidget* parent )
   // Initialize the slider values.
   normal_slider->setValue( 0 );
   plane_slider->setValue( 3 );
+  cell_size_slider->setValue(1.0);
 
   //marker_array_->subProp("Reference Frame")->setValue("map"); // This probably works by itself, I added the next line just in case
   //marker_array_->initialize(visualization_manager_);
@@ -143,6 +144,7 @@ void MyViz::setNormalNodes( int normal_cells )
 void MyViz::setPlaneNodes( int plane_cells )
 {
   plane_cells_ = plane_cells;
+
   if( grid_ != NULL )
   {
     grid_->subProp("Plane Cell Count") -> setValue(plane_cells);
@@ -206,22 +208,65 @@ void MyViz::visualizeMap(){
   temporal_edges.header.frame_id="map";
   temporal_edges.header.stamp = ros::Time::now();
   temporal_edges.ns = "topological_map"; //TODO maybe add segmentation layers
-  temporal_edges.type = visualization_msgs::Marker::LINE_STRIP;
+  temporal_edges.type = visualization_msgs::Marker::LINE_LIST;
   temporal_edges.action = visualization_msgs::Marker::ADD;
-  temporal_edges.scale.x = 0.5;
+  temporal_edges.scale.x = 0.3;
   temporal_edges.color.g = 1.0;
   temporal_edges.color.a = 1.0;
 
   temporal_edges.pose.orientation.w = 1.0;  
 
-  for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
+  int index;
     
-    std::cout <<std::distance(vector.begin(), it) << std::endl;
-    temporal_edges.id = 100+std::distance(vector.begin(), it);
-    temporal_point.x = it->first;
-    temporal_point.y = it->second;
-    temporal_edges.points.push_back(temporal_point);
+
+
+  for (int i =0; i <plane_cells_;i++){
+    for (int j =0; j <plane_cells_;j++){
+      if (j==(plane_cells_-1)&& i==(plane_cells_-1)){
+        continue;
+      }
+
+      if (j==(plane_cells_-1)){
+        if (i%2==0){
+          index = j + i*plane_cells_;
+          temporal_edges.id = 100+index;
+          temporal_point.x = vector[index].first;
+          temporal_point.y = vector[index].second;
+          temporal_edges.points.push_back(temporal_point);
+          std::cout << "indexes " << index << std::endl;
+          std::cout << "even " << i <<std::endl;
+          index = j + (i+1)*plane_cells_;
+          std::cout << "indexes " << index << std::endl;
+        }
+        else{
+         index = i*plane_cells_;
+         temporal_edges.id = 1020+index;
+         temporal_point.x = vector[index].first;
+         temporal_point.y = vector[index].second;
+         temporal_edges.points.push_back(temporal_point);
+         std::cout << "indexes " << index << std::endl;
+         std::cout << "odd " << i <<std::endl;
+         index = (i+1)*plane_cells_;
+         std::cout << "indexes " << index << std::endl;
+        }
+        temporal_edges.id = 1001+index;
+        temporal_point.x = vector[index].first;
+        temporal_point.y = vector[index].second;
+        temporal_edges.points.push_back(temporal_point);
+      }
+      else{
+        index = j + i*plane_cells_;
+        temporal_edges.id = 100+index;
+        temporal_point.x = vector[index].first;
+        temporal_point.y = vector[index].second;
+        temporal_edges.points.push_back(temporal_point);
+        temporal_point.x = vector[index+1].first;
+        temporal_point.y = vector[index+1].second;
+        temporal_edges.points.push_back(temporal_point);
+      }
+    }
   }
+  //ROS_ASSERT(temporal_edges.points.size()%2 ==0);
 
   marker_array.markers.push_back(temporal_edges);
   map_publisher_.publish(marker_array);
