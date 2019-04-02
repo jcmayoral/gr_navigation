@@ -93,17 +93,13 @@ MyViz::MyViz( QWidget* parent )
   manager_ = new rviz::VisualizationManager( render_panel_ );
   render_panel_->initialize( manager_->getSceneManager(), manager_ );
 
-  // Create a Grid display.
-  grid_ = manager_->createDisplay( "rviz/Grid", "adjustable grid", true );
+  // Create a MARKER
   marker_array_ = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
-  ROS_ASSERT( grid_ != NULL );
   ROS_ASSERT( marker_array_ != NULL );
 
-  // Configure the GridDisplay the way we like it.
-  grid_->subProp( "Line Style" )->setValue( "Billboards" );
-  grid_->subProp( "Color" )->setValue( QColor( Qt::yellow ) );
-
+  //subscribe to temproal topological_map
   marker_array_->subProp( "Marker Topic" )->setValue("temporal_topological_map");
+  marker_array_->subProp( "Queue Size " )->setValue(1);
 
   // Initialize the slider values.
   normal_slider->setValue( 0 );
@@ -132,24 +128,12 @@ MyViz::~MyViz()
 void MyViz::setNormalNodes( int normal_cells )
 {
   normal_cells_ = normal_cells;
-  if( grid_ != NULL )
-  {
-    //grid_->subProp("Width") -> setValue(width_cells);
-    grid_->subProp("Normal Cell Count") -> setValue(normal_cells);
-
-    //grid_->subProp( "Line Style" )->subProp( "Line Width" )->setValue( width_cells / 100.0f );
-  }
 }
 
 void MyViz::setPlaneNodes( int plane_cells )
 {
   plane_cells_ = plane_cells;
-
-  if( grid_ != NULL )
-  {
-    grid_->subProp("Plane Cell Count") -> setValue(plane_cells);
-    //grid_->subProp( "Line Style" )->subProp( "Line Width" )->setValue( height_cells / 100.0f );
-  }
+  visualizeMap();
 }
 
 // This function is a Qt slot connected to a QSlider's valueChanged()
@@ -158,11 +142,7 @@ void MyViz::setPlaneNodes( int plane_cells )
 void MyViz::setCellSize( int cell_size_percent )
 {
   cell_size_percent_ = cell_size_percent/10.0f;
-
-  if( grid_ != NULL )
-  {
-    grid_->subProp( "Cell Size" )->setValue( cell_size_percent / 10.0f );
-  }
+  visualizeMap();
 }
 
 void MyViz::visualizeMap(){
@@ -177,6 +157,14 @@ void MyViz::visualizeMap(){
   temporal_marker.header.stamp = ros::Time::now();
   temporal_marker.ns = "topological_map"; //TODO maybe add segmentation layers
   temporal_marker.type = visualization_msgs::Marker::CYLINDER;
+  
+  //DELETE PREVIOUS
+  temporal_marker.action = visualization_msgs::Marker::DELETEALL;
+  marker_array.markers.push_back(temporal_marker);
+  map_publisher_.publish(marker_array);
+  marker_array.markers.clear();
+
+  //Create New Nodes
   temporal_marker.action = visualization_msgs::Marker::ADD;
   temporal_marker.scale.x = 1.0;
   temporal_marker.scale.y = 1.0;
@@ -217,12 +205,10 @@ void MyViz::visualizeMap(){
   temporal_edges.pose.orientation.w = 1.0;  
 
   int index;
-    
-
 
   for (int i =0; i <plane_cells_;i++){
     for (int j =0; j <plane_cells_;j++){
-      if (j==(plane_cells_-1)&& i==(plane_cells_-1)){
+      if (j==(plane_cells_-1)&& i==(plane_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
         continue;
       }
 
@@ -233,10 +219,7 @@ void MyViz::visualizeMap(){
           temporal_point.x = vector[index].first;
           temporal_point.y = vector[index].second;
           temporal_edges.points.push_back(temporal_point);
-          std::cout << "indexes " << index << std::endl;
-          std::cout << "even " << i <<std::endl;
           index = j + (i+1)*plane_cells_;
-          std::cout << "indexes " << index << std::endl;
         }
         else{
          index = i*plane_cells_;
@@ -244,10 +227,7 @@ void MyViz::visualizeMap(){
          temporal_point.x = vector[index].first;
          temporal_point.y = vector[index].second;
          temporal_edges.points.push_back(temporal_point);
-         std::cout << "indexes " << index << std::endl;
-         std::cout << "odd " << i <<std::endl;
          index = (i+1)*plane_cells_;
-         std::cout << "indexes " << index << std::endl;
         }
         temporal_edges.id = 1001+index;
         temporal_point.x = vector[index].first;
