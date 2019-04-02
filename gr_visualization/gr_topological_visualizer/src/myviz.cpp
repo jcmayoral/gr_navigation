@@ -35,39 +35,37 @@ using namespace gr_topological_visualizer;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
-  : QWidget( parent ), marker_array_(), nh_()
+  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
   
   // Construct and lay out labels and slider controls.
-  QLabel* normal_cells_label = new QLabel( "Normal Nodes" );
-  QSlider* normal_slider = new QSlider( Qt::Horizontal );
+  QLabel* width_label = new QLabel( "Width Terrain" );
+  QSlider* width_slider = new QSlider( Qt::Horizontal );
+  width_slider->setMinimum( 0.00 );
+  width_slider->setMaximum( 1000.0 );
 
-  QLabel* plane_cells_label = new QLabel( "Plane Nodes" );
-  QSlider* plane_slider = new QSlider( Qt::Horizontal );
+  QLabel* height_label = new QLabel( "Height Terrain" );
+  QSlider* height_slider = new QSlider( Qt::Horizontal );
+  height_slider->setMinimum( 1.0 );
+  height_slider->setMaximum( 1000.0 );
 
-  normal_slider->setMinimum( 0 );
-  normal_slider->setMaximum( 100 );
-
-  plane_slider->setMinimum( 1 );
-  plane_slider->setMaximum( 100 );
-
-  QLabel* cell_size_label = new QLabel( "Cell Size" );
-  QSlider* cell_size_slider = new QSlider( Qt::Horizontal );
-  cell_size_slider->setMinimum( 1 );
-  cell_size_slider->setMaximum( 100 );
+  QLabel* robot_radius_label = new QLabel("Robot Radius");
+  QSpinBox* robot_radius_spinbox = new QSpinBox;
+  robot_radius_spinbox->setRange(1, 30);
+  robot_radius_spinbox->setSingleStep(1);
+  robot_radius_spinbox->setValue(robot_radius_);
 
   QPushButton* save_topological_map = new QPushButton ("Visualize Topological Map");
 
   QGridLayout* controls_layout = new QGridLayout();
-  controls_layout->addWidget( normal_cells_label, 0, 0 );
-  controls_layout->addWidget( normal_slider, 0, 1 );
-  controls_layout->addWidget( plane_cells_label, 1, 0 );
-  controls_layout->addWidget( plane_slider, 1, 1 );
-  controls_layout->addWidget( cell_size_label, 2, 0 );
-  controls_layout->addWidget( cell_size_slider, 2, 1 );
+  controls_layout->addWidget( width_label, 0, 0 );
+  controls_layout->addWidget( width_slider, 0, 1 );
+  controls_layout->addWidget( height_label, 1, 0 );
+  controls_layout->addWidget( height_slider, 1, 1 );
+  controls_layout->addWidget( robot_radius_label, 2, 0 );
+  controls_layout->addWidget( robot_radius_spinbox, 2, 1 );
   controls_layout->addWidget( save_topological_map, 3, 0 );
-
 
   // Construct and lay out render panel.
   render_panel_ = new rviz::RenderPanel();
@@ -79,10 +77,10 @@ MyViz::MyViz( QWidget* parent )
   setLayout( main_layout );
 
   // Make signal/slot connections.
-  connect( normal_slider, SIGNAL( valueChanged( int )), this, SLOT( setNormalNodes( int )));
-  connect( plane_slider, SIGNAL( valueChanged( int )), this, SLOT( setPlaneNodes( int )));
-  connect( cell_size_slider, SIGNAL( valueChanged( int )), this, SLOT( setCellSize( int )));
+  connect( width_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainWidth(  int )));
+  connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainHeight(  int)));
   connect( save_topological_map, SIGNAL( released( )), this, SLOT( visualizeMap( )));
+  connect( robot_radius_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setRobotRadius(int)));
 
   // Next we initialize the main RViz classes.
   //
@@ -99,12 +97,10 @@ MyViz::MyViz( QWidget* parent )
 
   //subscribe to temproal topological_map
   marker_array_->subProp( "Marker Topic" )->setValue("temporal_topological_map");
-  marker_array_->subProp( "Queue Size " )->setValue(1);
 
   // Initialize the slider values.
-  normal_slider->setValue( 0 );
-  plane_slider->setValue( 3 );
-  cell_size_slider->setValue(1.0);
+  height_slider->setValue( 10.0 );
+  width_slider->setValue( 10.0 );
 
   //marker_array_->subProp("Reference Frame")->setValue("map"); // This probably works by itself, I added the next line just in case
   //marker_array_->initialize(visualization_manager_);
@@ -122,27 +118,21 @@ MyViz::~MyViz()
   delete manager_;
 }
 
-// This function is a Qt slot connected to a QSlider's valueChanged()
-// signal.  It sets the line thickness of the grid by changing the
-// grid's "Line Width" property.
-void MyViz::setNormalNodes( int normal_cells )
-{
-  normal_cells_ = normal_cells;
+void MyViz::setRobotRadius(int value){
+  robot_radius_ = value;
+  std::cout << robot_radius_ << std::endl;
 }
 
-void MyViz::setPlaneNodes( int plane_cells )
-{
-  plane_cells_ = plane_cells;
-  visualizeMap();
+void MyViz::setTerrainWidth( int value){
+  width_cells_ = value/robot_radius_;
+  std::cout << width_cells_<< std::endl;
+  std::cout << robot_radius_ << std::endl;
+
 }
 
-// This function is a Qt slot connected to a QSlider's valueChanged()
-// signal.  It sets the cell size of the grid by changing the grid's
-// "Cell Size" Property.
-void MyViz::setCellSize( int cell_size_percent )
-{
-  cell_size_percent_ = cell_size_percent/10.0f;
-  visualizeMap();
+void MyViz::setTerrainHeight( int value ){
+  height_cells_ = value/robot_radius_;
+  std::cout << height_cells_<< std::endl;
 }
 
 void MyViz::visualizeMap(){
@@ -175,7 +165,7 @@ void MyViz::visualizeMap(){
 
   std::vector<std::pair<float,float> > vector;
 
-  map_utils_->calculateCenters(vector, plane_cells_, normal_cells_, cell_size_percent_);
+  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_ );
 
   for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
     
@@ -206,28 +196,31 @@ void MyViz::visualizeMap(){
 
   int index;
 
-  for (int i =0; i <plane_cells_;i++){
-    for (int j =0; j <plane_cells_;j++){
-      if (j==(plane_cells_-1)&& i==(plane_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
+  for (int i =0; i <height_cells_;i++){
+    for (int j =0; j <width_cells_;j++){
+      if (j==(width_cells_-1)&& i==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
+        ROS_INFO_STREAM("Ignoring " << i << " , " << j);;
         continue;
       }
 
-      if (j==(plane_cells_-1)){
+      if (j==(width_cells_-1)){
         if (i%2==0){
-          index = j + i*plane_cells_;
+          ROS_WARN("Even Edge");
+          index = j + i*width_cells_;
           temporal_edges.id = 100+index;
           temporal_point.x = vector[index].first;
           temporal_point.y = vector[index].second;
           temporal_edges.points.push_back(temporal_point);
-          index = j + (i+1)*plane_cells_;
+          index = j + (i+1)*width_cells_;
         }
         else{
-         index = i*plane_cells_;
+          ROS_WARN("ODD Edge");
+         index = i*width_cells_;
          temporal_edges.id = 1020+index;
          temporal_point.x = vector[index].first;
          temporal_point.y = vector[index].second;
          temporal_edges.points.push_back(temporal_point);
-         index = (i+1)*plane_cells_;
+         index = (i+1)*width_cells_;
         }
         temporal_edges.id = 1001+index;
         temporal_point.x = vector[index].first;
@@ -235,7 +228,8 @@ void MyViz::visualizeMap(){
         temporal_edges.points.push_back(temporal_point);
       }
       else{
-        index = j + i*plane_cells_;
+        ROS_INFO("Normal Edge");
+        index = j + i*width_cells_;
         temporal_edges.id = 100+index;
         temporal_point.x = vector[index].first;
         temporal_point.y = vector[index].second;
@@ -250,4 +244,5 @@ void MyViz::visualizeMap(){
 
   marker_array.markers.push_back(temporal_edges);
   map_publisher_.publish(marker_array);
+  ROS_INFO("OUT");
 }

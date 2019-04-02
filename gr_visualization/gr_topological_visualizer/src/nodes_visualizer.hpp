@@ -17,7 +17,7 @@ namespace gr_topological_visualizer{
       void calculateCenters(std::vector<std::pair<float,float> >& vector, int plane_cells, int width_cells, float cell_size){
           std::cout << cell_size << std::endl;
           for(int i =0; i < plane_cells;i++){
-            for(int j =0; j < plane_cells;j++){
+            for(int j =0; j < width_cells;j++){
               vector.push_back(std::make_pair(i*cell_size,j*cell_size));
             }   
           }
