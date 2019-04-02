@@ -120,19 +120,21 @@ MyViz::~MyViz()
 
 void MyViz::setRobotRadius(int value){
   robot_radius_ = value;
-  std::cout << robot_radius_ << std::endl;
+  width_cells_ = floor(terrain_width_/robot_radius_);
+  height_cells_ = floor(terrain_height_/robot_radius_);
+  visualizeMap();
 }
 
 void MyViz::setTerrainWidth( int value){
-  width_cells_ = value/robot_radius_;
-  std::cout << width_cells_<< std::endl;
-  std::cout << robot_radius_ << std::endl;
-
+  terrain_width_ = value;
+  width_cells_ = floor(value/robot_radius_);
+  visualizeMap();
 }
 
 void MyViz::setTerrainHeight( int value ){
-  height_cells_ = value/robot_radius_;
-  std::cout << height_cells_<< std::endl;
+  terrain_height_ = value;
+  height_cells_ = floor(value/robot_radius_);
+  visualizeMap();
 }
 
 void MyViz::visualizeMap(){
@@ -156,8 +158,8 @@ void MyViz::visualizeMap(){
 
   //Create New Nodes
   temporal_marker.action = visualization_msgs::Marker::ADD;
-  temporal_marker.scale.x = 1.0;
-  temporal_marker.scale.y = 1.0;
+  temporal_marker.scale.x = robot_radius_;
+  temporal_marker.scale.y = robot_radius_;
   temporal_marker.color.r = 1.0;
   temporal_marker.color.a = 1.0;
 
@@ -165,7 +167,7 @@ void MyViz::visualizeMap(){
 
   std::vector<std::pair<float,float> > vector;
 
-  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_ );
+  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
 
   for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
     

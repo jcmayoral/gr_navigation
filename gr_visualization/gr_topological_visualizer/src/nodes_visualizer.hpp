@@ -14,11 +14,10 @@ namespace gr_topological_visualizer{
       virtual ~MapGenerator(){
 
       }
-      void calculateCenters(std::vector<std::pair<float,float> >& vector, int plane_cells, int width_cells, float cell_size){
-          std::cout << cell_size << std::endl;
-          for(int i =0; i < plane_cells;i++){
-            for(int j =0; j < width_cells;j++){
-              vector.push_back(std::make_pair(i*cell_size,j*cell_size));
+      void calculateCenters(std::vector<std::pair<float,float> >& vector, int h_cells, int w_cells, float h_size, float w_size){
+          for(int i =0; i < h_cells;i++){
+            for(int j =0; j < w_cells;j++){
+              vector.push_back(std::make_pair(i*h_size,j*w_size));
             }   
           }
       }
