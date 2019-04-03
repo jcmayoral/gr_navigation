@@ -1,11 +1,10 @@
 #include <gr_map_utils/topological_to_metric_converter.h>
 
 namespace gr_map_utils{
-    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_), 
+    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_),
                                                                     mark_nodes_(false), nodes_value_(127),
                                                                     inverted_costmap_(true), map_yaw_(0.0),
-                                                                    map_offset_(2.0), cells_neighbors_(3)
-{
+                                                                    map_offset_(2.0), cells_neighbors_(3){
         ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
@@ -56,7 +55,7 @@ namespace gr_map_utils{
         ROS_INFO("Trying getting map from database");
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalMap> > results_map;
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
-        
+
 
         std::string name("simulation_map");
 
@@ -107,7 +106,7 @@ namespace gr_map_utils{
 
 
     bool Topological2MetricMap::getMapFromTopic(){
-        
+
         ROS_INFO("Wait map from topic.. timeout to 3 seconds");
         boost::shared_ptr<strands_navigation_msgs::TopologicalMap const> map;
         map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("static_topological_map", ros::Duration(3));
