@@ -14,14 +14,14 @@ PublisherSafeAction::~PublisherSafeAction(){
 };
 
 void PublisherSafeAction::execute(){
-    //ROS_INFO("Executing  Publisher SafeAction");
+    ROS_INFO_THROTTLE(5,"Executing  Publisher SafeAction");
     std_msgs::Bool topic;
     topic.data = false;
     topic_publisher_.publish(topic);
 };
 
 void PublisherSafeAction::stop(){
-    //ROS_WARN("Stop  Publisher SafeAction");
+    ROS_WARN("Stop  Publisher SafeAction");
     std_msgs::Bool topic;
     topic.data = true;
     topic_publisher_.publish(topic);

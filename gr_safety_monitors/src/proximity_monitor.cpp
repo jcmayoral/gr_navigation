@@ -33,15 +33,21 @@ namespace gr_safety_monitors
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){
         rgb_cloud.points[i].r = 255;
         ROS_ERROR_THROTTLE(5, "Obstacle Detected on first safety ring");
-        is_detected = true;
+        is_obstacle_detected_ = true;
+        fault_region_id_ = 0;
+        return;
       }
 
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 1){
         rgb_cloud.points[i].b = 255;
+        fault_region_id_ = 1;
+        is_obstacle_detected_ = true;
+        return;
       }
 
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 2){
         rgb_cloud.points[i].g = 255;
+        fault_region_id_ = 2;
       }
 
     }
@@ -60,7 +66,9 @@ namespace gr_safety_monitors
     return int(distance/region_radius_);
   }
 
-  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5), regions_number_(3), action_executer_(NULL)
+  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5),
+                                        regions_number_(3), action_executer_(NULL),
+                                        fault_region_id_(0)
   {
     //Define Fault Type as Unknown
     fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
@@ -180,8 +188,19 @@ namespace gr_safety_monitors
     fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 
     if (action_executer_ == NULL){ //if executer not initialized initialized it
-      //action_executer_ = new PublisherSafeAction(); 
-      action_executer_ = new DynamicReconfigureSafeAction();
+      //action_executer_ = new PublisherSafeAction();
+      ROS_INFO_STREAM ("Obstacle detected on region with ID "<< fault_region_id_ );
+      switch (fault_region_id_){
+        case 0:
+          action_executer_ = new PublisherSafeAction();
+          break;
+        case 1:
+          action_executer_ = new DynamicReconfigureSafeAction();
+          break;
+        default:
+          ROS_ERROR("Error detecting obstacles");
+      }
+
     }
     action_executer_->execute();
   }
