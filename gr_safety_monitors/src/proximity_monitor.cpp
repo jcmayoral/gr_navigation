@@ -27,12 +27,10 @@ namespace gr_safety_monitors
 	  //pcl2 to pclxyzrgba
     pcl::copyPointCloud(cloud,rgb_cloud);
 
-    bool is_detected = false;
     //color
     for (int i = 0; i < rgb_cloud.points.size(); i++) {
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){
         rgb_cloud.points[i].r = 255;
-        ROS_ERROR_THROTTLE(5, "Obstacle Detected on first safety ring");
         is_obstacle_detected_ = true;
         fault_region_id_ = 0;
         return;
@@ -45,14 +43,13 @@ namespace gr_safety_monitors
         return;
       }
 
-      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 2){
+      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) > 1){
         rgb_cloud.points[i].g = 255;
         fault_region_id_ = 2;
+        is_obstacle_detected_ = false;
       }
 
     }
-
-    is_obstacle_detected_ = is_detected;
 
     // Convert to ROS data type
     pcl::toROSMsg(rgb_cloud, output_pointcloud);
