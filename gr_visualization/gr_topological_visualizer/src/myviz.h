@@ -69,6 +69,7 @@ namespace gr_topological_visualizer{
       void setRobotRadius(int radius);
 
       void visualizeMap();
+      void saveMap();
 
     private:
       rviz::VisualizationManager* manager_;

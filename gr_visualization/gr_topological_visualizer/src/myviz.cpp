@@ -79,7 +79,7 @@ MyViz::MyViz( QWidget* parent )
   // Make signal/slot connections.
   connect( width_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainWidth(  int )));
   connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainHeight(  int)));
-  connect( save_topological_map, SIGNAL( released( )), this, SLOT( visualizeMap( )));
+  connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
   connect( robot_radius_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setRobotRadius(int)));
 
   // Next we initialize the main RViz classes.
@@ -147,7 +147,7 @@ void MyViz::visualizeMap(){
   //For now this fields are constants FOR NODES
   temporal_marker.header.frame_id="map";
   temporal_marker.header.stamp = ros::Time::now();
-  temporal_marker.ns = "topological_map"; //TODO maybe add segmentation layers
+  temporal_marker.ns = "nodes"; //TODO maybe add segmentation layers
   temporal_marker.type = visualization_msgs::Marker::CYLINDER;
   
   //DELETE PREVIOUS
@@ -187,7 +187,7 @@ void MyViz::visualizeMap(){
 
   temporal_edges.header.frame_id="map";
   temporal_edges.header.stamp = ros::Time::now();
-  temporal_edges.ns = "topological_map"; //TODO maybe add segmentation layers
+  temporal_edges.ns = "edges"; //TODO maybe add segmentation layers
   temporal_edges.type = visualization_msgs::Marker::LINE_LIST;
   temporal_edges.action = visualization_msgs::Marker::ADD;
   temporal_edges.scale.x = 0.3;
@@ -247,4 +247,8 @@ void MyViz::visualizeMap(){
   marker_array.markers.push_back(temporal_edges);
   map_publisher_.publish(marker_array);
   ROS_INFO("OUT");
+}
+
+void MyViz::saveMap(){
+  
 }
