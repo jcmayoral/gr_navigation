@@ -28,27 +28,34 @@ namespace gr_safety_monitors
     pcl::copyPointCloud(cloud,rgb_cloud);
 
     //color
+    bool warning_zone = false;
+
     for (int i = 0; i < rgb_cloud.points.size(); i++) {
-      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){
+      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){//FIRST POINT IN DANGER ZONE.. Return
         rgb_cloud.points[i].r = 255;
-        is_obstacle_detected_ = true;
         fault_region_id_ = 0;
+        is_obstacle_detected_ = true;
         return;
       }
 
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 1){
         rgb_cloud.points[i].b = 255;
         fault_region_id_ = 1;
+        warning_zone = true;
         is_obstacle_detected_ = true;
-        return;
       }
 
+      /*
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) > 1){
         rgb_cloud.points[i].g = 255;
+      }
+      */
+
+    }
+
+    if (!warning_zone){
         fault_region_id_ = 2;
         is_obstacle_detected_ = false;
-      }
-
     }
 
     // Convert to ROS data type
