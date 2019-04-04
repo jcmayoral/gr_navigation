@@ -61,6 +61,7 @@ namespace gr_safety_monitors
 
       double region_radius_;
       int regions_number_;
+      int fault_region_id_;
       SafeAction* action_executer_;
       boost::recursive_mutex mutex;
       dynamic_reconfigure::Server<gr_safety_monitors::ProximityMonitorConfig> dyn_server_;

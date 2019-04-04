@@ -27,26 +27,36 @@ namespace gr_safety_monitors
 	  //pcl2 to pclxyzrgba
     pcl::copyPointCloud(cloud,rgb_cloud);
 
-    bool is_detected = false;
     //color
+    bool warning_zone = false;
+
     for (int i = 0; i < rgb_cloud.points.size(); i++) {
-      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){
+      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){//FIRST POINT IN DANGER ZONE.. Return
         rgb_cloud.points[i].r = 255;
-        ROS_ERROR_THROTTLE(5, "Obstacle Detected on first safety ring");
-        is_detected = true;
+        fault_region_id_ = 0;
+        is_obstacle_detected_ = true;
+        return;
       }
 
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 1){
         rgb_cloud.points[i].b = 255;
+        fault_region_id_ = 1;
+        warning_zone = true;
+        is_obstacle_detected_ = true;
       }
 
-      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 2){
+      /*
+      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) > 1){
         rgb_cloud.points[i].g = 255;
       }
+      */
 
     }
 
-    is_obstacle_detected_ = is_detected;
+    if (!warning_zone){
+        fault_region_id_ = 2;
+        is_obstacle_detected_ = false;
+    }
 
     // Convert to ROS data type
     pcl::toROSMsg(rgb_cloud, output_pointcloud);
@@ -60,7 +70,9 @@ namespace gr_safety_monitors
     return int(distance/region_radius_);
   }
 
-  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5), regions_number_(3), action_executer_(NULL)
+  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5),
+                                        regions_number_(3), action_executer_(NULL),
+                                        fault_region_id_(0)
   {
     //Define Fault Type as Unknown
     fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
@@ -129,6 +141,13 @@ namespace gr_safety_monitors
           circumference.y = y;
           marker.points.push_back(circumference);
     }
+
+
+    //For some value 0 is never reached
+    circumference.y = region_radius_*level;
+    circumference.x = 0.0;
+    marker.points.push_back(circumference);
+
     //mirror
     for (float y= region_radius_*level; y>=-region_radius_*level; y-= 0.1 ){
           if (pow(y,2) > r_2)
@@ -138,10 +157,18 @@ namespace gr_safety_monitors
           marker.points.push_back(circumference);
     }
 
+    //For some value 0 is never reached
+    circumference.y = -region_radius_*level;
+    circumference.x = 0.0;
+    marker.points.push_back(circumference);
+
   }
 
   void ProximityMonitor::publishTopics()
   {
+    for (auto i=0; i< marker_array_.markers.size(); i++){
+      marker_array_.markers[i].header.stamp = ros::Time::now();
+    }
      marker_pub_.publish(marker_array_);
   }
 
@@ -168,8 +195,19 @@ namespace gr_safety_monitors
     fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 
     if (action_executer_ == NULL){ //if executer not initialized initialized it
-      //action_executer_ = new PublisherSafeAction(); 
-      action_executer_ = new DynamicReconfigureSafeAction();
+      //action_executer_ = new PublisherSafeAction();
+      ROS_INFO_STREAM ("Obstacle detected on region with ID "<< fault_region_id_ );
+      switch (fault_region_id_){
+        case 0:
+          action_executer_ = new PublisherSafeAction();
+          break;
+        case 1:
+          action_executer_ = new DynamicReconfigureSafeAction();
+          break;
+        default:
+          ROS_ERROR("Error detecting obstacles");
+      }
+
     }
     action_executer_->execute();
   }

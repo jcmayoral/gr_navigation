@@ -37,12 +37,17 @@
 
 #include <QGridLayout>
 #include <QVBoxLayout>
+#include <QSpinBox>
 
 #include <rviz/visualization_manager.h>
 #include <rviz/render_panel.h>
 #include <rviz/display.h>
+#include <rviz/default_plugin/marker_array_display.h>
 
 #include "nodes_visualizer.hpp"
+
+#include <ros/ros.h>
+#include <visualization_msgs/MarkerArray.h>
 
 namespace rviz
 {
@@ -59,20 +64,24 @@ namespace gr_topological_visualizer{
       virtual ~MyViz();
 
       private Q_SLOTS:      
-      void setNormalNodes( int normal_cells );
-      void setPlaneNodes( int plane_cells );
-      void setCellSize( int cell_size_percent );
+      void setTerrainWidth( int value);
+      void setTerrainHeight( int value);
+      void setRobotRadius(int radius);
 
-      void saveMap();
+      void visualizeMap();
 
     private:
       rviz::VisualizationManager* manager_;
       rviz::RenderPanel* render_panel_;
-      rviz::Display* grid_;
+      rviz::Display* marker_array_;
       MapGenerator* map_utils_;
-      int plane_cells_;
-      int normal_cells_;
-      float cell_size_percent_;
+      int height_cells_;
+      int width_cells_;
+      ros::NodeHandle nh_;
+      ros::Publisher map_publisher_;
+      float robot_radius_;
+      float terrain_width_;
+      float terrain_height_;
   };
 };
   // END_TUTORIAL
