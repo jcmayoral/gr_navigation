@@ -92,11 +92,11 @@ MyViz::MyViz( QWidget* parent )
   render_panel_->initialize( manager_->getSceneManager(), manager_ );
 
   // Create a MARKER
-  marker_array_ = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
-  ROS_ASSERT( marker_array_ != NULL );
+  marker_display_ = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
+  ROS_ASSERT( marker_display_ != NULL );
 
   //subscribe to temproal topological_map
-  marker_array_->subProp( "Marker Topic" )->setValue("temporal_topological_map");
+  marker_display_->subProp( "Marker Topic" )->setValue("temporal_topological_map");
 
   // Initialize the slider values.
   height_slider->setValue( 10.0 );
@@ -141,8 +141,9 @@ void MyViz::visualizeMap(){
   std::cout << "IN"<< std::endl;
 
   //Node Creation
-  visualization_msgs::MarkerArray marker_array;
   visualization_msgs::Marker temporal_marker;
+
+  marker_array_.markers.clear();
 
   //For now this fields are constants FOR NODES
   temporal_marker.header.frame_id="map";
@@ -152,9 +153,8 @@ void MyViz::visualizeMap(){
   
   //DELETE PREVIOUS
   temporal_marker.action = visualization_msgs::Marker::DELETEALL;
-  marker_array.markers.push_back(temporal_marker);
-  map_publisher_.publish(marker_array);
-  marker_array.markers.clear();
+  marker_array_.markers.push_back(temporal_marker);
+  map_publisher_.publish(marker_array_);
 
   //Create New Nodes
   temporal_marker.action = visualization_msgs::Marker::ADD;
@@ -175,7 +175,7 @@ void MyViz::visualizeMap(){
     temporal_marker.id = std::distance(vector.begin(), it);
     temporal_marker.pose.position.x = it->first;
     temporal_marker.pose.position.y = it->second;
-    marker_array.markers.push_back(temporal_marker);
+    marker_array_.markers.push_back(temporal_marker);
     std::printf("center %f %f \n",it->first,it->second);
   }
 
@@ -244,11 +244,26 @@ void MyViz::visualizeMap(){
   }
   //ROS_ASSERT(temporal_edges.points.size()%2 ==0);
 
-  marker_array.markers.push_back(temporal_edges);
-  map_publisher_.publish(marker_array);
+  marker_array_.markers.push_back(temporal_edges);
+  map_publisher_.publish(marker_array_);
   ROS_INFO("OUT");
 }
 
 void MyViz::saveMap(){
-  
+
+  strands_navigation_msgs::TopologicalMap topo_map;
+  strands_navigation_msgs::TopologicalNode topo_node;
+
+
+  for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
+    std::cout << it->id << std::endl;
+    topo_node.pose = it-> pose;
+    topo_map.nodes.push_back(topo_node);
+    for (std::vector<geometry_msgs::Point>::iterator it2 = it->points.begin(); it2!= it->points.end();it2++){
+      std::cout << it2->x << std::endl;
+    }
+  }
+
+  ROS_INFO_STREAM(topo_map);
+
 }
