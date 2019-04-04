@@ -5,7 +5,7 @@ using namespace gr_safety_monitors;
 PublisherSafeAction::PublisherSafeAction(){
     //ROS_INFO("Constructor Publisher SafeAction");
     ros::NodeHandle nh;
-    topic_publisher_ = nh.advertise<std_msgs::Bool>("stop_signal", 1);
+    topic_publisher_ = nh.advertise<std_msgs::Bool>("lock_all", 1);
 };
 
 PublisherSafeAction::~PublisherSafeAction(){
@@ -16,13 +16,13 @@ PublisherSafeAction::~PublisherSafeAction(){
 void PublisherSafeAction::execute(){
     ROS_INFO_THROTTLE(5,"Executing  Publisher SafeAction");
     std_msgs::Bool topic;
-    topic.data = false;
+    topic.data = true;
     topic_publisher_.publish(topic);
 };
 
 void PublisherSafeAction::stop(){
     ROS_WARN("Stop  Publisher SafeAction");
     std_msgs::Bool topic;
-    topic.data = true;
+    topic.data = false;
     topic_publisher_.publish(topic);
 };

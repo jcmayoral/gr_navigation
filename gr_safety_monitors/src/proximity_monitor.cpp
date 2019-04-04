@@ -166,6 +166,9 @@ namespace gr_safety_monitors
 
   void ProximityMonitor::publishTopics()
   {
+    for (auto i=0; i< marker_array_.markers.size(); i++){
+      marker_array_.markers[i].header.stamp = ros::Time::now();
+    }
      marker_pub_.publish(marker_array_);
   }
 

@@ -27,7 +27,7 @@ void DynamicReconfigureSafeAction::execute(){
     double_param.value = 0.2;
     conf.doubles.push_back(double_param);
 
-    double_param.name = "accel_lim_x";
+    double_param.name = "acc_lim_x";
     double_param.value = 0.2;
     conf.doubles.push_back(double_param);
 
