@@ -1,8 +1,11 @@
 # gr_navigation package
 
+
 ## Overview of the Approach
 ![Master Plan Draft 29.03.19 (Not final)](/doc/master_plan.png)
 
+## Components on Progess
+![Master Plan Draft 04.04.19](/doc/on_progress.png)
 
 ## Map Representations
 A sample of a hybrid map.
