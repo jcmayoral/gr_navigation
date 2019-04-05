@@ -128,7 +128,7 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.20;
+        created_map_.info.resolution = 0.10;
 
         float min_x = std::numeric_limits<float>::max();
         float min_y = std::numeric_limits<float>::max();
@@ -252,36 +252,60 @@ namespace gr_map_utils{
             float theta;
 
             for (Edges & e  : edges){//= edges.begin(); i != edges.end(); i++){
-                /*
                 std::cout << "Edges from "
                 <<  e.first 
                 << " to "
                 << e.second
                 <<std::endl;
-                */
+               
+               /*
                 init_x = std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
                 init_y = std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
 
                 dest_x = std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
                 dest_y = std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
-                std::cout << "JOSE " << init_x << " , " << dest_x <<  std::endl;
-                std::cout << "JOSE " << init_y << " , " << dest_y <<  std::endl;
+                
+                */
+                init_x = nodes_coordinates[e.first].first;
+                init_y = nodes_coordinates[e.first].second;
+
+                dest_x = nodes_coordinates[e.second].first;
+                dest_y = nodes_coordinates[e.second].second;
+
 
                 r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
-                theta = std::atan2(dest_y - init_y)/(dest_x - init_x);
 
-                for ( float i = init_x; i<=dest_x; i +=res*2 ){
-                    for ( float j = init_y; j<=dest_y; j+=res*2 ){
+                if(r<res){
+                    continue;
+                }
+
+                theta = atan2(dest_y - init_y, dest_x - init_x);
+
+                for (float r_i = 0.0; r_i <=r; r_i+=res){
+                    row = (init_x + r_i*cos(theta) - origin.position.x)/res; 
+                    col = (init_y + r_i*sin(theta) - origin.position.y)/res;
+                    if (row==0 && col == 0)
+                        continue;
+                    index = int(row + created_map_.info.width *col);
+                    if (index > created_map_.data.size())
+                        continue;
+                    created_map_.data[index] = 254;
+                }
+
+                /*
+
+                for ( float i = init_x; i<=dest_x; i +=res ){
+                    for ( float j = init_y; j<=dest_y; j+=res ){
                         std::cout << " i " << i << " j " << j << std::endl;
                         row = (i- origin.position.x)/res; 
                         col = (j- origin.position.y)/res;
-                        index = int(i + created_map_.info.width *j);
+                        index = int(row + created_map_.info.width *col);
                         if (index > created_map_.data.size())
                             continue;
                         created_map_.data[index] = 254;
                     }
                 }
-   
+                */
             }
             std::cout << "ENDDDDDD";
             for (std::map<std::string, CellCoordinates >::iterator  it = nodes_coordinates.begin(); it!= nodes_coordinates.end(); ++it ){

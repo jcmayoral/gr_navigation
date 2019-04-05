@@ -4,6 +4,7 @@
 #include <boost/foreach.hpp>
 #include <mutex>
 #include <vector>
+#include <math.h>
 #include <dynamic_reconfigure/server.h>
 
 #include <strands_navigation_msgs/TopologicalMap.h>
