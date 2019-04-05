@@ -49,6 +49,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <strands_navigation_msgs/TopologicalMap.h>
+#include <mongodb_store/message_store.h>
 
 namespace rviz
 {
@@ -85,6 +86,7 @@ namespace gr_topological_visualizer{
       float terrain_width_;
       float terrain_height_;
       visualization_msgs::MarkerArray marker_array_;
+     	mongodb_store::MessageStoreProxy* message_store_;
   };
 };
   // END_TUTORIAL

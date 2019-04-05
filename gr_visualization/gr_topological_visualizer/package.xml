@@ -1,6 +1,6 @@
 <package>
   <name>gr_topological_visualizer</name>
-  <version>0.2.3</version>
+  <version>0.2.4</version>
   <description>
      Based on the librviz_tutorial from William Woodall. This package allows an interaction to the topological map.
   </description>

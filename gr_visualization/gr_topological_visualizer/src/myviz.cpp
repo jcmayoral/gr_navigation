@@ -38,7 +38,8 @@ MyViz::MyViz( QWidget* parent )
   : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
-  
+  message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps");
+
   // Construct and lay out labels and slider controls.
   QLabel* width_label = new QLabel( "Width Terrain" );
   QSlider* width_slider = new QSlider( Qt::Horizontal );
@@ -160,6 +161,7 @@ void MyViz::visualizeMap(){
   temporal_marker.action = visualization_msgs::Marker::ADD;
   temporal_marker.scale.x = robot_radius_;
   temporal_marker.scale.y = robot_radius_;
+  temporal_marker.scale.z = 0.1; //rviz complains
   temporal_marker.color.r = 1.0;
   temporal_marker.color.a = 1.0;
 
@@ -254,6 +256,14 @@ void MyViz::saveMap(){
   strands_navigation_msgs::TopologicalMap topo_map;
   strands_navigation_msgs::TopologicalNode topo_node;
 
+  topo_map.map = "spare_map";
+  topo_map.name = "spare_map";
+  topo_map.pointset = "spare_map";
+
+  topo_node.map = "spare_map";
+  topo_node.name = "spare_map";
+  topo_node.pointset = "spare_map";
+
 
   for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
     std::cout << it->id << std::endl;
@@ -264,6 +274,9 @@ void MyViz::saveMap(){
     }
   }
 
-  ROS_INFO_STREAM(topo_map);
-
+  ROS_INFO("before");
+  std::string name = "spare_node";
+  std::string field = "map";
+  std::string result(message_store_->insertNamed( field, name, topo_map));
+  ROS_INFO_STREAM("inserted at collection " << message_store_->getCollectionName());
 }
