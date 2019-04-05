@@ -130,9 +130,6 @@ namespace gr_map_utils{
         created_map_.header.frame_id = "map"; //TODO this should be a param
         created_map_.info.resolution = 0.20;
 
-        int nodes_number = 0;
-        float center_x = 0.0;
-        float center_y = 0.0;
         float min_x = std::numeric_limits<float>::max();
         float min_y = std::numeric_limits<float>::max();
 
@@ -143,7 +140,7 @@ namespace gr_map_utils{
         float node_y;
 
         std::vector<CellCoordinates> node_centers;
-        std::map<std::string, CellCoordinates > nodes_to_indexes;
+        std::map<std::string, CellCoordinates > nodes_coordinates;
         std::vector<Edges> edges;
 
         geometry_msgs::TransformStamped to_map_transform; // My frames are named "base_link" and "leap_motion"
@@ -160,7 +157,9 @@ namespace gr_map_utils{
             tf2::doTransform(in, out, to_map_transform);
             node_x = out.pose.position.x;
             node_y = out.pose.position.y;
-            center_x += node_x;
+
+            std::cout << node_x << std::endl;
+            std::cout << node_y << std::endl;
 
             if (node_x < min_x){
                 min_x = node_x;
@@ -170,7 +169,6 @@ namespace gr_map_utils{
                 max_x = node_x;
             }
 
-            center_y += node_y;
 
             if (node_y < min_y){
                 min_y = node_y;
@@ -180,10 +178,10 @@ namespace gr_map_utils{
                 max_y = node_y;
             }
 
-            nodes_number ++;
             node_centers.emplace_back(node_x, node_y);
+            std::cout << "x " << node_x << " y " << node_y << std::endl;
 
-            nodes_to_indexes[it->name] = CellCoordinates(node_x,node_y);
+            nodes_coordinates[it->name] = CellCoordinates(node_x,node_y);
 
             for (std::vector<strands_navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){
                 //std::cout << "Edge ID "<< edges_it->edge_id << std::endl;
@@ -248,18 +246,45 @@ namespace gr_map_utils{
             */
 
             //for (auto const& i : edges){ map
-            for (Edges & i  : edges){//= edges.begin(); i != edges.end(); i++){
+            float init_x, init_y;
+            float dest_x, dest_y;
+            float r; 
+            float theta;
+
+            for (Edges & e  : edges){//= edges.begin(); i != edges.end(); i++){
+                /*
                 std::cout << "Edges from "
-                <<  i.first 
+                <<  e.first 
                 << " to "
-                << i.second
-                << " with int x "
-                << nodes_to_indexes[i.first].first
-                << " with end x"
-                << nodes_to_indexes[i.second].first
+                << e.second
                 <<std::endl;
+                */
+                init_x = std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
+                init_y = std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+
+                dest_x = std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
+                dest_y = std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                std::cout << "JOSE " << init_x << " , " << dest_x <<  std::endl;
+                std::cout << "JOSE " << init_y << " , " << dest_y <<  std::endl;
+
+                r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
+                theta = std::atan2(dest_y - init_y)/(dest_x - init_x);
+
+                for ( float i = init_x; i<=dest_x; i +=res*2 ){
+                    for ( float j = init_y; j<=dest_y; j+=res*2 ){
+                        std::cout << " i " << i << " j " << j << std::endl;
+                        row = (i- origin.position.x)/res; 
+                        col = (j- origin.position.y)/res;
+                        index = int(i + created_map_.info.width *j);
+                        if (index > created_map_.data.size())
+                            continue;
+                        created_map_.data[index] = 254;
+                    }
+                }
+   
             }
-            for (std::map<std::string, CellCoordinates >::iterator  it = nodes_to_indexes.begin(); it!= nodes_to_indexes.end(); ++it ){
+            std::cout << "ENDDDDDD";
+            for (std::map<std::string, CellCoordinates >::iterator  it = nodes_coordinates.begin(); it!= nodes_coordinates.end(); ++it ){
                 //std::printf("Edge from %s to %s /n", it.first, it.second);
                 //std::cout <<"Edge from " << it->first << " to " << it->second << std::endl;
                 

@@ -17,7 +17,7 @@
 
 namespace gr_map_utils{
 
-    typedef std::pair<int,int> CellCoordinates;
+    typedef std::pair<float,float> CellCoordinates;
     typedef std::pair<std::string,std::string> Edges;
 
 
