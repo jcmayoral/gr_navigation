@@ -16,7 +16,11 @@
 
 
 namespace gr_map_utils{
-    
+
+    typedef std::pair<int,int> CellCoordinates;
+    typedef std::pair<std::string,std::string> Edges;
+
+
     class Topological2MetricMap : public MapConverterInterface{
         public:
             Topological2MetricMap(ros::NodeHandle nh);

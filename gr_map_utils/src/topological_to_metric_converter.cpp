@@ -142,13 +142,16 @@ namespace gr_map_utils{
         float node_x;
         float node_y;
 
-        std::vector<std::pair<int,int> > cells;
+        std::vector<CellCoordinates> node_centers;
+        std::map<std::string, CellCoordinates > nodes_to_indexes;
+        std::vector<Edges> edges;
+
         geometry_msgs::TransformStamped to_map_transform; // My frames are named "base_link" and "leap_motion"
         geometry_msgs::PoseStamped out;
         geometry_msgs::PoseStamped in;
 
         for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
-
+            std::cout << "node name "<< it->name << std::endl;
             in.header.frame_id = "map";//todo topological map should include frame_id
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
@@ -178,7 +181,15 @@ namespace gr_map_utils{
             }
 
             nodes_number ++;
-            cells.emplace_back(node_x, node_y);
+            node_centers.emplace_back(node_x, node_y);
+
+            nodes_to_indexes[it->name] = CellCoordinates(node_x,node_y);
+
+            for (std::vector<strands_navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){
+                //std::cout << "Edge ID "<< edges_it->edge_id << std::endl;
+                std::string goal = edges_it->edge_id.substr(edges_it->edge_id.find("_") + 1);
+                edges.emplace_back(it->name,goal);//This is just an example
+            }
         }
 
 
@@ -212,7 +223,7 @@ namespace gr_map_utils{
         int row;
 
         if(mark_nodes_){
-            for ( const std::pair<int,int>  &it : cells ){
+            for ( const std::pair<int,int>  &it : node_centers ){
                 row = (it.first - origin.position.x)/res; //new_coordinate frame ...TODO Orientation
                 col = (it.second - origin.position.y)/res;
 
@@ -225,6 +236,37 @@ namespace gr_map_utils{
                     }
                 }
             }
+
+            //EDGES
+            /*
+            for (auto const& x : nodes_to_indexes){
+              std::cout << x.first  // string (key)
+              << ':' 
+              << x.second.first // 
+              << std::endl;
+            }
+            */
+
+            //for (auto const& i : edges){ map
+            for (Edges & i  : edges){//= edges.begin(); i != edges.end(); i++){
+                std::cout << "Edges from "
+                <<  i.first 
+                << " to "
+                << i.second
+                << " with int x "
+                << nodes_to_indexes[i.first].first
+                << " with end x"
+                << nodes_to_indexes[i.second].first
+                <<std::endl;
+            }
+            for (std::map<std::string, CellCoordinates >::iterator  it = nodes_to_indexes.begin(); it!= nodes_to_indexes.end(); ++it ){
+                //std::printf("Edge from %s to %s /n", it.first, it.second);
+                //std::cout <<"Edge from " << it->first << " to " << it->second << std::endl;
+                
+                //std::cout << "a";
+            }
+
+
         }
         ROS_INFO("Map Created");
     }
