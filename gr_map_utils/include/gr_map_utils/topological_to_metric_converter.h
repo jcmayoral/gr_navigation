@@ -4,6 +4,7 @@
 #include <boost/foreach.hpp>
 #include <mutex>
 #include <vector>
+#include <math.h>
 #include <dynamic_reconfigure/server.h>
 
 #include <strands_navigation_msgs/TopologicalMap.h>
@@ -16,7 +17,11 @@
 
 
 namespace gr_map_utils{
-    
+
+    typedef std::pair<float,float> CellCoordinates;
+    typedef std::pair<std::string,std::string> Edges;
+
+
     class Topological2MetricMap : public MapConverterInterface{
         public:
             Topological2MetricMap(ros::NodeHandle nh);

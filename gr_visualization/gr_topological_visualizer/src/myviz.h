@@ -48,6 +48,8 @@
 
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <strands_navigation_msgs/TopologicalMap.h>
+#include <mongodb_store/message_store.h>
 
 namespace rviz
 {
@@ -69,11 +71,12 @@ namespace gr_topological_visualizer{
       void setRobotRadius(int radius);
 
       void visualizeMap();
+      void saveMap();
 
     private:
       rviz::VisualizationManager* manager_;
       rviz::RenderPanel* render_panel_;
-      rviz::Display* marker_array_;
+      rviz::Display* marker_display_;
       MapGenerator* map_utils_;
       int height_cells_;
       int width_cells_;
@@ -82,6 +85,8 @@ namespace gr_topological_visualizer{
       float robot_radius_;
       float terrain_width_;
       float terrain_height_;
+      visualization_msgs::MarkerArray marker_array_;
+     	mongodb_store::MessageStoreProxy* message_store_;
   };
 };
   // END_TUTORIAL

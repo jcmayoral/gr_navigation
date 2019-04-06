@@ -128,11 +128,8 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.20;
+        created_map_.info.resolution = 0.1;
 
-        int nodes_number = 0;
-        float center_x = 0.0;
-        float center_y = 0.0;
         float min_x = std::numeric_limits<float>::max();
         float min_y = std::numeric_limits<float>::max();
 
@@ -142,13 +139,16 @@ namespace gr_map_utils{
         float node_x;
         float node_y;
 
-        std::vector<std::pair<int,int> > cells;
+        std::vector<CellCoordinates> node_centers;
+        std::map<std::string, CellCoordinates > nodes_coordinates;
+        std::vector<Edges> edges;
+
         geometry_msgs::TransformStamped to_map_transform; // My frames are named "base_link" and "leap_motion"
         geometry_msgs::PoseStamped out;
         geometry_msgs::PoseStamped in;
 
         for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
-
+            //std::cout << "node name "<< it->name << std::endl;
             in.header.frame_id = "map";//todo topological map should include frame_id
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
@@ -157,7 +157,7 @@ namespace gr_map_utils{
             tf2::doTransform(in, out, to_map_transform);
             node_x = out.pose.position.x;
             node_y = out.pose.position.y;
-            center_x += node_x;
+
 
             if (node_x < min_x){
                 min_x = node_x;
@@ -167,7 +167,6 @@ namespace gr_map_utils{
                 max_x = node_x;
             }
 
-            center_y += node_y;
 
             if (node_y < min_y){
                 min_y = node_y;
@@ -177,10 +176,24 @@ namespace gr_map_utils{
                 max_y = node_y;
             }
 
-            nodes_number ++;
-            cells.emplace_back(node_x, node_y);
-        }
+            node_centers.emplace_back(node_x, node_y);
+            nodes_coordinates[it->name] = CellCoordinates(node_x,node_y);
 
+            for (std::vector<strands_navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){               
+                //Since some node names has several "_" the beginning of the array must be replaced or erased with null values
+                //Assuming edges convention name as edge_id_1  " _ " edge_id_2
+              
+                //Create copy of edge name
+                std::string tmp_string(edges_it->edge_id);
+                //remove edge_id_1;
+                tmp_string.erase(tmp_string.begin(), tmp_string.begin() + it->name.size());
+                // get goal edge_id_2
+                std::string goal = tmp_string.substr(tmp_string.find("_") + 1);
+                //Push_back edges
+                edges.emplace_back(it->name,goal);//This is just an example
+            }
+        }
+        
 
         geometry_msgs::Pose origin;
         origin.position.x = min_x - map_offset_/2;
@@ -212,10 +225,13 @@ namespace gr_map_utils{
         int row;
 
         if(mark_nodes_){
-            for ( const std::pair<int,int>  &it : cells ){
+
+            //Mark nodes
+            for ( const std::pair<int,int>  &it : node_centers ){
                 row = (it.first - origin.position.x)/res; //new_coordinate frame ...TODO Orientation
                 col = (it.second - origin.position.y)/res;
 
+                //inflate nodes on map
                 for (auto i = row-cells_neighbors_; i< row+cells_neighbors_; ++i){
                     for (auto j = col-cells_neighbors_; j< col+cells_neighbors_; ++j){
                         index = int(i + created_map_.info.width *j);
@@ -223,6 +239,45 @@ namespace gr_map_utils{
                             continue;
                         created_map_.data[index] = nodes_value_;
                     }
+                }
+            }
+
+            float init_x, init_y;
+            float dest_x, dest_y;
+            float r; 
+            double theta;
+            int i_cell_x, i_cell_y, d_cell_x, d_cell_y;
+            float r_x, r_y;
+
+            //Iterates edges
+            for (Edges & e  : edges){
+
+                //Establish Limits
+                init_x = std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
+                init_y = std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+
+                dest_x = std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
+                dest_y = std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+
+                //Edge Angle
+                theta = atan2(dest_y - init_y, dest_x - init_x);
+
+                //Distance between nodes
+                r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
+
+                for (float r_i = res; r_i <=r+res; r_i+=res){
+                    //Local Coordiantes
+                    r_x = r_i*cos(theta);
+                    r_y = r_i*sin(theta);
+                    //To Index
+                    row = round((init_x + r_x - origin.position.x)/res); 
+                    col = round((init_y + r_y - origin.position.y)/res);
+                    index = int(row + created_map_.info.width *col);
+                    if (index > created_map_.data.size()){
+                        continue;
+                    }
+
+                    created_map_.data[index] = nodes_value_;
                 }
             }
         }
