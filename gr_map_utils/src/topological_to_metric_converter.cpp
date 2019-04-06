@@ -128,7 +128,7 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.10;
+        created_map_.info.resolution = 0.1;
 
         float min_x = std::numeric_limits<float>::max();
         float min_y = std::numeric_limits<float>::max();
@@ -148,7 +148,7 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped in;
 
         for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
-            std::cout << "node name "<< it->name << std::endl;
+            //std::cout << "node name "<< it->name << std::endl;
             in.header.frame_id = "map";//todo topological map should include frame_id
             in.pose.position.x = it->pose.position.x;
             in.pose.position.y = it->pose.position.y;
@@ -158,8 +158,6 @@ namespace gr_map_utils{
             node_x = out.pose.position.x;
             node_y = out.pose.position.y;
 
-            std::cout << node_x << std::endl;
-            std::cout << node_y << std::endl;
 
             if (node_x < min_x){
                 min_x = node_x;
@@ -179,14 +177,23 @@ namespace gr_map_utils{
             }
 
             node_centers.emplace_back(node_x, node_y);
-            std::cout << "x " << node_x << " y " << node_y << std::endl;
-
             nodes_coordinates[it->name] = CellCoordinates(node_x,node_y);
 
             for (std::vector<strands_navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){
                 //std::cout << "Edge ID "<< edges_it->edge_id << std::endl;
+               
+                char empty[it->name.size()];
+                
+                for (int c = 0; c< it->name.size(); c++)
+                    empty[c] = '\0';
+                
+                std::string tmp_string = edges_it->edge_id.replace(edges_it->edge_id.begin(), edges_it->edge_id.begin() + it->name.size(), empty);
+                std::cout << "aaa " << tmp_string << std::endl;
+                
                 std::string goal = edges_it->edge_id.substr(edges_it->edge_id.find("_") + 1);
                 edges.emplace_back(it->name,goal);//This is just an example
+                std::cout << it->name << " : " << goal << std::endl;
+                //std::cout << it->name << "should be" << edges_it->edge_id.substr(0,edges_it->edge_id.find("_"));
             }
         }
 
@@ -249,46 +256,73 @@ namespace gr_map_utils{
             float init_x, init_y;
             float dest_x, dest_y;
             float r; 
-            float theta;
+            double theta;
+            int i_cell_x, i_cell_y, d_cell_x, d_cell_y;
 
             for (Edges & e  : edges){//= edges.begin(); i != edges.end(); i++){
+                /*
                 std::cout << "Edges from "
                 <<  e.first 
                 << " to "
                 << e.second
                 <<std::endl;
-               
-               /*
-                init_x = std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                init_y = std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+               */
+                init_x = std::min<float>(fabs(nodes_coordinates[e.first].first), fabs(nodes_coordinates[e.second].first));
+                init_y = std::min<float>(fabs(nodes_coordinates[e.first].second), fabs(nodes_coordinates[e.second].second));
 
-                dest_x = std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                dest_y = std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                dest_x = std::max<float>(fabs(nodes_coordinates[e.first].first), fabs(nodes_coordinates[e.second].first));
+                dest_y = std::max<float>(fabs(nodes_coordinates[e.first].second), fabs(nodes_coordinates[e.second].second));
                 
+
+
+
+                /*
+                i_cell_x = (init_x - origin.position.x)/res;
+                i_cell_y = (init_y- origin.position.y)/res;
+
+                d_cell_x = (dest_x - origin.position.x)/res;
+                d_cell_y = (dest_y - origin.position.y)/res;
+
+                std::cout << "cell range x " << i_cell_x << ", " << d_cell_x << std::endl;
+                std::cout << "cell range y " << i_cell_y << ", " << d_cell_y << std::endl;
+
+                for (int i=i_cell_x; i<=d_cell_x-2; ++i)
+                    for (int j=i_cell_y; j<=d_cell_y-2; ++j){
+                        if (i<0 || j <0)
+                            continue;
+                        index = int(i + created_map_.info.width *j);
+                        if (index > created_map_.data.size()){
+                            ROS_ERROR("AAA");
+                            continue;
+                        }
+                        created_map_.data[index] = 254;
+
+                    }
                 */
-                init_x = nodes_coordinates[e.first].first;
-                init_y = nodes_coordinates[e.first].second;
 
-                dest_x = nodes_coordinates[e.second].first;
-                dest_y = nodes_coordinates[e.second].second;
-
+                theta = atan2(dest_y - init_y, dest_x - init_x);
+                int dg = theta * 180 / M_PI;
 
                 r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
 
-                if(r<res){
-                    continue;
-                }
+                float r_x, r_y;
+                for (float r_i = res; r_i <=r; r_i+=res){
+                    r_x = r_i*cos(theta);
+                    r_y = r_i*sin(theta);
+                    row = round((init_x + r_x - origin.position.x)/res); 
+                    col = round((init_y + r_y - origin.position.y)/res);
+                   if (row<=0 || col <=0){
+                       //ROS_ERROR("Negative index");
+                       continue;
+                   }
 
-                theta = atan2(dest_y - init_y, dest_x - init_x);
-
-                for (float r_i = 0.0; r_i <=r; r_i+=res){
-                    row = (init_x + r_i*cos(theta) - origin.position.x)/res; 
-                    col = (init_y + r_i*sin(theta) - origin.position.y)/res;
-                    if (row==0 && col == 0)
-                        continue;
                     index = int(row + created_map_.info.width *col);
-                    if (index > created_map_.data.size())
+                    if (index > created_map_.data.size()){
+                        //ROS_ERROR("INDEX TOO LARGE");
                         continue;
+                    }
+
+                    //std::cout << col << " and  " << row << std::endl;
                     created_map_.data[index] = 254;
                 }
 
