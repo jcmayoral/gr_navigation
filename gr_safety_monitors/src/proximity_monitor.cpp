@@ -20,11 +20,11 @@ namespace gr_safety_monitors
 
   void ProximityMonitor::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
     pcl::PointCloud<pcl::PointXYZ> cloud;
- 	  pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
+    pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
     sensor_msgs::PointCloud2 output_pointcloud;
 
     pcl::fromROSMsg(*pointcloud, cloud);
-	  //pcl2 to pclxyzrgba
+    //pcl2 to pclxyzrgba
     pcl::copyPointCloud(cloud,rgb_cloud);
 
     //color
@@ -79,8 +79,8 @@ namespace gr_safety_monitors
     //Define Fault Cause as Unknown
     fault_.cause_ = FaultTopology::UNKNOWN;
 
-  	dyn_server_cb_ = boost::bind(&ProximityMonitor::dyn_reconfigureCB, this, _1, _2);
-   	dyn_server_.setCallback(dyn_server_cb_);
+    dyn_server_cb_ = boost::bind(&ProximityMonitor::dyn_reconfigureCB, this, _1, _2);
+    dyn_server_.setCallback(dyn_server_cb_);
     ROS_INFO("Constructor ProximityMonitor");
   }
 
@@ -186,7 +186,7 @@ namespace gr_safety_monitors
   }
 
   void ProximityMonitor::isolateFault(){
-   	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     diagnoseFault();
   }
 
