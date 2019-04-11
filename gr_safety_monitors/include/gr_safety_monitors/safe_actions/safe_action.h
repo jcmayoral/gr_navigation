@@ -11,6 +11,11 @@ namespace gr_safety_monitors{
             virtual ~SafeAction(){};
             virtual void execute()=0;
             virtual void stop()=0;
+            int getSafetyID(){
+              return safety_id_;
+            }
+        protected:
+            int safety_id_;
     };
 };
 

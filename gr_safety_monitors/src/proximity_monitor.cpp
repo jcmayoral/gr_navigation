@@ -194,21 +194,31 @@ namespace gr_safety_monitors
     fault_.cause_ = FaultTopology::DYNAMIC_OBSTACLE;
     fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 
-    if (action_executer_ == NULL){ //if executer not initialized initialized it
-      //action_executer_ = new PublisherSafeAction();
-      ROS_INFO_STREAM ("Obstacle detected on region with ID "<< fault_region_id_ );
-      switch (fault_region_id_){
-        case 0:
+    //action_executer_ = new PublisherSafeAction();
+    ROS_INFO_STREAM ("Obstacle detected on region with ID "<< fault_region_id_ );
+    switch (fault_region_id_){
+      case 0: // if DANGER REGION... stop whatever is it and
+      //if executer not initialized initialized it just if lock was not locked before
+        if (action_executer_ != NULL && action_executer_->getSafetyID()!=0){ //if executer not initialized initialized it
+          action_executer_->stop();
+        }
+        else{
           action_executer_ = new PublisherSafeAction();
-          break;
-        case 1:
+          action_executer_->execute();
+        }
+        break;
+      case 1:
+        if (action_executer_ != NULL && action_executer_->getSafetyID()!=1){
+          action_executer_->stop();
+        }
+        else{
           action_executer_ = new DynamicReconfigureSafeAction();
-          break;
-        default:
-          ROS_ERROR("Error detecting obstacles");
-      }
+          action_executer_->execute();
+        }
+        break;
+      default:
+        ROS_ERROR("Error detecting obstacles");
 
     }
-    action_executer_->execute();
   }
 }

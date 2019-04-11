@@ -4,6 +4,7 @@ using namespace gr_safety_monitors;
 
 PublisherSafeAction::PublisherSafeAction(){
     //ROS_INFO("Constructor Publisher SafeAction");
+    safety_id_ = 0;
     ros::NodeHandle nh;
     topic_publisher_ = nh.advertise<std_msgs::Bool>("lock_all", 1);
 };
