@@ -4,13 +4,15 @@ namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_),
                                                                     mark_nodes_(false), nodes_value_(127),
                                                                     inverted_costmap_(true), map_yaw_(0.0),
-                                                                    map_offset_(2.0), cells_neighbors_(3){
+                                                                    map_offset_(2.0), cells_neighbors_(3),
+                                                                    map_resolution_(0.1){
         ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
-        map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");\
+        //Not implemented yet
+        map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
         timer_publisher_ = nh_.createTimer(ros::Duration(0.1), &Topological2MetricMap::timer_cb, this);
         dyn_server_cb_ = boost::bind(&Topological2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
@@ -27,6 +29,7 @@ namespace gr_map_utils{
         map_yaw_ = config.map_orientation;
         map_offset_ = config.map_offset;
         cells_neighbors_ = config.node_inflation;
+        map_resolution_ = config.map_resolution;
         transformMap();
     }
 
@@ -57,7 +60,7 @@ namespace gr_map_utils{
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
 
 
-        std::string name("simulation_map");
+        std::string name("riseholme_bidirectional_sim");
 
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
@@ -109,7 +112,7 @@ namespace gr_map_utils{
 
         ROS_INFO("Wait map from topic.. timeout to 3 seconds");
         boost::shared_ptr<strands_navigation_msgs::TopologicalMap const> map;
-        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("static_topological_map", ros::Duration(3));
+        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("topological_map", ros::Duration(3));
         if (map != NULL){
             topological_map_ = *map;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
@@ -128,7 +131,7 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.1;
+        created_map_.info.resolution = map_resolution_;
 
         float min_x = std::numeric_limits<float>::max();
         float min_y = std::numeric_limits<float>::max();
@@ -242,8 +245,8 @@ namespace gr_map_utils{
                 }
             }
 
-            float init_x, init_y;
-            float dest_x, dest_y;
+            double init_x, init_y;
+            double dest_x, dest_y;
             float r; 
             double theta;
             int i_cell_x, i_cell_y, d_cell_x, d_cell_y;
@@ -253,19 +256,28 @@ namespace gr_map_utils{
             for (Edges & e  : edges){
 
                 //Establish Limits
-                init_x = std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                init_y = std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                init_x = nodes_coordinates[e.first].first;//std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
+                init_y = nodes_coordinates[e.first].second;//std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
 
-                dest_x = std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                dest_y = std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                dest_x = nodes_coordinates[e.second].first;//std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
+                dest_y = nodes_coordinates[e.second].second;//std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
 
                 //Edge Angle
                 theta = atan2(dest_y - init_y, dest_x - init_x);
 
+                if (!e.first.compare("WayPoint70")){
+                     if (!e.second.compare("WayPoint69")){
+                        std::cout << e.first << std::endl;
+                        std::cout << e.second << std::endl;
+                        std::cout << theta*180/M_PI << std::endl;
+                        std::cout << init_x << " , " << init_y << std::endl;
+                        std::cout << dest_x << " , " << dest_y << std::endl;
+                     }
+                }
+
                 //Distance between nodes
                 r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
-
-                for (float r_i = res; r_i <=r+res; r_i+=res){
+                for (double r_i = 0; r_i <=r+res; r_i+=res){
                     //Local Coordiantes
                     r_x = r_i*cos(theta);
                     r_y = r_i*sin(theta);

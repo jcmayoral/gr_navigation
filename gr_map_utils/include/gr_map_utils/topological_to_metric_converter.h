@@ -54,6 +54,7 @@ namespace gr_map_utils{
             bool inverted_costmap_;
             int nodes_value_;
             double map_yaw_;
+            double map_resolution_;
             float map_offset_;
             int cells_neighbors_;
     };
