@@ -2,11 +2,12 @@
 
 namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_),
-                                                                    mark_nodes_(false), nodes_value_(127),
+                                                                    mark_nodes_(false), mark_edges_(false),
+                                                                    nodes_value_(127), edges_value_(127),
                                                                     inverted_costmap_(true), map_yaw_(0.0),
                                                                     map_offset_(2.0), cells_neighbors_(3),
                                                                     map_resolution_(0.1){
-        ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
+        ROS_INFO("Initiliazing Node Topological2MetricMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
@@ -24,11 +25,13 @@ namespace gr_map_utils{
 
     void Topological2MetricMap::dyn_reconfigureCB(TopologicalMapConverterConfig &config, uint32_t level){
         mark_nodes_ = config.mark_nodes;
+        mark_edges_ = config.mark_edges;
         nodes_value_ = config.nodes_value;
+        edges_value_ = config.edges_value;
         inverted_costmap_ = config.invert_costmap;
         map_yaw_ = config.map_orientation;
         map_offset_ = config.map_offset;
-        cells_neighbors_ = config.node_inflation;
+        cells_neighbors_ = config.feature_inflation;
         map_resolution_ = config.map_resolution;
         transformMap();
     }
@@ -244,52 +247,48 @@ namespace gr_map_utils{
                     }
                 }
             }
+        }
 
+        if(mark_edges_){
+            //variables used for edges
             double init_x, init_y;
             double dest_x, dest_y;
             float r; 
             double theta;
             int i_cell_x, i_cell_y, d_cell_x, d_cell_y;
             float r_x, r_y;
-
             //Iterates edges
             for (Edges & e  : edges){
 
                 //Establish Limits
-                init_x = nodes_coordinates[e.first].first;//std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                init_y = nodes_coordinates[e.first].second;//std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                init_x = nodes_coordinates[e.first].first;
+                init_y = nodes_coordinates[e.first].second;
 
-                dest_x = nodes_coordinates[e.second].first;//std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                dest_y = nodes_coordinates[e.second].second;//std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                dest_x = nodes_coordinates[e.second].first;
+                dest_y = nodes_coordinates[e.second].second;
 
                 //Edge Angle
                 theta = atan2(dest_y - init_y, dest_x - init_x);
 
-                if (!e.first.compare("WayPoint70")){
-                     if (!e.second.compare("WayPoint69")){
-                        std::cout << e.first << std::endl;
-                        std::cout << e.second << std::endl;
-                        std::cout << theta*180/M_PI << std::endl;
-                        std::cout << init_x << " , " << init_y << std::endl;
-                        std::cout << dest_x << " , " << dest_y << std::endl;
-                     }
-                }
-
                 //Distance between nodes
                 r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
-                for (double r_i = 0; r_i <=r+res; r_i+=res){
-                    //Local Coordiantes
-                    r_x = r_i*cos(theta);
-                    r_y = r_i*sin(theta);
-                    //To Index
-                    row = round((init_x + r_x - origin.position.x)/res); 
-                    col = round((init_y + r_y - origin.position.y)/res);
-                    index = int(row + created_map_.info.width *col);
-                    if (index > created_map_.data.size()){
-                        continue;
-                    }
 
-                    created_map_.data[index] = nodes_value_;
+                //inflate edges
+                for (int inflation=0;inflation< cells_neighbors_;inflation++){
+                    for (double r_i = 0; r_i <=r+res; r_i+=res){
+                        //Local Coordiantes
+                        r_x = r_i*cos(theta);
+                        r_y = r_i*sin(theta);
+                        //To Index
+                        row = round((init_x + r_x - origin.position.x)/res); 
+                        col = round((init_y + r_y - origin.position.y)/res);
+                        index = int(row+inflation + created_map_.info.width *(col+inflation));
+                        if (index > created_map_.data.size()){
+                            continue;
+                        }
+
+                        created_map_.data[index] = edges_value_;
+                    }
                 }
             }
         }

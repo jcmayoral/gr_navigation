@@ -51,8 +51,10 @@ namespace gr_map_utils{
             dynamic_reconfigure::Server<TopologicalMapConverterConfig> dyn_server_;
             dynamic_reconfigure::Server<TopologicalMapConverterConfig>::CallbackType dyn_server_cb_;
             bool mark_nodes_;
+            bool mark_edges_;
             bool inverted_costmap_;
             int nodes_value_;
+            int edges_value_;
             double map_yaw_;
             double map_resolution_;
             float map_offset_;
