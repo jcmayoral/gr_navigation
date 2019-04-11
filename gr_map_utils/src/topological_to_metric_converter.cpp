@@ -216,7 +216,7 @@ namespace gr_map_utils{
         created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
 
         if (inverted_costmap_)
-            created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height,254);
         else
             created_map_.data.resize(created_map_.info.width * created_map_.info.height,255);
 
@@ -238,8 +238,8 @@ namespace gr_map_utils{
                 col = (it.second - origin.position.y)/res;
 
                 //inflate nodes on map
-                for (auto i = row-cells_neighbors_; i< row+cells_neighbors_; ++i){
-                    for (auto j = col-cells_neighbors_; j< col+cells_neighbors_; ++j){
+                for (auto i = row-cells_neighbors_; i< row+cells_neighbors_; i++){
+                    for (auto j = col-cells_neighbors_; j< col+cells_neighbors_; j++){
                         index = int(i + created_map_.info.width *j);
                         if (index > created_map_.data.size())
                             continue;
@@ -274,8 +274,8 @@ namespace gr_map_utils{
                 r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
 
                 //inflate edges
-                for (int inflation=0;inflation< cells_neighbors_;inflation++){
-                    for (double r_i = 0; r_i <=r+res; r_i+=res){
+                for (int inflation=-cells_neighbors_;inflation< cells_neighbors_;inflation++){
+                    for (double r_i = 0; r_i <=r; r_i+=res/2){
                         //Local Coordiantes
                         r_x = r_i*cos(theta);
                         r_y = r_i*sin(theta);
