@@ -212,8 +212,10 @@ namespace gr_safety_monitors
           action_executer_->stop();
         }
         else{
-          action_executer_ = new DynamicReconfigureSafeAction();
-          action_executer_->execute();
+          if(action_executer_->getSafetyID()!=1){//avoid recalling
+            action_executer_ = new DynamicReconfigureSafeAction();
+            action_executer_->execute();
+          }
         }
         break;
       default:
