@@ -2,15 +2,18 @@
 
 namespace gr_map_utils{
     Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_),
-                                                                    mark_nodes_(false), nodes_value_(127),
+                                                                    mark_nodes_(false), mark_edges_(false),
+                                                                    nodes_value_(127), edges_value_(127),
                                                                     inverted_costmap_(true), map_yaw_(0.0),
-                                                                    map_offset_(2.0), cells_neighbors_(3){
-        ROS_INFO("Initiliazing Node OSM2TopologicalMap Node");
+                                                                    map_offset_(2.0), cells_neighbors_(3),
+                                                                    map_resolution_(0.1){
+        ROS_INFO("Initiliazing Node Topological2MetricMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
-        map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");\
+        //Not implemented yet
+        map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
         timer_publisher_ = nh_.createTimer(ros::Duration(0.1), &Topological2MetricMap::timer_cb, this);
         dyn_server_cb_ = boost::bind(&Topological2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
@@ -22,11 +25,14 @@ namespace gr_map_utils{
 
     void Topological2MetricMap::dyn_reconfigureCB(TopologicalMapConverterConfig &config, uint32_t level){
         mark_nodes_ = config.mark_nodes;
+        mark_edges_ = config.mark_edges;
         nodes_value_ = config.nodes_value;
+        edges_value_ = config.edges_value;
         inverted_costmap_ = config.invert_costmap;
         map_yaw_ = config.map_orientation;
         map_offset_ = config.map_offset;
-        cells_neighbors_ = config.node_inflation;
+        cells_neighbors_ = config.feature_inflation;
+        map_resolution_ = config.map_resolution;
         transformMap();
     }
 
@@ -57,7 +63,7 @@ namespace gr_map_utils{
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
 
 
-        std::string name("simulation_map");
+        std::string name("riseholme_bidirectional_sim");
 
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
@@ -109,7 +115,7 @@ namespace gr_map_utils{
 
         ROS_INFO("Wait map from topic.. timeout to 3 seconds");
         boost::shared_ptr<strands_navigation_msgs::TopologicalMap const> map;
-        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("static_topological_map", ros::Duration(3));
+        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("topological_map", ros::Duration(3));
         if (map != NULL){
             topological_map_ = *map;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
@@ -128,7 +134,7 @@ namespace gr_map_utils{
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
-        created_map_.info.resolution = 0.1;
+        created_map_.info.resolution = map_resolution_;
 
         float min_x = std::numeric_limits<float>::max();
         float min_y = std::numeric_limits<float>::max();
@@ -210,9 +216,9 @@ namespace gr_map_utils{
         created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
 
         if (inverted_costmap_)
-            created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height,254);
         else
-            created_map_.data.resize(created_map_.info.width * created_map_.info.height,255);
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
 
         float res = created_map_.info.resolution;
 
@@ -232,8 +238,8 @@ namespace gr_map_utils{
                 col = (it.second - origin.position.y)/res;
 
                 //inflate nodes on map
-                for (auto i = row-cells_neighbors_; i< row+cells_neighbors_; ++i){
-                    for (auto j = col-cells_neighbors_; j< col+cells_neighbors_; ++j){
+                for (auto i = row-cells_neighbors_; i<= row+cells_neighbors_; i++){
+                    for (auto j = col-cells_neighbors_; j<= col+cells_neighbors_; j++){
                         index = int(i + created_map_.info.width *j);
                         if (index > created_map_.data.size())
                             continue;
@@ -241,23 +247,25 @@ namespace gr_map_utils{
                     }
                 }
             }
+        }
 
-            float init_x, init_y;
-            float dest_x, dest_y;
+        if(mark_edges_){
+            //variables used for edges
+            double init_x, init_y;
+            double dest_x, dest_y;
             float r; 
             double theta;
             int i_cell_x, i_cell_y, d_cell_x, d_cell_y;
             float r_x, r_y;
-
             //Iterates edges
             for (Edges & e  : edges){
 
                 //Establish Limits
-                init_x = std::min<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                init_y = std::min<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                init_x = nodes_coordinates[e.first].first;
+                init_y = nodes_coordinates[e.first].second;
 
-                dest_x = std::max<float>(nodes_coordinates[e.first].first, nodes_coordinates[e.second].first);
-                dest_y = std::max<float>(nodes_coordinates[e.first].second, nodes_coordinates[e.second].second);
+                dest_x = nodes_coordinates[e.second].first;
+                dest_y = nodes_coordinates[e.second].second;
 
                 //Edge Angle
                 theta = atan2(dest_y - init_y, dest_x - init_x);
@@ -265,19 +273,22 @@ namespace gr_map_utils{
                 //Distance between nodes
                 r = std::sqrt(std::pow(dest_y - init_y,2) + std::pow(dest_x - init_x,2));
 
-                for (float r_i = res; r_i <=r+res; r_i+=res){
-                    //Local Coordiantes
-                    r_x = r_i*cos(theta);
-                    r_y = r_i*sin(theta);
-                    //To Index
-                    row = round((init_x + r_x - origin.position.x)/res); 
-                    col = round((init_y + r_y - origin.position.y)/res);
-                    index = int(row + created_map_.info.width *col);
-                    if (index > created_map_.data.size()){
-                        continue;
-                    }
+                //inflate edges
+                for (int inflation=-cells_neighbors_;inflation<= cells_neighbors_;inflation++){
+                    for (double r_i = 0; r_i <=r; r_i+=res){
+                        //Local Coordiantes
+                        r_x = r_i*cos(theta);
+                        r_y = r_i*sin(theta);
+                        //To Index
+                        row = round((init_x + r_x - origin.position.x)/res); 
+                        col = round((init_y + r_y - origin.position.y)/res);
+                        index = int(row+inflation + created_map_.info.width *(col+inflation));
+                        if (index > created_map_.data.size()){
+                            continue;
+                        }
 
-                    created_map_.data[index] = nodes_value_;
+                        created_map_.data[index] = edges_value_;
+                    }
                 }
             }
         }

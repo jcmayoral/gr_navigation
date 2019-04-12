@@ -57,7 +57,7 @@ MyViz::MyViz( QWidget* parent )
   robot_radius_spinbox->setSingleStep(1);
   robot_radius_spinbox->setValue(robot_radius_);
 
-  QPushButton* save_topological_map = new QPushButton ("Visualize Topological Map");
+  QPushButton* save_topological_map = new QPushButton ("Store Map");
 
   QGridLayout* controls_layout = new QGridLayout();
   controls_layout->addWidget( width_label, 0, 0 );
@@ -109,8 +109,6 @@ MyViz::MyViz( QWidget* parent )
   manager_->initialize();
   manager_->startUpdate();
 
-  std::cout <<"a"<<std::endl;
-
 }
 
 // Destructor.
@@ -139,8 +137,6 @@ void MyViz::setTerrainHeight( int value ){
 }
 
 void MyViz::visualizeMap(){
-  std::cout << "IN"<< std::endl;
-
   //Node Creation
   visualization_msgs::Marker temporal_marker;
 
@@ -161,7 +157,7 @@ void MyViz::visualizeMap(){
   temporal_marker.action = visualization_msgs::Marker::ADD;
   temporal_marker.scale.x = robot_radius_;
   temporal_marker.scale.y = robot_radius_;
-  temporal_marker.scale.z = 0.1; //rviz complains
+  temporal_marker.scale.z = 0.05;
   temporal_marker.color.r = 1.0;
   temporal_marker.color.a = 1.0;
 
@@ -172,16 +168,12 @@ void MyViz::visualizeMap(){
   map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
 
   for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
-    
-    std::cout <<std::distance(vector.begin(), it) << std::endl;
     temporal_marker.id = std::distance(vector.begin(), it);
     temporal_marker.pose.position.x = it->first;
     temporal_marker.pose.position.y = it->second;
     marker_array_.markers.push_back(temporal_marker);
-    std::printf("center %f %f \n",it->first,it->second);
+    //std::printf("center %f %f \n",it->first,it->second);
   }
-
-  //map_publisher_.publish(marker_array);
 
   //For edges
   geometry_msgs::Point temporal_point;
@@ -192,7 +184,10 @@ void MyViz::visualizeMap(){
   temporal_edges.ns = "edges"; //TODO maybe add segmentation layers
   temporal_edges.type = visualization_msgs::Marker::LINE_LIST;
   temporal_edges.action = visualization_msgs::Marker::ADD;
-  temporal_edges.scale.x = 0.3;
+  temporal_edges.scale.x = 0.5;
+  temporal_edges.scale.y = 0.1;
+  temporal_edges.scale.z = 0.5;
+  temporal_edges.color.r = 1.0;
   temporal_edges.color.g = 1.0;
   temporal_edges.color.a = 1.0;
 
@@ -203,13 +198,13 @@ void MyViz::visualizeMap(){
   for (int i =0; i <height_cells_;i++){
     for (int j =0; j <width_cells_;j++){
       if (j==(width_cells_-1)&& i==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
-        ROS_INFO_STREAM("Ignoring " << i << " , " << j);;
+        ROS_DEBUG_STREAM("Ignoring " << i << " , " << j);;
         continue;
       }
 
       if (j==(width_cells_-1)){
         if (i%2==0){
-          ROS_WARN("Even Edge");
+          ROS_DEBUG("Even Edge");
           index = j + i*width_cells_;
           temporal_edges.id = 100+index;
           temporal_point.x = vector[index].first;
@@ -218,13 +213,13 @@ void MyViz::visualizeMap(){
           index = j + (i+1)*width_cells_;
         }
         else{
-          ROS_WARN("ODD Edge");
-         index = i*width_cells_;
-         temporal_edges.id = 1020+index;
-         temporal_point.x = vector[index].first;
-         temporal_point.y = vector[index].second;
-         temporal_edges.points.push_back(temporal_point);
-         index = (i+1)*width_cells_;
+          ROS_DEBUG("ODD Edge");
+          index = i*width_cells_;
+          temporal_edges.id = 1020+index;
+          temporal_point.x = vector[index].first;
+          temporal_point.y = vector[index].second;
+          temporal_edges.points.push_back(temporal_point);
+          index = (i+1)*width_cells_;
         }
         temporal_edges.id = 1001+index;
         temporal_point.x = vector[index].first;
@@ -232,7 +227,7 @@ void MyViz::visualizeMap(){
         temporal_edges.points.push_back(temporal_point);
       }
       else{
-        ROS_INFO("Normal Edge");
+        ROS_DEBUG("Normal Edge");
         index = j + i*width_cells_;
         temporal_edges.id = 100+index;
         temporal_point.x = vector[index].first;
@@ -244,11 +239,9 @@ void MyViz::visualizeMap(){
       }
     }
   }
-  //ROS_ASSERT(temporal_edges.points.size()%2 ==0);
 
   marker_array_.markers.push_back(temporal_edges);
   map_publisher_.publish(marker_array_);
-  ROS_INFO("OUT");
 }
 
 void MyViz::saveMap(){
@@ -266,17 +259,12 @@ void MyViz::saveMap(){
 
 
   for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
-    std::cout << it->id << std::endl;
     topo_node.pose = it-> pose;
     topo_map.nodes.push_back(topo_node);
-    for (std::vector<geometry_msgs::Point>::iterator it2 = it->points.begin(); it2!= it->points.end();it2++){
-      std::cout << it2->x << std::endl;
-    }
   }
 
-  ROS_INFO("before");
   std::string name = "spare_node";
   std::string field = "map";
   std::string result(message_store_->insertNamed( field, name, topo_map));
-  ROS_INFO_STREAM("inserted at collection " << message_store_->getCollectionName());
+  ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
 }

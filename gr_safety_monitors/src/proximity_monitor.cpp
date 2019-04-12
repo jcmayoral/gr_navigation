@@ -20,11 +20,11 @@ namespace gr_safety_monitors
 
   void ProximityMonitor::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
     pcl::PointCloud<pcl::PointXYZ> cloud;
- 	  pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
+    pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
     sensor_msgs::PointCloud2 output_pointcloud;
 
     pcl::fromROSMsg(*pointcloud, cloud);
-	  //pcl2 to pclxyzrgba
+    //pcl2 to pclxyzrgba
     pcl::copyPointCloud(cloud,rgb_cloud);
 
     //color
@@ -79,8 +79,8 @@ namespace gr_safety_monitors
     //Define Fault Cause as Unknown
     fault_.cause_ = FaultTopology::UNKNOWN;
 
-  	dyn_server_cb_ = boost::bind(&ProximityMonitor::dyn_reconfigureCB, this, _1, _2);
-   	dyn_server_.setCallback(dyn_server_cb_);
+    dyn_server_cb_ = boost::bind(&ProximityMonitor::dyn_reconfigureCB, this, _1, _2);
+    dyn_server_.setCallback(dyn_server_cb_);
     ROS_INFO("Constructor ProximityMonitor");
   }
 
@@ -186,7 +186,7 @@ namespace gr_safety_monitors
   }
 
   void ProximityMonitor::isolateFault(){
-   	boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     diagnoseFault();
   }
 
@@ -194,21 +194,33 @@ namespace gr_safety_monitors
     fault_.cause_ = FaultTopology::DYNAMIC_OBSTACLE;
     fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 
-    if (action_executer_ == NULL){ //if executer not initialized initialized it
-      //action_executer_ = new PublisherSafeAction();
-      ROS_INFO_STREAM ("Obstacle detected on region with ID "<< fault_region_id_ );
-      switch (fault_region_id_){
-        case 0:
+    //action_executer_ = new PublisherSafeAction();
+    ROS_INFO_STREAM ("Obstacle detected on region with ID "<< fault_region_id_ );
+    switch (fault_region_id_){
+      case 0: // if DANGER REGION... stop whatever is it and
+      //if executer not initialized initialized it just if lock was not locked before
+        if (action_executer_ != NULL && action_executer_->getSafetyID()!=0){ //if executer not initialized initialized it
+          action_executer_->stop();
+        }
+        else{
           action_executer_ = new PublisherSafeAction();
-          break;
-        case 1:
-          action_executer_ = new DynamicReconfigureSafeAction();
-          break;
-        default:
-          ROS_ERROR("Error detecting obstacles");
-      }
+          action_executer_->execute();
+        }
+        break;
+      case 1:
+        if (action_executer_ != NULL && action_executer_->getSafetyID()!=1){
+          action_executer_->stop();
+        }
+        else{
+          if(action_executer_->getSafetyID()!=1){//avoid recalling
+            action_executer_ = new DynamicReconfigureSafeAction();
+            action_executer_->execute();
+          }
+        }
+        break;
+      default:
+        ROS_ERROR("Error detecting obstacles");
 
     }
-    action_executer_->execute();
   }
 }
