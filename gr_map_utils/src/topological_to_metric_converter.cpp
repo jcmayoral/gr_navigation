@@ -218,7 +218,7 @@ namespace gr_map_utils{
         if (inverted_costmap_)
             created_map_.data.resize(created_map_.info.width * created_map_.info.height,254);
         else
-            created_map_.data.resize(created_map_.info.width * created_map_.info.height,255);
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
 
         float res = created_map_.info.resolution;
 
