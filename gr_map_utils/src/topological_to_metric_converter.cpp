@@ -288,6 +288,19 @@ namespace gr_map_utils{
                         }
 
                         created_map_.data[index] = edges_value_;
+
+                        //HACK
+                        //Avoid undesired marks on costmap
+                        index = int(row + created_map_.info.width *(col+inflation));
+                        if (index > created_map_.data.size()){
+                            continue;
+                        }
+                        created_map_.data[index] = edges_value_;
+                        index = int(inflation+row + created_map_.info.width *(col));
+                        if (index > created_map_.data.size()){
+                            continue;
+                        }
+                        created_map_.data[index] = edges_value_;
                     }
                 }
             }
