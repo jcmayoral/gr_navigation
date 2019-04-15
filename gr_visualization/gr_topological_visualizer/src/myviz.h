@@ -29,6 +29,8 @@
 #ifndef MYVIZ_H
 #define MYVIZ_H
 
+#include <vector>
+
 #include <QWidget>
 #include <QColor>
 #include <QSlider>
@@ -92,7 +94,7 @@ namespace gr_topological_visualizer{
      	mongodb_store::MessageStoreProxy* message_store_;
 
       NodeMap node_map_;
-      Edges edeges_;
+      std::vector<Edges> edges_;
   };
 };
   // END_TUTORIAL

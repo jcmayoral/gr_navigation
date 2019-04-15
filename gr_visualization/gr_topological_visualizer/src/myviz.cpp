@@ -141,6 +141,7 @@ void MyViz::visualizeMap(){
   visualization_msgs::Marker temporal_marker;
 
   marker_array_.markers.clear();
+  edges_.clear();
 
   //For now this fields are constants FOR NODES
   temporal_marker.header.frame_id="map";
@@ -185,7 +186,7 @@ void MyViz::visualizeMap(){
 
   map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
 
-  int index, index_2 = 0;
+  int index, index_1, index_2 = 0;
   int col;
   int row;
 
@@ -200,6 +201,7 @@ void MyViz::visualizeMap(){
     std::string id_str("node_" + std::to_string(index));
     
     node_map_[id_str] = temporal_marker.pose;
+
   
       if (col ==(width_cells_-1)&& row==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
         continue; 
@@ -209,37 +211,40 @@ void MyViz::visualizeMap(){
       if (col==(width_cells_-1)){
         //select direction of border
         if (row%2==0){
-          index_2 = col + row*width_cells_;
-          temporal_edges.id = 100+index_2;
-          temporal_point.x = vector[index_2].first;
-          temporal_point.y = vector[index_2].second;
+          index_1 = col + row*width_cells_;
+          temporal_edges.id = 100+index_1;
+          temporal_point.x = vector[index_1].first;
+          temporal_point.y = vector[index_1].second;
           temporal_edges.points.push_back(temporal_point);
           index_2 = col + (row+1)*width_cells_;
         }
         else{
-          index_2 = row*width_cells_;
-          temporal_edges.id = 1020+index_2;
-          temporal_point.x = vector[index_2].first;
-          temporal_point.y = vector[index_2].second;
+          index_1 = row*width_cells_;
+          temporal_edges.id = 1020+index_1;
+          temporal_point.x = vector[index_1].first;
+          temporal_point.y = vector[index_1].second;
           temporal_edges.points.push_back(temporal_point);
           index_2 = (row+1)*width_cells_;
         }
-        temporal_edges.id = 1001+index;
+        temporal_edges.id = 1001+index_1;
         temporal_point.x = vector[index_2].first;
         temporal_point.y = vector[index_2].second;
         temporal_edges.points.push_back(temporal_point);
+        edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_2));
       }
       else{
         //no border nodes
-        index_2 = col + row*width_cells_;
-        temporal_edges.id = 100+index_2;
-        temporal_point.x = vector[index_2].first;
-        temporal_point.y = vector[index_2].second;
+        index_1 = col + row*width_cells_;
+        temporal_edges.id = 100+index_1;
+        temporal_point.x = vector[index_1].first;
+        temporal_point.y = vector[index_1].second;
         temporal_edges.points.push_back(temporal_point);
-        temporal_point.x = vector[index_2+1].first;
-        temporal_point.y = vector[index_2+1].second;
+        temporal_point.x = vector[index_1+1].first;
+        temporal_point.y = vector[index_1+1].second;
         temporal_edges.points.push_back(temporal_point);
+        edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_1 + 1));
       }
+      
        marker_array_.markers.push_back(temporal_edges);
 
     }
@@ -260,6 +265,10 @@ void MyViz::saveMap(){
   topo_node.name = "spare_map";
   topo_node.pointset = "spare_map";
 
+  for (Edges & e  : edges_){
+    std::cout << "Edge: " << e.first << " to " << e.second << std::endl;   
+  }
+  
   for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
     topo_node.pose = it-> pose;
     topo_map.nodes.push_back(topo_node);
