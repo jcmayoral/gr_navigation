@@ -264,6 +264,7 @@ void MyViz::saveMap(){
 
   strands_navigation_msgs::TopologicalMap topo_map;
   strands_navigation_msgs::TopologicalNode topo_node;
+  strands_navigation_msgs::Edge edge;
 
   topo_map.map = "spare_map";
   topo_map.name = "spare_map";
@@ -273,25 +274,23 @@ void MyViz::saveMap(){
   topo_node.name = "spare_map";
   topo_node.pointset = "spare_map";
 
-  for (Edges & e  : edges_){
-    std::cout << "Edge: " << e.first << " to " << e.second << std::endl;
-    std::cout << "Init : " << node_map_[e.first].position.x << " and " << node_map_[e.first].position.y << std::endl;    
-    std::cout << "End : " << node_map_[e.second].position.x << " and " << node_map_[e.second].position.y << std::endl;
-  }
   
   for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
+    topo_node.edges.clear();
     topo_node.pose = it-> pose;
     for (Edges & e : edges_){
       if (e.first.compare("node_" + std::to_string(it->id))==0){
-        std::cout << it->id << " , " << e.first << std::endl;
+        edge.edge_id = e.first + "_" + e.second;
+        edge.node = e.second;
+        topo_node.edges.push_back(edge);
       }
     }
-
+    ROS_INFO_STREAM(topo_node);
     topo_map.nodes.push_back(topo_node);
   }
 
   std::string name = "spare_node";
   std::string field = "map";
-  std::string result(message_store_->insertNamed( field, name, topo_map));
-  ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
+  //std::string result(message_store_->insertNamed( field, name, topo_map));
+  //ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
 }
