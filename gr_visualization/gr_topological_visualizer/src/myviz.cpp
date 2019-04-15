@@ -44,12 +44,12 @@ MyViz::MyViz( QWidget* parent )
   QLabel* width_label = new QLabel( "Width Terrain" );
   QSlider* width_slider = new QSlider( Qt::Horizontal );
   width_slider->setMinimum( 0.00 );
-  width_slider->setMaximum( 1000.0 );
+  width_slider->setMaximum( 100.0 );
 
   QLabel* height_label = new QLabel( "Height Terrain" );
   QSlider* height_slider = new QSlider( Qt::Horizontal );
   height_slider->setMinimum( 1.0 );
-  height_slider->setMaximum( 1000.0 );
+  height_slider->setMaximum( 100.0 );
 
   QLabel* robot_radius_label = new QLabel("Robot Radius");
   QSpinBox* robot_radius_spinbox = new QSpinBox;
@@ -155,25 +155,13 @@ void MyViz::visualizeMap(){
 
   //Create New Nodes
   temporal_marker.action = visualization_msgs::Marker::ADD;
-  temporal_marker.scale.x = robot_radius_;
-  temporal_marker.scale.y = robot_radius_;
+  temporal_marker.scale.x = robot_radius_/2;//divided by two just o see edges
+  temporal_marker.scale.y = robot_radius_/2;
   temporal_marker.scale.z = 0.05;
   temporal_marker.color.r = 1.0;
   temporal_marker.color.a = 1.0;
 
   temporal_marker.pose.orientation.w = 1.0;  
-
-  std::vector<std::pair<float,float> > vector;
-
-  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
-
-  for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
-    temporal_marker.id = std::distance(vector.begin(), it);
-    temporal_marker.pose.position.x = it->first;
-    temporal_marker.pose.position.y = it->second;
-    marker_array_.markers.push_back(temporal_marker);
-    //std::printf("center %f %f \n",it->first,it->second);
-  }
 
   //For edges
   geometry_msgs::Point temporal_point;
@@ -190,57 +178,72 @@ void MyViz::visualizeMap(){
   temporal_edges.color.r = 1.0;
   temporal_edges.color.g = 1.0;
   temporal_edges.color.a = 1.0;
-
   temporal_edges.pose.orientation.w = 1.0;  
 
-  int index;
+  
+  std::vector<std::pair<float,float> > vector;
 
-  for (int i =0; i <height_cells_;i++){
-    for (int j =0; j <width_cells_;j++){
-      if (j==(width_cells_-1)&& i==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
-        ROS_DEBUG_STREAM("Ignoring " << i << " , " << j);;
-        continue;
+  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
+
+  int index, index_2 = 0;
+  int col;
+  int row;
+
+  for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
+    index = std::distance(vector.begin(), it);
+    col = round(index/height_cells_);
+    row = index - col *height_cells_;
+    temporal_marker.id = std::distance(vector.begin(), it);
+    temporal_marker.pose.position.x = it->first;
+    temporal_marker.pose.position.y = it->second;
+    marker_array_.markers.push_back(temporal_marker);
+    std::string id_str("node_" + std::to_string(index));
+    
+    node_map_[id_str] = temporal_marker.pose;
+  
+      if (col ==(width_cells_-1)&& row==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
+        continue; 
       }
 
-      if (j==(width_cells_-1)){
-        if (i%2==0){
-          ROS_DEBUG("Even Edge");
-          index = j + i*width_cells_;
-          temporal_edges.id = 100+index;
-          temporal_point.x = vector[index].first;
-          temporal_point.y = vector[index].second;
+      //is the last node of a row
+      if (col==(width_cells_-1)){
+        //select direction of border
+        if (row%2==0){
+          index_2 = col + row*width_cells_;
+          temporal_edges.id = 100+index_2;
+          temporal_point.x = vector[index_2].first;
+          temporal_point.y = vector[index_2].second;
           temporal_edges.points.push_back(temporal_point);
-          index = j + (i+1)*width_cells_;
+          index_2 = col + (row+1)*width_cells_;
         }
         else{
-          ROS_DEBUG("ODD Edge");
-          index = i*width_cells_;
-          temporal_edges.id = 1020+index;
-          temporal_point.x = vector[index].first;
-          temporal_point.y = vector[index].second;
+          index_2 = row*width_cells_;
+          temporal_edges.id = 1020+index_2;
+          temporal_point.x = vector[index_2].first;
+          temporal_point.y = vector[index_2].second;
           temporal_edges.points.push_back(temporal_point);
-          index = (i+1)*width_cells_;
+          index_2 = (row+1)*width_cells_;
         }
         temporal_edges.id = 1001+index;
-        temporal_point.x = vector[index].first;
-        temporal_point.y = vector[index].second;
+        temporal_point.x = vector[index_2].first;
+        temporal_point.y = vector[index_2].second;
         temporal_edges.points.push_back(temporal_point);
       }
       else{
-        ROS_DEBUG("Normal Edge");
-        index = j + i*width_cells_;
-        temporal_edges.id = 100+index;
-        temporal_point.x = vector[index].first;
-        temporal_point.y = vector[index].second;
+        //no border nodes
+        index_2 = col + row*width_cells_;
+        temporal_edges.id = 100+index_2;
+        temporal_point.x = vector[index_2].first;
+        temporal_point.y = vector[index_2].second;
         temporal_edges.points.push_back(temporal_point);
-        temporal_point.x = vector[index+1].first;
-        temporal_point.y = vector[index+1].second;
+        temporal_point.x = vector[index_2+1].first;
+        temporal_point.y = vector[index_2+1].second;
         temporal_edges.points.push_back(temporal_point);
       }
-    }
-  }
+       marker_array_.markers.push_back(temporal_edges);
 
-  marker_array_.markers.push_back(temporal_edges);
+    }
+
   map_publisher_.publish(marker_array_);
 }
 
@@ -256,7 +259,6 @@ void MyViz::saveMap(){
   topo_node.map = "spare_map";
   topo_node.name = "spare_map";
   topo_node.pointset = "spare_map";
-
 
   for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
     topo_node.pose = it-> pose;

@@ -59,6 +59,9 @@ class VisualizationManager;
 }
 
 namespace gr_topological_visualizer{
+  typedef std::map<std::string, geometry_msgs::Pose> NodeMap;
+  typedef std::pair<std::string, std::string> Edges;
+
   class MyViz: public QWidget{
     Q_OBJECT
     public:
@@ -87,6 +90,9 @@ namespace gr_topological_visualizer{
       float terrain_height_;
       visualization_msgs::MarkerArray marker_array_;
      	mongodb_store::MessageStoreProxy* message_store_;
+
+      NodeMap node_map_;
+      Edges edeges_;
   };
 };
   // END_TUTORIAL
