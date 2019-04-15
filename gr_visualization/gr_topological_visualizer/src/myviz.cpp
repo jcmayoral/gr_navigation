@@ -186,68 +186,76 @@ void MyViz::visualizeMap(){
 
   map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
 
-  int index, index_1, index_2 = 0;
+  int id, index_1, index_2 = 0;
   int col;
   int row;
 
   for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
-    index = std::distance(vector.begin(), it);
-    col = round(index/height_cells_);
-    row = index - col *height_cells_;
+    //Storing Nodes
+    id = std::distance(vector.begin(), it);
+    col = round(id/height_cells_);
+    row = id - col *height_cells_; 
+   
     temporal_marker.id = std::distance(vector.begin(), it);
     temporal_marker.pose.position.x = it->first;
     temporal_marker.pose.position.y = it->second;
     marker_array_.markers.push_back(temporal_marker);
-    std::string id_str("node_" + std::to_string(index));
+    std::string id_str("node_" + std::to_string(id));
     
     node_map_[id_str] = temporal_marker.pose;
 
   
-      if (col ==(width_cells_-1)&& row==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
-        continue; 
-      }
+    //Edges Creation
+    if (col ==(width_cells_-1)&& row==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
+      continue; 
+    }
 
-      //is the last node of a row
-      if (col==(width_cells_-1)){
-        //select direction of border
-        if (row%2==0){
-          index_1 = col + row*width_cells_;
-          temporal_edges.id = 100+index_1;
-          temporal_point.x = vector[index_1].first;
-          temporal_point.y = vector[index_1].second;
-          temporal_edges.points.push_back(temporal_point);
-          index_2 = col + (row+1)*width_cells_;
-        }
-        else{
-          index_1 = row*width_cells_;
-          temporal_edges.id = 1020+index_1;
-          temporal_point.x = vector[index_1].first;
-          temporal_point.y = vector[index_1].second;
-          temporal_edges.points.push_back(temporal_point);
-          index_2 = (row+1)*width_cells_;
-        }
-        temporal_edges.id = 1001+index_1;
-        temporal_point.x = vector[index_2].first;
-        temporal_point.y = vector[index_2].second;
-        temporal_edges.points.push_back(temporal_point);
-        edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_2));
-      }
-      else{
-        //no border nodes
+    //is the last node of a row
+    if (col==(width_cells_-1)){
+      //select direction of border
+      //from index_1 to index_2
+      if (row%2==0){
         index_1 = col + row*width_cells_;
         temporal_edges.id = 100+index_1;
         temporal_point.x = vector[index_1].first;
         temporal_point.y = vector[index_1].second;
         temporal_edges.points.push_back(temporal_point);
-        temporal_point.x = vector[index_1+1].first;
-        temporal_point.y = vector[index_1+1].second;
-        temporal_edges.points.push_back(temporal_point);
-        edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_1 + 1));
+        index_2 = col + (row+1)*width_cells_;
       }
-      
-       marker_array_.markers.push_back(temporal_edges);
-
+      else{
+        index_1 = row*width_cells_;
+        temporal_edges.id = 1020+index_1;
+        temporal_point.x = vector[index_1].first;
+        temporal_point.y = vector[index_1].second;
+        temporal_edges.points.push_back(temporal_point);
+        index_2 = (row+1)*width_cells_;
+      }
+      temporal_edges.id = 1001+index_1;
+      temporal_point.x = vector[index_2].first;
+      temporal_point.y = vector[index_2].second;
+      //Marker
+      temporal_edges.points.push_back(temporal_point);
+      //Edges ids
+      edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_2));
     }
+    else{
+      //no border nodes
+      index_1 = col + row*width_cells_;
+      temporal_edges.id = 100+index_1;
+      temporal_point.x = vector[index_1].first;
+      temporal_point.y = vector[index_1].second;
+      temporal_edges.points.push_back(temporal_point);
+      temporal_point.x = vector[index_1+1].first;
+      temporal_point.y = vector[index_1+1].second;
+      //Marker
+      temporal_edges.points.push_back(temporal_point);
+      //Edges ids
+      edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_1 + 1));
+    }
+    
+      marker_array_.markers.push_back(temporal_edges);
+
+  }
 
   map_publisher_.publish(marker_array_);
 }
@@ -266,11 +274,19 @@ void MyViz::saveMap(){
   topo_node.pointset = "spare_map";
 
   for (Edges & e  : edges_){
-    std::cout << "Edge: " << e.first << " to " << e.second << std::endl;   
+    std::cout << "Edge: " << e.first << " to " << e.second << std::endl;
+    std::cout << "Init : " << node_map_[e.first].position.x << " and " << node_map_[e.first].position.y << std::endl;    
+    std::cout << "End : " << node_map_[e.second].position.x << " and " << node_map_[e.second].position.y << std::endl;
   }
   
   for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
     topo_node.pose = it-> pose;
+    for (Edges & e : edges_){
+      if (e.first.compare("node_" + std::to_string(it->id))==0){
+        std::cout << it->id << " , " << e.first << std::endl;
+      }
+    }
+
     topo_map.nodes.push_back(topo_node);
   }
 
