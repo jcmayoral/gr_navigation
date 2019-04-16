@@ -36,12 +36,13 @@ class BagRecorder(smach.State):
         self.is_bag_started = True
         rospy.sleep(0.5)
         self.is_finished = False # End Filter
-        userdata.restart_requested_out = False
-        return "RECORD_STARTED"
 
     def execute(self, userdata):
         if userdata.restart_requested:
             self.restart(userdata.shared_string , str(userdata.counter_in))
+            userdata.restart_requested_out = True
+            return "RECORD_STARTED"
+
 
         if userdata.restart_requested is None:
             print ("EXITING")
