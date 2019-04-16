@@ -75,6 +75,7 @@ namespace gr_topological_visualizer{
       void setTerrainHeight( int value);
       void setRobotRadius(int radius);
 
+      void executeTopoMap();
       void visualizeMap();
       void saveMap();
 

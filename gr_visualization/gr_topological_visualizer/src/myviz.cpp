@@ -58,6 +58,7 @@ MyViz::MyViz( QWidget* parent )
   robot_radius_spinbox->setValue(robot_radius_);
 
   QPushButton* save_topological_map = new QPushButton ("Store Map");
+  QPushButton* execute_map = new QPushButton ("Execute Map");
 
   QGridLayout* controls_layout = new QGridLayout();
   controls_layout->addWidget( width_label, 0, 0 );
@@ -67,6 +68,7 @@ MyViz::MyViz( QWidget* parent )
   controls_layout->addWidget( robot_radius_label, 2, 0 );
   controls_layout->addWidget( robot_radius_spinbox, 2, 1 );
   controls_layout->addWidget( save_topological_map, 3, 0 );
+  controls_layout->addWidget( execute_map, 3, 1 );
 
   // Construct and lay out render panel.
   render_panel_ = new rviz::RenderPanel();
@@ -80,6 +82,7 @@ MyViz::MyViz( QWidget* parent )
   // Make signal/slot connections.
   connect( width_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainWidth(  int )));
   connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainHeight(  int)));
+  connect( execute_map, SIGNAL( released( )), this, SLOT( executeTopoMap( )));
   connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
   connect( robot_radius_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setRobotRadius(int)));
 
@@ -293,4 +296,8 @@ void MyViz::saveMap(){
   std::string field = "map";
   //std::string result(message_store_->insertNamed( field, name, topo_map));
   //ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
+}
+
+void MyViz::executeTopoMap(){
+
 }
