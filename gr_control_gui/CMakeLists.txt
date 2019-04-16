@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gr_topological_visualizer)
+project(gr_control_gui)
 
 add_compile_options(-std=c++11)
 

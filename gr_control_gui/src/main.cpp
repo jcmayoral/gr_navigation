@@ -37,7 +37,7 @@
 #include <ros/ros.h>
 #include "myviz.h"
 
-using namespace gr_topological_visualizer;
+using namespace gr_control_gui;
 
 int main(int argc, char **argv)
 {

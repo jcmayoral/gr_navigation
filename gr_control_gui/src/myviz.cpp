@@ -31,7 +31,7 @@
 #include "myviz.h"
 
 
-using namespace gr_topological_visualizer;
+using namespace gr_control_gui;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )

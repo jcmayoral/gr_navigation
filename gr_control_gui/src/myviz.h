@@ -60,7 +60,7 @@ class RenderPanel;
 class VisualizationManager;
 }
 
-namespace gr_topological_visualizer{
+namespace gr_control_gui{
   typedef std::map<std::string, geometry_msgs::Pose> NodeMap;
   typedef std::pair<std::string, std::string> Edges;
 
