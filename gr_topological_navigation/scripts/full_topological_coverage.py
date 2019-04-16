@@ -3,7 +3,7 @@ import rospy
 from gr_topological_navigation.topological_planner import TopologicalPlanner
 
 if __name__ == '__main__':
-    topological_planner = TopologicalPlanner()
+    topological_planner = TopologicalPlanner(start_node = "WayPoint70")
     topological_planner.generate_full_coverage_plan()
     topological_planner.go_to_source()
 

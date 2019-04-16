@@ -15,7 +15,7 @@ class TopologicalPlanner:
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
         msg = GetTopologicalMapRequest()
         #TODO ask for the parameter
-        msg.pointset = "simulation_map"
+        msg.pointset = "riseholme_bidirectional_sim"
         #TODO ask for the parameter
         self.start_node = start_node
         #TODO what to do in case of failures
