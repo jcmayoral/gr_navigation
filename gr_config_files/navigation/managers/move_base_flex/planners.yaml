@@ -1,8 +1,13 @@
 planners:
   - name: 'GlobalPlanner'
     type: 'global_planner/GlobalPlanner'
-  - name: 'SBPLLatticePlanner'
-    type: 'SBPLLatticePlanner'
+  #- name: 'SBPLLatticePlanner'
+  #  type: 'SBPLLatticePlanner'
+
+GlobalPlanner:
+  allow_uknown: True
+  publish_potential: True
+  use_grid_path: True
 
 SBPLLatticePlanner:
   planner_type: ARAPlanner

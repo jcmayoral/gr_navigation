@@ -1,6 +1,6 @@
 <package>
-  <name>gr_topological_visualizer</name>
-  <version>0.2.5</version>
+  <name>gr_control_gui</name>
+  <version>0.2.10</version>
   <description>
      Based on the librviz_tutorial from William Woodall. This package allows an interaction to the topological map.
   </description>
@@ -12,6 +12,7 @@
   <build_depend>qtbase5-dev</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>rviz</build_depend>
+  <build_depend>geometry_msgs</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>mongodb_store</build_depend>
   <build_depend>strands_navigation_msgs</build_depend>
@@ -21,6 +22,7 @@
   <run_depend>libqt5-widgets</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rviz</run_depend>
+  <run_depend>geometry_msgs</run_depend>
   <run_depend>visualization_msgs</run_depend>
   <run_depend>mongodb_store</run_depend>
   <run_depend>strands_navigation_msgs</run_depend>

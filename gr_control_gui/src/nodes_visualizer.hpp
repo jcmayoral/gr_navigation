@@ -5,7 +5,7 @@
 #include<visualization_msgs/MarkerArray.h>
 #include<vector>
 
-namespace gr_topological_visualizer{
+namespace gr_control_gui{
   class MapGenerator{
     public:
       MapGenerator(){

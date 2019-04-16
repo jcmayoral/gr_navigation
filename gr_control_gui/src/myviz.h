@@ -29,6 +29,8 @@
 #ifndef MYVIZ_H
 #define MYVIZ_H
 
+#include <vector>
+
 #include <QWidget>
 #include <QColor>
 #include <QSlider>
@@ -58,7 +60,10 @@ class RenderPanel;
 class VisualizationManager;
 }
 
-namespace gr_topological_visualizer{
+namespace gr_control_gui{
+  typedef std::map<std::string, geometry_msgs::Pose> NodeMap;
+  typedef std::pair<std::string, std::string> Edges;
+
   class MyViz: public QWidget{
     Q_OBJECT
     public:
@@ -70,6 +75,7 @@ namespace gr_topological_visualizer{
       void setTerrainHeight( int value);
       void setRobotRadius(int radius);
 
+      void executeTopoMap();
       void visualizeMap();
       void saveMap();
 
@@ -87,6 +93,9 @@ namespace gr_topological_visualizer{
       float terrain_height_;
       visualization_msgs::MarkerArray marker_array_;
      	mongodb_store::MessageStoreProxy* message_store_;
+
+      NodeMap node_map_;
+      std::vector<Edges> edges_;
   };
 };
   // END_TUTORIAL

@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gr_topological_visualizer)
+project(gr_control_gui)
 
 add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED COMPONENTS rviz roscpp visualization_msgs mongodb_store strands_navigation_msgs)
+find_package(catkin REQUIRED COMPONENTS rviz roscpp visualization_msgs 
+                    geometry_msgs mongodb_store strands_navigation_msgs)
 
 include_directories(${catkin_INCLUDE_DIRS}
 )
@@ -15,6 +16,7 @@ catkin_package(
       rviz
       roscpp
       visualization_msgs
+      geometry_msgs
       mongodb_store
       strands_navigation_msgs
 )
