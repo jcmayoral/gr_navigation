@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from gr_topological_navigation.actions.utils import BagRecorder
+from gr_topological_navigation.states.utils import BagRecorder
 from std_msgs.msg import Bool, Empty
 import rospy
 

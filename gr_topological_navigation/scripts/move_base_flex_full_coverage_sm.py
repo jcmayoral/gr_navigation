@@ -16,7 +16,7 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from mdr_move_base_safe.msg import MoveBaseSafeAction, MoveBaseSafeGoal
 import tf
 
-from gr_topological_navigation.actions.utils import BagRecorder
+from gr_topological_navigation.states.utils import BagRecorder
 
 class Setup(smach.State):
     def __init__(self):
