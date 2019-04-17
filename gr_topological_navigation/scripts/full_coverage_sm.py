@@ -9,25 +9,24 @@ import tf
 
 from gr_topological_navigation.states.utils import BagRecorder
 from gr_topological_navigation.states.manager import Manager
-from gr_topological_navigation.topological_planner import TopologicalPlanner
+from gr_topological_navigation.states.topological_planner import TopologicalPlanner
 
 rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
 sm.userdata.sm_counter = 0
-sm.userdata.bag_family = "collision_bags_bags_2003_"
+sm.userdata.bag_family = "topological_testing_"
 sm.userdata.restart_requested = True # This flag restart the cycle
 sm.userdata.stop_requested = False # This flag stops the recorder
-sm.userdata.finish_requested = False # This flag finishes sm
 
 with sm:
     smach.StateMachine.add('SETUP', Manager(),
-                       transitions={'SETUP_DONE':'CONFIG_WRITER', 'FINISH_REQUEST': 'CONFIG_WRITER'},
+                       transitions={'SETUP_DONE':'CONFIG_WRITER', 'FINISH_REQUEST': 'END_SM'},
                        remapping={'counter_in':'sm_counter',
                                   'counter_out':'sm_counter',
                                   'restart_requested_out':'restart_requested',
-                                  'finish_requested_out':'finish_requested'})
-
+                                  'stop_requested_out':'stop_requested'})
+    #TODO provide topic and types somehow
     smach.StateMachine.add('CONFIG_WRITER', BagRecorder(),
                    transitions={'RECORD_STARTED':'TRIGGER_MOVE', 'END_RECORD': 'END_SM'},
                    remapping={'counter_in':'sm_counter',
@@ -36,8 +35,10 @@ with sm:
                               'restart_requested_out':'restart_requested',
                               'stop_requested_out':'stop_requested'})
 
-    smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(),
-                  transitions={'NODE_REACHED':'END_SM', 'ERROR_NAVIGATION': 'END_SM'})
+    smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(start_node = "WayPoint70"),
+                  transitions={'NODE_REACHED':'SETUP', 'ERROR_NAVIGATION': 'END_SM'},
+                  remapping={'restart_requested_out':'restart_requested',
+                             'stop_requested_out':'stop_requested'})
 
 #bagRecord.close()
 #Instrospection

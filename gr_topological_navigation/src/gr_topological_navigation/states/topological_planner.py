@@ -43,7 +43,7 @@ class TopologicalPlanner(SimpleActionState):
                          outcomes=['NODE_REACHED','ERROR_NAVIGATION'], goal_cb = self.goal_cb,
                          result_cb = self.result_cb,
                          input_keys=['counter_in', 'shared_string', 'restart_requested'],
-                         output_keys=['missing_edges', 'was_restarted'])
+                         output_keys=['missing_edges', 'restart_requested_out', 'stop_requested_out'])
 
     #Getting FB form topological navigation
     def current_edge_callback(self, edge_raw):
@@ -95,7 +95,6 @@ class TopologicalPlanner(SimpleActionState):
         rospy.logwarn("Generating Full Coverage Plan")
         #bfs_edges Not recommended
         self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.start_node, orientation='reverse'))
-        print self.topological_plan
         #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
         #self.topological_plan = list(nx.dfs_preorder_nodes(self.networkx_graph, source=self.start_node))
 
@@ -127,9 +126,12 @@ class TopologicalPlanner(SimpleActionState):
 
     def goal_cb(self, userdata, goal):
 
-        if userdata.restart_requested:
+        if userdata.restart_requested: #not implemented yet
             self.reset()
-            userdata.was_restarted = True
+            userdata.restart_requested_out = False
+            self.go_to_source()
+
+        if not self.is_task_initialized:
             self.go_to_source()
 
         next_transition = self.get_next_transition()
@@ -145,9 +147,11 @@ class TopologicalPlanner(SimpleActionState):
     def result_cb(self, userdata, status, results):
         if results:
             userdata.missing_edges = len(self.topological_plan)
+            userdata.restart_requested_out = True
             return "NODE_REACHED"
-        else:
+        else: #if anything fails stop
             userdata.missing_edges = len(self.topological_plan)
+            userdata.stop_requested_out = True
             return "ERROR_NAVIGATION"
 
 

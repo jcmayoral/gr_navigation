@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import rospy
-from gr_topological_navigation.topological_planner import TopologicalPlanner
+from gr_topological_navigation.states.topological_planner import TopologicalPlanner
 
 if __name__ == '__main__':
     rospy.init_node("topological_full_coverage_planner")z

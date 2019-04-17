@@ -7,6 +7,7 @@ class BagRecorder(smach.State):
     def __init__(self, record_topics=dict()):
         self.is_finished = False
         self.is_bag_started = False
+        self.path = "/home/jose/collection_data/topological_navigation/"
         self.lock = threading.Lock()
 
         for topic, type in record_topics.iteritems():
@@ -16,38 +17,39 @@ class BagRecorder(smach.State):
         self.startBag()
         smach.State.__init__(self,
                              outcomes=['RECORD_STARTED','END_RECORD'],
-                             input_keys=['counter_in', 'shared_string', 'restart_requested'],
-                             output_keys=['counter_out', 'restart_requested_out'])
-        rospy.loginfo("Initializing")
+                             input_keys=['counter_in', 'shared_string', 'restart_requested','stop_requested'],
+                             output_keys=['counter_out', 'restart_requested_out', 'stop_requested_out'])
+        rospy.loginfo("Initializing Bag Recorder")
 
     def startBag(self):
-        self.bag = rosbag.Bag('starter.bag', 'w')
+        self.bag = rosbag.Bag(self.path + 'starter.bag', 'w')
         self.is_finished = False
         self.is_bag_started= True
-        rospy.sleep(5)
+        rospy.sleep(2)
 
     def restart(self, root_name, bag_id):
-        print ("NEW FILE")
         rospy.sleep(0.5)
         self.close()
         self.is_finished = True # Filter error of cb when file is already closed
-        self.bag = rosbag.Bag(root_name + bag_id +'.bag', 'w')
+        self.bag = rosbag.Bag(self.path + root_name + bag_id +'.bag', 'w')
+        rospy.logwarn("Creating new Bag file")
         #userdata.counter_out = userdata.counter_in + 1
         self.is_bag_started = True
         rospy.sleep(0.5)
         self.is_finished = False # End Filter
 
     def execute(self, userdata):
+        if userdata.stop_requested:
+            self.close()
+            userdata.stop_requested_out = True
+            return "END_RECORD"
+
         if userdata.restart_requested:
             self.restart(userdata.shared_string , str(userdata.counter_in))
-            userdata.restart_requested_out = True
+            userdata.restart_requested_out = False
             return "RECORD_STARTED"
 
 
-        if userdata.restart_requested is None:
-            print ("EXITING")
-            self.close()
-            return "END_RECORD"
 
     def writeToBag(self,topic, msgs):
         self.lock.acquire()
