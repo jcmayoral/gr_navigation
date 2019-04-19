@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="topic_tools" type="relay" name="republisher_1" args="/safe_signal /lock_all" output="screen" />
+  <node pkg="topic_tools" type="relay" name="republisher_2" args="/safe_signal /stop_cutter" output="screen" />
+</launch>
