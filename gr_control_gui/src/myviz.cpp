@@ -39,7 +39,7 @@ MyViz::MyViz( QWidget* parent )
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
   //collection and database as arguments to messageStoreProxy
-  message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps","topological_maps");
+  message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps","message_store");
 
   // Construct and lay out labels and slider controls.
   QLabel* width_label = new QLabel( "Width Terrain" );
@@ -142,6 +142,7 @@ void MyViz::setTerrainHeight( int value ){
 
 void MyViz::visualizeMap(){
   //Node Creation
+  node_map_.clear();
   visualization_msgs::Marker temporal_marker;
 
   marker_array_.markers.clear();
@@ -272,7 +273,7 @@ void MyViz::saveMap(){
 
   strands_navigation_msgs::Edge edge;
 
-  std::string map_id("spare_map");
+  std::string map_id("trash_map_2");
 
   topo_map.map = map_id;
   topo_map.name =  map_id;
@@ -288,32 +289,36 @@ void MyViz::saveMap(){
   // Just work on Jose's mongodb_store repository
   std::vector<std::string> fields;
   fields.push_back("map");
-  fields.push_back("name");
+  fields.push_back("node");
   fields.push_back("pointset");
+  fields.push_back("name");
 
   std::vector<std::string> ids;
   ids.push_back(map_id);
   ids.push_back(map_id);
   ids.push_back(map_id);
-
+  ids.push_back(map_id);
 
   for (auto const & node : node_map_){
     topo_node.edges.clear();
     topo_node.verts.clear();
-    
     topo_node.pose = node.second;
-    vertex.x = topo_node.pose.position.x + 1;
-    vertex.y = topo_node.pose.position.y + 1;
-    topo_node.verts.push_back(vertex);
-    vertex.x = topo_node.pose.position.x - 1;
-    vertex.y = topo_node.pose.position.y - 1;
-    topo_node.verts.push_back(vertex);
+    ids[1] = node.first;
+    ids[3] = node.first;
+    topo_node.name = node.first;
 
-    vertex.x = topo_node.pose.position.x;
-    vertex.y = topo_node.pose.position.y + 1;
+
+    vertex.x = 0;
+    vertex.y = 1;
     topo_node.verts.push_back(vertex);
-    vertex.x = topo_node.pose.position.x - 1;
-    vertex.y = topo_node.pose.position.y;
+    vertex.x = 1;
+    vertex.y = 1;
+    topo_node.verts.push_back(vertex);
+    vertex.x = 1;
+    vertex.y = 0;
+    topo_node.verts.push_back(vertex);
+    vertex.x = 0;
+    vertex.y = 0;
     topo_node.verts.push_back(vertex);
 
     for (Edges & e : edges_){
@@ -323,9 +328,9 @@ void MyViz::saveMap(){
         topo_node.edges.push_back(edge);
       }
     }
-    //std::string result(message_store_->insertNamed( fields, ids, topo_node));
-    std::string result(message_store_->insertNamed("name", node.first, topo_node));
-    std::cout << "node_id " << result << std::endl;
+    std::string result(message_store_->insertNamed( fields, ids, topo_node));
+    std::cout << result << std::endl;
+    //std::string result(message_store_->insertNamed("pointset", map_id, topo_node));
     topo_map.nodes.push_back(topo_node);
   }
 
