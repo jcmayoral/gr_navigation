@@ -242,6 +242,9 @@ void MyViz::visualizeMap(){
       temporal_edges.points.push_back(temporal_point);
       //Edges ids
       edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_2));
+      //bidirectional
+      edges_.emplace_back("node_"+ std::to_string(index_2),"node_" + std::to_string(index_1));
+
     }
     else{
       //no border nodes
@@ -273,7 +276,7 @@ void MyViz::saveMap(){
 
   strands_navigation_msgs::Edge edge;
 
-  std::string map_id("trash_map_2");
+  std::string map_id("trash_map_5");
 
   topo_map.map = map_id;
   topo_map.name =  map_id;
@@ -325,6 +328,7 @@ void MyViz::saveMap(){
       if (e.first.compare(node.first)==0){
         edge.edge_id = e.first + "_" + e.second;
         edge.node = e.second;
+        edge.action = "move_base";
         topo_node.edges.push_back(edge);
       }
     }
