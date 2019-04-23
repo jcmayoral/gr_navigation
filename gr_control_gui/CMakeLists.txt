@@ -65,7 +65,7 @@ add_executable(myviz ${SRC_FILES})
 ## ``set(QT_LIBRARIES Qt5::Widgets)``, and with whatever libraries
 ## catkin has included.
 target_link_libraries(myviz ${QT_LIBRARIES} ${catkin_LIBRARIES})
-add_dependencies(myviz ${PROJECT_NAME}_lib)
+#add_dependencies(myviz ${PROJECT_NAME}_lib)
 
 
 ## END_TUTORIAL

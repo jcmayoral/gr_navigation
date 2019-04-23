@@ -38,7 +38,8 @@ MyViz::MyViz( QWidget* parent )
   : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
-  message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps");
+  //collection and database as arguments to messageStoreProxy
+  message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps","topological_maps");
 
   // Construct and lay out labels and slider controls.
   QLabel* width_label = new QLabel( "Width Terrain" );
@@ -267,33 +268,68 @@ void MyViz::saveMap(){
 
   strands_navigation_msgs::TopologicalMap topo_map;
   strands_navigation_msgs::TopologicalNode topo_node;
+  strands_navigation_msgs::Vertex vertex;
+
   strands_navigation_msgs::Edge edge;
 
-  topo_map.map = "spare_map";
-  topo_map.name = "spare_map";
-  topo_map.pointset = "spare_map";
+  std::string map_id("spare_map");
 
-  topo_node.map = "spare_map";
-  topo_node.name = "spare_map";
-  topo_node.pointset = "spare_map";
+  topo_map.map = map_id;
+  topo_map.name =  map_id;
+  topo_map.pointset = map_id;
 
-  
-  for (std::vector<visualization_msgs::Marker>::iterator it = marker_array_.markers.begin(); it!= marker_array_.markers.end();it++){
+
+  topo_node.map = map_id;
+  topo_node.name = map_id;
+  topo_node.pointset = map_id;
+  topo_node.localise_by_topic = map_id;
+
+  //TODO this is a hack for the python mongodb implementation
+  // Just work on Jose's mongodb_store repository
+  std::vector<std::string> fields;
+  fields.push_back("map");
+  fields.push_back("name");
+  fields.push_back("pointset");
+
+  std::vector<std::string> ids;
+  ids.push_back(map_id);
+  ids.push_back(map_id);
+  ids.push_back(map_id);
+
+
+  for (auto const & node : node_map_){
     topo_node.edges.clear();
-    topo_node.pose = it-> pose;
+    topo_node.verts.clear();
+    
+    topo_node.pose = node.second;
+    vertex.x = topo_node.pose.position.x + 1;
+    vertex.y = topo_node.pose.position.y + 1;
+    topo_node.verts.push_back(vertex);
+    vertex.x = topo_node.pose.position.x - 1;
+    vertex.y = topo_node.pose.position.y - 1;
+    topo_node.verts.push_back(vertex);
+
+    vertex.x = topo_node.pose.position.x;
+    vertex.y = topo_node.pose.position.y + 1;
+    topo_node.verts.push_back(vertex);
+    vertex.x = topo_node.pose.position.x - 1;
+    vertex.y = topo_node.pose.position.y;
+    topo_node.verts.push_back(vertex);
+
     for (Edges & e : edges_){
-      if (e.first.compare("node_" + std::to_string(it->id))==0){
+      if (e.first.compare(node.first)==0){
         edge.edge_id = e.first + "_" + e.second;
         edge.node = e.second;
         topo_node.edges.push_back(edge);
       }
     }
-    ROS_INFO_STREAM(topo_node);
+    //std::string result(message_store_->insertNamed( fields, ids, topo_node));
+    std::string result(message_store_->insertNamed("name", node.first, topo_node));
+    std::cout << "node_id " << result << std::endl;
     topo_map.nodes.push_back(topo_node);
   }
 
-  std::string name = "spare_node";
-  std::string field = "map";
+
   //std::string result(message_store_->insertNamed( field, name, topo_map));
   //ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
 }
