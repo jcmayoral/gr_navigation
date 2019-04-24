@@ -15,6 +15,7 @@ rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
 sm.userdata.sm_counter = 0
+sm.userdata.nodes_to_go = 100
 sm.userdata.bag_family = "topological_testing_"
 sm.userdata.restart_requested = True # This flag restart the cycle
 sm.userdata.stop_requested = False # This flag stops the recorder
@@ -35,7 +36,7 @@ with sm:
                               'restart_requested_out':'restart_requested',
                               'stop_requested_out':'stop_requested'})
 
-    smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(start_node = "WayPoint70", pointset= "riseholme_bidirectional_sim"),
+    smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(start_node = "node_0", pointset= "trash_map_5"),
                   transitions={'NODE_REACHED':'SETUP', 'ERROR_NAVIGATION': 'END_SM'},
                   remapping={'restart_requested_out':'restart_requested',
                              'stop_requested_out':'stop_requested'})

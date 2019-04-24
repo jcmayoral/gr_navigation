@@ -204,11 +204,17 @@ void MyViz::visualizeMap(){
     temporal_marker.id = std::distance(vector.begin(), it);
     temporal_marker.pose.position.x = it->first;
     temporal_marker.pose.position.y = it->second;
+
+    int floor_col = floor(id/width_cells_);
+    double yaw =(floor_col%2) ? -1.57 : 1.57;
+    tf2::Quaternion quat_tf;
+    quat_tf.setRPY(0.0, 0.0, yaw);
+    geometry_msgs::Quaternion quat_msg;
+    tf2::convert(quat_tf, temporal_marker.pose.orientation);
+
     marker_array_.markers.push_back(temporal_marker);
     std::string id_str("node_" + std::to_string(id));
-    
     node_map_[id_str] = temporal_marker.pose;
-
   
     //Edges Creation
     if (col ==(width_cells_-1)&& row==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
@@ -339,17 +345,17 @@ void MyViz::saveMap(){
     topo_node.name = node.first;
 
 
-    vertex.x = 0;
-    vertex.y = 1;
+    vertex.x = -robot_radius_/2;
+    vertex.y = robot_radius_/2;
     topo_node.verts.push_back(vertex);
-    vertex.x = 1;
-    vertex.y = 1;
+    vertex.x = robot_radius_/2;
+    vertex.y = robot_radius_/2;
     topo_node.verts.push_back(vertex);
-    vertex.x = 1;
-    vertex.y = 0;
+    vertex.x = robot_radius_/2;
+    vertex.y = -robot_radius_/2;
     topo_node.verts.push_back(vertex);
-    vertex.x = 0;
-    vertex.y = 0;
+    vertex.x = -robot_radius_/2;
+    vertex.y = -robot_radius_/2;
     topo_node.verts.push_back(vertex);
 
     for (Edges & e : edges_){

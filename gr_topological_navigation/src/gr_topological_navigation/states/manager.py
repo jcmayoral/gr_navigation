@@ -5,7 +5,7 @@ class Manager(smach.State):
     def __init__(self):
         smach.State.__init__(self,
                              outcomes=['SETUP_DONE', 'FINISH_REQUEST'],
-                             input_keys=['counter_in', 'restart_requested', 'stop_requested'],
+                             input_keys=['counter_in', 'restart_requested', 'stop_requested', 'nodes_to_go'],
                              output_keys=['counter_out', 'restart_requested_out', 'stop_requested_out'])
 
     def execute(self, userdata):
@@ -14,7 +14,7 @@ class Manager(smach.State):
         if userdata.stop_requested:
             userdata.stop_requested_out = True
             return "FINISH_REQUEST"
-        if userdata.counter_in < 5: # TODO Automatic File Indexing
+        if userdata.nodes_to_go != 0: # TODO Automatic File Indexing
             userdata.counter_out = userdata.counter_in +1
             userdata.restart_requested_out = True
             return 'SETUP_DONE'
