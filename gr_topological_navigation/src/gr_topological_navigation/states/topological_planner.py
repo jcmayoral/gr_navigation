@@ -10,7 +10,7 @@ from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 from std_msgs.msg import String, Bool
 
 class TopologicalPlanner(SimpleActionState):
-    def __init__(self, gui=False, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
+    def __init__(self, gui=True, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
 
@@ -18,12 +18,12 @@ class TopologicalPlanner(SimpleActionState):
         self.start_node = start_node
         self.gui = gui
         self.pointset = pointset
+        self.topological_plan = None
 
         #get_topological_map reset_graph
         self.get_map()
 
         self.is_task_initialized = False
-        self.topological_plan = None
 
         self.visited_edges = list()
         self.current_node = "start"
@@ -41,7 +41,6 @@ class TopologicalPlanner(SimpleActionState):
                          output_keys=['missing_edges', 'restart_requested_out', 'stop_requested_out'])
 
     def reset_graph(self,map):
-        self.networkx_graph = nx.Graph()
         #generate_full_coverage_plan
         self.create_graph(map)
         self.generate_full_coverage_plan()
@@ -80,6 +79,7 @@ class TopologicalPlanner(SimpleActionState):
         self.get_map()
 
     def create_graph(self, map):
+        self.networkx_graph = nx.Graph()
         nodes_poses = dict()
 
         for n in map.map.nodes:
