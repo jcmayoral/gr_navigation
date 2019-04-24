@@ -53,6 +53,9 @@
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <mongodb_store/message_store.h>
 
+#include <boost/foreach.hpp>
+
+
 namespace rviz
 {
 class Display;
@@ -78,6 +81,7 @@ namespace gr_control_gui{
       void executeTopoMap();
       void visualizeMap();
       void saveMap();
+      void deleteTopoMap(std::string map_id);
 
     private:
       rviz::VisualizationManager* manager_;
