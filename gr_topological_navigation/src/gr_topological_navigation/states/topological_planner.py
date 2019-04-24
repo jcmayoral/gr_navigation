@@ -10,13 +10,13 @@ from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 from std_msgs.msg import String, Bool
 
 class TopologicalPlanner(SimpleActionState):
-    def __init__(self, gui=False, start_node='cold_storage'):
+    def __init__(self, gui=False, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
         get_topological_map = rospy.ServiceProxy("/topological_map_publisher/get_topological_map", GetTopologicalMap)
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
         msg = GetTopologicalMapRequest()
         #TODO ask for the parameter
-        msg.pointset = "riseholme_bidirectional_sim"
+        msg.pointset = pointset
         #TODO ask for the parameter
         self.start_node = start_node
         #TODO what to do in case of failures
@@ -100,7 +100,7 @@ class TopologicalPlanner(SimpleActionState):
 
     def go_to_source(self):
         rospy.loginfo("Robot going to start node %s", self.start_node)
-        self.command_robot_to_node(self.start_node, no_orientation=False)
+        self.command_robot_to_node(self.start_node, no_orientation=True)
         self.is_task_initialized = True
 
     def get_next_transition(self):
