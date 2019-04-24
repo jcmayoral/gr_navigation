@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 from strands_navigation_msgs.srv import GetTopologicalMapRequest, GetTopologicalMap
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 from std_msgs.msg import String, Bool
+from gr_topological_navigation.states.move_base_state import command_robot_to_node, move_base
 
 class TopologicalPlanner(SimpleActionState):
-    def __init__(self, gui=True, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
+    def __init__(self, gui=False, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
 
@@ -19,6 +20,7 @@ class TopologicalPlanner(SimpleActionState):
         self.gui = gui
         self.pointset = pointset
         self.topological_plan = None
+        self.nodes_poses = None
 
         #get_topological_map reset_graph
         self.get_map()
@@ -28,17 +30,12 @@ class TopologicalPlanner(SimpleActionState):
         self.visited_edges = list()
         self.current_node = "start"
 
-        self.action_client = actionlib.SimpleActionClient('topological_navigation', GotoNodeAction)
-        rospy.loginfo("Waiting for Action Server /topological_navigation")
-        self.action_client.wait_for_server()
-        rospy.loginfo("Action Server Found")
-
         #Smach State Constructor
         SimpleActionState.__init__(self, "topological_navigation", GotoNodeAction,
                          outcomes=['NODE_REACHED','ERROR_NAVIGATION'], goal_cb = self.goal_cb,
                          result_cb = self.result_cb,
-                         input_keys=['counter_in', 'shared_string', 'restart_requested'],
-                         output_keys=['missing_edges', 'restart_requested_out', 'stop_requested_out'])
+                         input_keys=['counter_in', 'shared_string', 'restart_requested','next_transition'],
+                         output_keys=['missing_edges', 'restart_requested_out', 'stop_requested_out','next_transition'])
 
     def reset_graph(self,map):
         #generate_full_coverage_plan
@@ -80,11 +77,11 @@ class TopologicalPlanner(SimpleActionState):
 
     def create_graph(self, map):
         self.networkx_graph = nx.Graph()
-        nodes_poses = dict()
+        self.nodes_poses = dict()
 
         for n in map.map.nodes:
             self.networkx_graph.add_node(n.name)
-            nodes_poses[n.name] =(n.pose.position.x, n.pose.position.y)
+            self.nodes_poses[n.name] =(n.pose.position.x, n.pose.position.y)
             for e in n.edges:
                 if not self.networkx_graph.has_edge(e.node, n.name) and  not self.networkx_graph.has_edge(n.name, e.node):
                     self.networkx_graph.add_edge(n.name, e.node, edge_id=e.edge_id)
@@ -109,7 +106,10 @@ class TopologicalPlanner(SimpleActionState):
 
     def go_to_source(self):
         rospy.loginfo("Robot going to start node %s", self.start_node)
-        self.command_robot_to_node(self.start_node, no_orientation=True)
+        if self.nodes_poses is not None:
+            rospy.logerr(self.nodes_poses[self.start_node])
+        move_base(self.nodes_poses[self.start_node][0], self.nodes_poses[self.start_node][1])
+        self.current_node = self.start_node
         self.is_task_initialized = True
 
     def get_next_transition(self):
@@ -122,17 +122,6 @@ class TopologicalPlanner(SimpleActionState):
         next_edge = self.topological_plan.pop(0)
         return next_edge
 
-    def command_robot_to_node(self,node_id, no_orientation=True):
-        rospy.loginfo("Commanding robot to %s", node_id)
-        navgoal = GotoNodeGoal()
-        navgoal.target = node_id
-        navgoal.no_orientation = no_orientation
-        self.action_client.send_goal(navgoal)
-        self.action_client.wait_for_result()
-        rospy.loginfo("Is node %s reached? %r", node_id,  self.action_client.get_result())
-        self.current_node = node_id
-        return self.action_client.get_result()
-
     def goal_cb(self, userdata, goal):
 
         if userdata.restart_requested: #not implemented yet
@@ -144,7 +133,7 @@ class TopologicalPlanner(SimpleActionState):
             self.go_to_source()
 
         next_transition = self.get_next_transition()
-
+        userdata.next_transition = next_transition
         if next_transition is None: #this could happens
             goal.target = self.current_node
         else:
@@ -157,6 +146,7 @@ class TopologicalPlanner(SimpleActionState):
         if results:
             userdata.missing_edges = len(self.topological_plan)
             userdata.restart_requested_out = True
+            self.current_node = userdata.next_transition
             return "NODE_REACHED"
         else: #if anything fails stop
             userdata.missing_edges = len(self.topological_plan)
