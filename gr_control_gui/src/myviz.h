@@ -52,6 +52,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <mongodb_store/message_store.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <boost/foreach.hpp>
 

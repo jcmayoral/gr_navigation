@@ -204,6 +204,19 @@ void MyViz::visualizeMap(){
     temporal_marker.id = std::distance(vector.begin(), it);
     temporal_marker.pose.position.x = it->first;
     temporal_marker.pose.position.y = it->second;
+
+
+
+    double yaw =(col%2) ? -1.57 : 1.57;
+
+    tf2::Quaternion quat_tf;
+    quat_tf.setRPY(0.0, 0.0, yaw);
+    geometry_msgs::Quaternion quat_msg;
+    tf2::convert(quat_tf, temporal_marker.pose.orientation);
+
+
+
+
     marker_array_.markers.push_back(temporal_marker);
     std::string id_str("node_" + std::to_string(id));
     
