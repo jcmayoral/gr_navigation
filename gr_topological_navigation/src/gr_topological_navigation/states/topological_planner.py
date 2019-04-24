@@ -34,8 +34,8 @@ class TopologicalPlanner(SimpleActionState):
         SimpleActionState.__init__(self, "topological_navigation", GotoNodeAction,
                          outcomes=['NODE_REACHED','ERROR_NAVIGATION'], goal_cb = self.goal_cb,
                          result_cb = self.result_cb,
-                         input_keys=['counter_in', 'shared_string', 'restart_requested','next_transition'],
-                         output_keys=['missing_edges', 'restart_requested_out', 'stop_requested_out','next_transition'])
+                         input_keys=['counter_in', 'shared_string', 'restart_requested','next_transition', 'nodes_to_go'],
+                         output_keys=['restart_requested_out', 'stop_requested_out','next_transition', 'nodes_to_go'])
 
     def reset_graph(self,map):
         #generate_full_coverage_plan
@@ -144,7 +144,7 @@ class TopologicalPlanner(SimpleActionState):
 
     def result_cb(self, userdata, status, results):
         if results:
-            userdata.missing_edges = len(self.topological_plan)
+            userdata.nodes_to_go = len(self.topological_plan)
             userdata.restart_requested_out = True
             self.current_node = userdata.next_transition
             return "NODE_REACHED"

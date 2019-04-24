@@ -3,7 +3,6 @@ import rospy
 from gr_topological_navigation.states.topological_planner import TopologicalPlanner
 from gr_topological_navigation.states.move_base_state import command_robot_to_node
 
-
 if __name__ == '__main__':
     rospy.init_node("topological_full_coverage_planner")
     topological_planner = TopologicalPlanner(start_node = "node_0", pointset="trash_map_5")

@@ -34,7 +34,4 @@ def move_base(x =0, y=0, yaw = 0):
     goal.target_pose.header.stamp = rospy.Time.now()
     action_client.send_goal(goal)
     action_client.wait_for_result()
-    rospy.loginfo(action_client.get_result())
-
-    #print result
     return action_client.get_result()

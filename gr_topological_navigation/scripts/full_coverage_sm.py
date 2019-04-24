@@ -15,6 +15,7 @@ rospy.init_node("my_collision_bag_recorder")
 
 sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
 sm.userdata.sm_counter = 0
+sm.userdata.nodes_to_go = 100
 sm.userdata.bag_family = "topological_testing_"
 sm.userdata.restart_requested = True # This flag restart the cycle
 sm.userdata.stop_requested = False # This flag stops the recorder
