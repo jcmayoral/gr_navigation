@@ -11,32 +11,27 @@ from std_msgs.msg import String, Bool
 
 class TopologicalPlanner(SimpleActionState):
     def __init__(self, gui=False, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
-        get_topological_map = rospy.ServiceProxy("/topological_map_publisher/get_topological_map", GetTopologicalMap)
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
-        msg = GetTopologicalMapRequest()
-        #TODO ask for the parameter
-        msg.pointset = pointset
+
         #TODO ask for the parameter
         self.start_node = start_node
-        #TODO what to do in case of failures
-        map = get_topological_map(msg)
-        #Topological Map parsed to a networkx Graph so functions can be used
-        self.networkx_graph = nx.Graph()
         self.gui = gui
+        self.pointset = pointset
+
+        #get_topological_map reset_graph
+        self.get_map()
+
         self.is_task_initialized = False
         self.topological_plan = None
-        self.create_graph(map)
+
         self.visited_edges = list()
         self.current_node = "start"
+
         self.action_client = actionlib.SimpleActionClient('topological_navigation', GotoNodeAction)
         rospy.loginfo("Waiting for Action Server /topological_navigation")
         self.action_client.wait_for_server()
         rospy.loginfo("Action Server Found")
-
-
-        #generate_full_coverage_plan
-        self.generate_full_coverage_plan()
 
         #Smach State Constructor
         SimpleActionState.__init__(self, "topological_navigation", GotoNodeAction,
@@ -44,6 +39,19 @@ class TopologicalPlanner(SimpleActionState):
                          result_cb = self.result_cb,
                          input_keys=['counter_in', 'shared_string', 'restart_requested'],
                          output_keys=['missing_edges', 'restart_requested_out', 'stop_requested_out'])
+
+    def reset_graph(self,map):
+        self.networkx_graph = nx.Graph()
+        #generate_full_coverage_plan
+        self.create_graph(map)
+        self.generate_full_coverage_plan()
+
+    def get_map(self):
+        get_topological_map = rospy.ServiceProxy("/topological_map_publisher/get_topological_map", GetTopologicalMap)
+        msg = GetTopologicalMapRequest()
+        msg.pointset = self.pointset
+        map = get_topological_map(msg)
+        self.reset_graph(map)
 
     #Getting FB form topological navigation
     def current_edge_callback(self, edge_raw):
@@ -69,6 +77,7 @@ class TopologicalPlanner(SimpleActionState):
     def reset(self):
         self.is_task_initialized = False
         self.visited_edges = list()
+        self.get_map()
 
     def create_graph(self, map):
         nodes_poses = dict()
