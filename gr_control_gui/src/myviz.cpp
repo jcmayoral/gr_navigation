@@ -339,17 +339,17 @@ void MyViz::saveMap(){
     topo_node.name = node.first;
 
 
-    vertex.x = 0;
-    vertex.y = 1;
+    vertex.x = -robot_radius_/2;
+    vertex.y = robot_radius_/2;
     topo_node.verts.push_back(vertex);
-    vertex.x = 1;
-    vertex.y = 1;
+    vertex.x = robot_radius_/2;
+    vertex.y = robot_radius_/2;
     topo_node.verts.push_back(vertex);
-    vertex.x = 1;
-    vertex.y = 0;
+    vertex.x = robot_radius_/2;
+    vertex.y = -robot_radius_/2;
     topo_node.verts.push_back(vertex);
-    vertex.x = 0;
-    vertex.y = 0;
+    vertex.x = -robot_radius_/2;
+    vertex.y = -robot_radius_/2;
     topo_node.verts.push_back(vertex);
 
     for (Edges & e : edges_){
