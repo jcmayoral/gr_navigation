@@ -260,7 +260,7 @@ void MyViz::visualizeMap(){
       //Edges ids
       edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_1 + 1));
       //birectional
-      edges_.emplace_back("node_"+ std::to_string(index_2),"node_" + std::to_string(index_1));
+      edges_.emplace_back("node_"+ std::to_string(index_1 + 1),"node_" + std::to_string(index_1));
 
     }
     
