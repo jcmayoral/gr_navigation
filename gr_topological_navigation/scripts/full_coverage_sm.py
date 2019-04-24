@@ -35,7 +35,7 @@ with sm:
                               'restart_requested_out':'restart_requested',
                               'stop_requested_out':'stop_requested'})
 
-    smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(start_node = "WayPoint70"),
+    smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(start_node = "WayPoint70", pointset= "riseholme_bidirectional_sim"),
                   transitions={'NODE_REACHED':'SETUP', 'ERROR_NAVIGATION': 'END_SM'},
                   remapping={'restart_requested_out':'restart_requested',
                              'stop_requested_out':'stop_requested'})

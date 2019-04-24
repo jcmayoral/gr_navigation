@@ -259,6 +259,9 @@ void MyViz::visualizeMap(){
       temporal_edges.points.push_back(temporal_point);
       //Edges ids
       edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_1 + 1));
+      //birectional
+      edges_.emplace_back("node_"+ std::to_string(index_1 + 1),"node_" + std::to_string(index_1));
+
     }
     
       marker_array_.markers.push_back(temporal_edges);
@@ -266,6 +269,31 @@ void MyViz::visualizeMap(){
   }
 
   map_publisher_.publish(marker_array_);
+}
+
+void MyViz::deleteTopoMap(std::string map_id){
+
+
+    std::string id("remove_collection");
+  	message_store_->deleteID(id+"--"+map_id);
+   /*
+   std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
+
+   std::vector<std::string> fields;
+   fields.push_back("map");
+   fields.push_back("pointset");
+   
+   std::vector<std::string> ids;
+   ids.push_back(map_id);
+   ids.push_back(map_id);
+
+   if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>(map_id, "pointset", results_node, false)) {
+            strands_navigation_msgs::TopologicalNode node;
+            BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> node,  results_node){
+                ROS_DEBUG_STREAM("Got by name: " << *node);
+            }
+  }
+  */
 }
 
 void MyViz::saveMap(){
@@ -277,7 +305,7 @@ void MyViz::saveMap(){
   strands_navigation_msgs::Edge edge;
 
   std::string map_id("trash_map_5");
-
+  deleteTopoMap(map_id);
   topo_map.map = map_id;
   topo_map.name =  map_id;
   topo_map.pointset = map_id;
@@ -332,7 +360,9 @@ void MyViz::saveMap(){
         topo_node.edges.push_back(edge);
       }
     }
+    
     std::string result(message_store_->insertNamed( fields, ids, topo_node));
+    
     std::cout << result << std::endl;
     //std::string result(message_store_->insertNamed("pointset", map_id, topo_node));
     topo_map.nodes.push_back(topo_node);
