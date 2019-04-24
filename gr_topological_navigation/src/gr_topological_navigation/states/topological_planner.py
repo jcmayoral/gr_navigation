@@ -4,6 +4,7 @@ import actionlib
 import smach
 from smach_ros import SimpleActionState
 import networkx as nx
+import numpy as np
 import matplotlib.pyplot as plt
 from strands_navigation_msgs.srv import GetTopologicalMapRequest, GetTopologicalMap
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
@@ -119,8 +120,28 @@ class TopologicalPlanner(SimpleActionState):
         if len(self.topological_plan) == 0:
             rospy.logerr("Next transition not found")
             return None
+
+
         next_edge = self.topological_plan.pop(0)
+        #find a better condition
+        while np.fabs(self.get_orientation(next_edge)) == 90:
+            rospy.logwarn("skipping region")
+            if len(self.topological_plan) == 1:
+                return next_edge
+            next_edge = self.topological_plan.pop(0)
+
+
         return next_edge
+
+    def get_orientation (self, edge):
+        #this is in map c
+        p0 = self.nodes_poses[edge[0]]
+        p1 = self.nodes_poses[edge[1]]
+
+        dx = p1[0] - p0[0]
+        dy = p1[1] - p0[0]
+        print np.arctan2(dy, dx) * 180 / np.pi
+        return np.arctan2(dy, dx) * 180 / np.pi
 
     def goal_cb(self, userdata, goal):
 
