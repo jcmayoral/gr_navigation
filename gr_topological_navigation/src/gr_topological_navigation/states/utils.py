@@ -41,7 +41,7 @@ class BagRecorder(smach.State):
     def execute(self, userdata):
         if userdata.stop_requested:
             self.close()
-            userdata.stop_requested_out = True
+            #userdata.stop_requested_out = True
             return "END_RECORD"
 
         if userdata.restart_requested:

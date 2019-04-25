@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gr_topological_navigation</name>
-  <version>0.2.6</version>
+  <version>0.3.0</version>
   <description>gr_topological_navigation package</description>
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
   <license>MIT</license>
@@ -10,8 +10,11 @@
   <build_depend>rospy</build_depend>
   <build_depend>strands_navigation_msgs</build_depend>
   <build_depend>topological_navigation</build_depend>
+  <build_depend>std_msgs</build_depend>
+
   <exec_depend>rospy</exec_depend>
   <exec_depend>strands_navigation_msgs</exec_depend>
   <exec_depend>topological_navigation</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
 
 </package>

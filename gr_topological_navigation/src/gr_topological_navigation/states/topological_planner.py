@@ -35,8 +35,8 @@ class TopologicalPlanner(SimpleActionState):
         SimpleActionState.__init__(self, "topological_navigation", GotoNodeAction,
                          outcomes=['NODE_REACHED','ERROR_NAVIGATION'], goal_cb = self.goal_cb,
                          result_cb = self.result_cb,
-                         input_keys=['counter_in', 'shared_string', 'restart_requested','next_transition', 'nodes_to_go'],
-                         output_keys=['restart_requested_out', 'stop_requested_out','next_transition', 'nodes_to_go'])
+                         input_keys=['next_transition', 'nodes_to_go','execution_requested'],
+                         output_keys=['restart_requested_out', 'stop_requested_out','next_transition', 'nodes_to_go', 'execution_requested_out'])
 
     def reset_graph(self,map):
         #generate_full_coverage_plan
@@ -121,12 +121,14 @@ class TopologicalPlanner(SimpleActionState):
             rospy.logerr("Next transition not found")
             return None
 
-
         next_edge = self.topological_plan.pop(0)
-        #find a better condition
+        #TODO find a better condition
+        #for example analyzing path before proceed....
+        # possible at move_base_flex
         while np.fabs(self.get_orientation(next_edge)) == 90:
             rospy.logwarn("skipping region")
-            if len(self.topological_plan) == 1:
+            if len(self.topological_plan) == 0:
+                rospy.logerr("Topological plan size is zero returning last edge")
                 return next_edge
             next_edge = self.topological_plan.pop(0)
 
@@ -140,14 +142,14 @@ class TopologicalPlanner(SimpleActionState):
 
         dx = p1[0] - p0[0]
         dy = p1[1] - p0[0]
-        print np.arctan2(dy, dx) * 180 / np.pi
+        print "edge ", edge, "angle ", np.arctan2(dy, dx) * 180 / np.pi
         return np.arctan2(dy, dx) * 180 / np.pi
 
     def goal_cb(self, userdata, goal):
 
-        if userdata.restart_requested: #not implemented yet
+        if userdata.execution_requested: #not implemented yet
             self.reset()
-            userdata.restart_requested_out = False
+            userdata.execution_requested_out = False
             self.go_to_source()
 
         if not self.is_task_initialized:
