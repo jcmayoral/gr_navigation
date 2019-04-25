@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   strands_navigation_msgs
   topological_navigation
+  std_msgs
 )
 
 catkin_python_setup()
@@ -14,6 +15,7 @@ catkin_package(
     rospy
     strands_navigation_msgs
     topological_navigation
+    std_msgs
 )
 
 include_directories(

@@ -3,12 +3,11 @@ project(gr_control_gui)
 
 add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED COMPONENTS rviz roscpp visualization_msgs 
+find_package(catkin REQUIRED COMPONENTS rviz roscpp visualization_msgs
                     geometry_msgs mongodb_store strands_navigation_msgs
-                    tf2_geometry_msgs)
+                    tf2_geometry_msgs std_msgs)
 
-include_directories(${catkin_INCLUDE_DIRS}
-)
+include_directories(${catkin_INCLUDE_DIRS})
 
 add_definitions(-Wno-deprecated-declarations)
 
@@ -21,6 +20,7 @@ catkin_package(
       mongodb_store
       strands_navigation_msgs
       tf2_geometry_msgs
+      std_msgs
 )
 
 link_directories(${catkin_LIBRARY_DIRS})

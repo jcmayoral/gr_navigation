@@ -38,6 +38,7 @@ MyViz::MyViz( QWidget* parent )
   : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
+  reset_publisher_ = nh_.advertise<std_msgs::Time>("update_map", 1);
   //collection and database as arguments to messageStoreProxy
   message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps","message_store");
 
@@ -153,7 +154,7 @@ void MyViz::visualizeMap(){
   temporal_marker.header.stamp = ros::Time::now();
   temporal_marker.ns = "nodes"; //TODO maybe add segmentation layers
   temporal_marker.type = visualization_msgs::Marker::CYLINDER;
-  
+
   //DELETE PREVIOUS
   temporal_marker.action = visualization_msgs::Marker::DELETEALL;
   marker_array_.markers.push_back(temporal_marker);
@@ -167,7 +168,7 @@ void MyViz::visualizeMap(){
   temporal_marker.color.r = 1.0;
   temporal_marker.color.a = 1.0;
 
-  temporal_marker.pose.orientation.w = 1.0;  
+  temporal_marker.pose.orientation.w = 1.0;
 
   //For edges
   geometry_msgs::Point temporal_point;
@@ -184,9 +185,9 @@ void MyViz::visualizeMap(){
   temporal_edges.color.r = 1.0;
   temporal_edges.color.g = 1.0;
   temporal_edges.color.a = 1.0;
-  temporal_edges.pose.orientation.w = 1.0;  
+  temporal_edges.pose.orientation.w = 1.0;
 
-  
+
   std::vector<std::pair<float,float> > vector;
 
   map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
@@ -199,8 +200,8 @@ void MyViz::visualizeMap(){
     //Storing Nodes
     id = std::distance(vector.begin(), it);
     col = round(id/height_cells_);
-    row = id - col *height_cells_; 
-   
+    row = id - col *height_cells_;
+
     temporal_marker.id = std::distance(vector.begin(), it);
     temporal_marker.pose.position.x = it->first;
     temporal_marker.pose.position.y = it->second;
@@ -215,10 +216,10 @@ void MyViz::visualizeMap(){
     marker_array_.markers.push_back(temporal_marker);
     std::string id_str("node_" + std::to_string(id));
     node_map_[id_str] = temporal_marker.pose;
-  
+
     //Edges Creation
     if (col ==(width_cells_-1)&& row==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
-      continue; 
+      continue;
     }
 
     //is the last node of a row
@@ -269,7 +270,7 @@ void MyViz::visualizeMap(){
       edges_.emplace_back("node_"+ std::to_string(index_1 + 1),"node_" + std::to_string(index_1));
 
     }
-    
+
       marker_array_.markers.push_back(temporal_edges);
 
   }
@@ -288,7 +289,7 @@ void MyViz::deleteTopoMap(std::string map_id){
    std::vector<std::string> fields;
    fields.push_back("map");
    fields.push_back("pointset");
-   
+
    std::vector<std::string> ids;
    ids.push_back(map_id);
    ids.push_back(map_id);
@@ -366,9 +367,9 @@ void MyViz::saveMap(){
         topo_node.edges.push_back(edge);
       }
     }
-    
+
     std::string result(message_store_->insertNamed( fields, ids, topo_node));
-    
+
     std::cout << result << std::endl;
     //std::string result(message_store_->insertNamed("pointset", map_id, topo_node));
     topo_map.nodes.push_back(topo_node);
@@ -380,5 +381,6 @@ void MyViz::saveMap(){
 }
 
 void MyViz::executeTopoMap(){
+  reset_publisher_.publish(std_msgs::Time());
 
 }

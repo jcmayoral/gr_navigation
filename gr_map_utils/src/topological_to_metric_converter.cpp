@@ -63,7 +63,7 @@ namespace gr_map_utils{
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
 
 
-        std::string name("riseholme_bidirectional_sim");
+        std::string name("trash_map_5");
 
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
@@ -185,10 +185,10 @@ namespace gr_map_utils{
             node_centers.emplace_back(node_x, node_y);
             nodes_coordinates[it->name] = CellCoordinates(node_x,node_y);
 
-            for (std::vector<strands_navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){               
+            for (std::vector<strands_navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){
                 //Since some node names has several "_" the beginning of the array must be replaced or erased with null values
                 //Assuming edges convention name as edge_id_1  " _ " edge_id_2
-              
+
                 //Create copy of edge name
                 std::string tmp_string(edges_it->edge_id);
                 //remove edge_id_1;
@@ -199,7 +199,7 @@ namespace gr_map_utils{
                 edges.emplace_back(it->name,goal);//This is just an example
             }
         }
-        
+
 
         geometry_msgs::Pose origin;
         origin.position.x = min_x - map_offset_/2;
@@ -253,9 +253,8 @@ namespace gr_map_utils{
             //variables used for edges
             double init_x, init_y;
             double dest_x, dest_y;
-            float r; 
+            float r;
             double theta;
-            int i_cell_x, i_cell_y, d_cell_x, d_cell_y;
             float r_x, r_y;
             //Iterates edges
             for (Edges & e  : edges){
@@ -280,7 +279,7 @@ namespace gr_map_utils{
                         r_x = r_i*cos(theta);
                         r_y = r_i*sin(theta);
                         //To Index
-                        row = round((init_x + r_x - origin.position.x)/res); 
+                        row = round((init_x + r_x - origin.position.x)/res);
                         col = round((init_y + r_y - origin.position.y)/res);
                         index = int(row+inflation + created_map_.info.width *(col+inflation));
                         if (index > created_map_.data.size()){
