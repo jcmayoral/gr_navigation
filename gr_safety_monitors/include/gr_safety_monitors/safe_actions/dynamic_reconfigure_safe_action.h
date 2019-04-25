@@ -15,7 +15,7 @@ namespace gr_safety_monitors{
             ~DynamicReconfigureSafeAction();
             virtual void execute();
             virtual void stop();
-    };  
+    };
 };
 
 #endif
