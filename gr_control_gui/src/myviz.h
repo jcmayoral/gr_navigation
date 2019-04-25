@@ -53,7 +53,7 @@
 #include <strands_navigation_msgs/TopologicalMap.h>
 #include <mongodb_store/message_store.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
+#include <std_msgs/Time.h>
 #include <boost/foreach.hpp>
 
 
@@ -74,7 +74,7 @@ namespace gr_control_gui{
       MyViz( QWidget* parent = 0 );
       virtual ~MyViz();
 
-      private Q_SLOTS:      
+      private Q_SLOTS:
       void setTerrainWidth( int value);
       void setTerrainHeight( int value);
       void setRobotRadius(int radius);
@@ -93,6 +93,8 @@ namespace gr_control_gui{
       int width_cells_;
       ros::NodeHandle nh_;
       ros::Publisher map_publisher_;
+      ros::Publisher reset_publisher_;
+
       float robot_radius_;
       float terrain_width_;
       float terrain_height_;
