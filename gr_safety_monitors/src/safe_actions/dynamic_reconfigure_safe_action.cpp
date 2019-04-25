@@ -4,7 +4,7 @@ using namespace gr_safety_monitors;
 
 DynamicReconfigureSafeAction::DynamicReconfigureSafeAction(){
     ROS_INFO("Dynamic Reconfigure Safe Action");
-    safety_id_ == 1;
+    safety_id_ = 1;
 };
 
 DynamicReconfigureSafeAction::~DynamicReconfigureSafeAction(){

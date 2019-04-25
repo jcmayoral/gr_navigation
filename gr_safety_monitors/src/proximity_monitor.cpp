@@ -19,6 +19,7 @@ namespace gr_safety_monitors
   }
 
   void ProximityMonitor::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
+    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     pcl::PointCloud<pcl::PointXYZ> cloud;
     pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
     sensor_msgs::PointCloud2 output_pointcloud;
@@ -177,8 +178,10 @@ namespace gr_safety_monitors
     //The next condition is true when is obstacle not detected and
     // and executer is initialized (obstacle not anymore on danger region)
     publishTopics();
+    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
 
     if(action_executer_!= NULL && !is_obstacle_detected_){
+      ROS_WARN("Stopping executer due no obstacle detected");
       action_executer_->stop();
       action_executer_ = NULL;
     }
@@ -186,7 +189,6 @@ namespace gr_safety_monitors
   }
 
   void ProximityMonitor::isolateFault(){
-    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     diagnoseFault();
   }
 
@@ -195,32 +197,40 @@ namespace gr_safety_monitors
     fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 
     //action_executer_ = new PublisherSafeAction();
-    ROS_INFO_STREAM ("Obstacle detected on region with ID "<< fault_region_id_ );
+    ROS_INFO_STREAM_THROTTLE(5, "Obstacle detected on region with ID "<< fault_region_id_ );
     switch (fault_region_id_){
       case 0: // if DANGER REGION... stop whatever is it and
       //if executer not initialized initialized it just if lock was not locked before
-        if (action_executer_ != NULL && action_executer_->getSafetyID()!=0){ //if executer not initialized initialized it
-          action_executer_->stop();
+        if (action_executer_ != NULL){
+          if (action_executer_->getSafetyID()!=0){ //overwrite other actions if initialize ignore
+            action_executer_->stop();
+            action_executer_ = new PublisherSafeAction();
+            action_executer_->execute();
+          }
         }
-        else{
+        else{//initialize if not
           action_executer_ = new PublisherSafeAction();
           action_executer_->execute();
         }
         break;
       case 1:
-        if (action_executer_ != NULL && action_executer_->getSafetyID()!=1){
-          action_executer_->stop();
-        }
-        else{
-          if(action_executer_->getSafetyID()!=1){//avoid recalling
+        if (action_executer_ != NULL){
+          if(action_executer_->getSafetyID()!=1 && action_executer_->getSafetyID()!=0){
+            //Stop any action which is not DANGER AND WARNING
+            ROS_INFO_STREAM("Stopping previous action " << action_executer_->getSafetyID());
+            action_executer_->stop();
             action_executer_ = new DynamicReconfigureSafeAction();
             action_executer_->execute();
           }
         }
+        else{//init if NULL
+          action_executer_ = new DynamicReconfigureSafeAction();
+          action_executer_->execute();
+        }
         break;
       default:
         ROS_ERROR("Error detecting obstacles");
-
+        break;
     }
   }
 }
