@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 
-namespace gr_safety_monitors{
+namespace gr_safety_policies{
     class SafeAction{
         public:
             SafeAction(){

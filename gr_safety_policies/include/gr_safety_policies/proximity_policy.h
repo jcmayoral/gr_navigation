@@ -1,5 +1,5 @@
-#ifndef PROXIMITY_MONITOR_H
-#define PROXIMITY_MONITOR_H
+#ifndef PROXIMITY_POLICY_H
+#define PROXIMITY_POLICY_H
 
 #include <ros/ros.h>
 #include <string>
@@ -19,24 +19,24 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <gr_safety_monitors/safe_actions/publisher_safe_action.h>
-#include <gr_safety_monitors/safe_actions/dynamic_reconfigure_safe_action.h>
-#include <gr_safety_monitors/safe_actions/safe_action.h>
+#include <gr_safety_policies/safe_actions/publisher_safe_action.h>
+#include <gr_safety_policies/safe_actions/dynamic_reconfigure_safe_action.h>
+#include <gr_safety_policies/safe_actions/safe_action.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 
 #include <dynamic_reconfigure/server.h>
-#include <gr_safety_monitors/ProximityMonitorConfig.h>
+#include <gr_safety_policies/ProximityPolicyConfig.h>
 
-namespace gr_safety_monitors
+namespace gr_safety_policies
 {
 
-  class ProximityMonitor : public fault_core::FaultDetector
+  class ProximityPolicy : public fault_core::FaultDetector
   {
     public:
 
-      ProximityMonitor();
-      ~ProximityMonitor();
+      ProximityPolicy();
+      ~ProximityPolicy();
 
       void instantiateServices(ros::NodeHandle nh);
       void initialize(int sensor_number);
@@ -49,7 +49,7 @@ namespace gr_safety_monitors
       void createRingMarker(visualization_msgs::Marker& marker, int level);
       void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
       int getRing(float x, float y);
-      void dyn_reconfigureCB(gr_safety_monitors::ProximityMonitorConfig &config, uint32_t level);
+      void dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level);
 
     private:
       std::vector<ros::Subscriber> array_subscribers_;
@@ -64,8 +64,8 @@ namespace gr_safety_monitors
       int fault_region_id_;
       SafeAction* action_executer_;
       boost::recursive_mutex mutex;
-      dynamic_reconfigure::Server<gr_safety_monitors::ProximityMonitorConfig> dyn_server_;
-      dynamic_reconfigure::Server<gr_safety_monitors::ProximityMonitorConfig>::CallbackType dyn_server_cb_;
+      dynamic_reconfigure::Server<gr_safety_policies::ProximityPolicyConfig> dyn_server_;
+      dynamic_reconfigure::Server<gr_safety_policies::ProximityPolicyConfig>::CallbackType dyn_server_cb_;
   };
 
 };

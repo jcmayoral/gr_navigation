@@ -1,0 +1,15 @@
+<library path="lib/libgr_safety_policies">
+  <class name="gr_safety_policies/ProximityMonitor" type="gr_safety_policies::ProximityPolicy" base_class_type="fault_core::FaultDetector">
+    <description>
+      A simple proximity policy.
+    </description>
+  </class>
+</library>
+
+<library path="lib/libgr_safety_policies">
+  <class name="gr_safety_policies/WeatherPolicy" type="gr_safety_policies::WeatherPolicy" base_class_type="fault_core::FaultDetector">
+    <description>
+      A simple weather policy.
+    </description>
+  </class>
+</library>

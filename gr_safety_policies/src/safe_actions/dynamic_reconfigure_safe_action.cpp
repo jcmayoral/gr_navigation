@@ -1,6 +1,6 @@
-#include <gr_safety_monitors/safe_actions/dynamic_reconfigure_safe_action.h>
+#include <gr_safety_policies/safe_actions/dynamic_reconfigure_safe_action.h>
 
-using namespace gr_safety_monitors;
+using namespace gr_safety_policies;
 
 DynamicReconfigureSafeAction::DynamicReconfigureSafeAction(){
     ROS_INFO("Dynamic Reconfigure Safe Action");
