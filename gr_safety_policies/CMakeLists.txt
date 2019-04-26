@@ -51,7 +51,7 @@ add_executable(policies_manager_node src/policies_manager_node.cpp)
 
 add_definitions(-DCURL_STATICLIB)
 
-target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl)
+target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl ${JSON_INCLUDE_DIRS})
 #Independent policies
 target_link_libraries(proximity_policy_node gr_safety_policies gr_safe_actions)
 target_link_libraries(weather_policy_node gr_safety_policies gr_safe_actions)
