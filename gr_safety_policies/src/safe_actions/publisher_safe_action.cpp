@@ -1,6 +1,6 @@
-#include <gr_safety_monitors/safe_actions/publisher_safe_action.h>
+#include <gr_safety_policies/safe_actions/publisher_safe_action.h>
 
-using namespace gr_safety_monitors;
+using namespace gr_safety_policies;
 
 PublisherSafeAction::PublisherSafeAction(){
     //ROS_INFO("Constructor Publisher SafeAction");

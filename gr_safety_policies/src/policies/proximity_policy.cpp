@@ -1,24 +1,23 @@
-#include "gr_safety_monitors/proximity_monitor.h"
+#include "gr_safety_policies/proximity_policy.h"
 #include <pluginlib/class_list_macros.h>
 #include <iostream>
 
 // register this class as a Fault Detector
-PLUGINLIB_DECLARE_CLASS(gr_safety_monitors, ProximityMonitor,
-                        gr_safety_monitors::ProximityMonitor,
+PLUGINLIB_DECLARE_CLASS(gr_safety_policies, ProximityPolicy,
+                        gr_safety_policies::ProximityPolicy,
                         fault_core::FaultDetector)
 
 using namespace fault_core;
-//using namespace message_filters;
-namespace gr_safety_monitors
+namespace gr_safety_policies
 {
 
-  void ProximityMonitor::instantiateServices(ros::NodeHandle nh){
+  void ProximityPolicy::instantiateServices(ros::NodeHandle nh){
     marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
     pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("proximity_pointcloud", 1);
-    pointcloud_sub_ = nh.subscribe("/velodyne_points/filtered", 2, &ProximityMonitor::pointcloud_CB, this);
+    pointcloud_sub_ = nh.subscribe("/velodyne_points/filtered", 2, &ProximityPolicy::pointcloud_CB, this);
   }
 
-  void ProximityMonitor::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
+  void ProximityPolicy::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     pcl::PointCloud<pcl::PointXYZ> cloud;
     pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
@@ -65,13 +64,13 @@ namespace gr_safety_monitors
     pointcloud_pub_.publish(output_pointcloud);
   }
 
-  int ProximityMonitor::getRing(float x, float y){
+  int ProximityPolicy::getRing(float x, float y){
     float distance = 0.0;
     distance = sqrt(pow(x,2) + pow(y,2));
     return int(distance/region_radius_);
   }
 
-  ProximityMonitor::ProximityMonitor(): is_obstacle_detected_(false), region_radius_(2.5),
+  ProximityPolicy::ProximityPolicy(): is_obstacle_detected_(false), region_radius_(2.5),
                                         regions_number_(3), action_executer_(NULL),
                                         fault_region_id_(0)
   {
@@ -80,18 +79,18 @@ namespace gr_safety_monitors
     //Define Fault Cause as Unknown
     fault_.cause_ = FaultTopology::UNKNOWN;
 
-    dyn_server_cb_ = boost::bind(&ProximityMonitor::dyn_reconfigureCB, this, _1, _2);
+    dyn_server_cb_ = boost::bind(&ProximityPolicy::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
-    ROS_INFO("Constructor ProximityMonitor");
+    ROS_INFO("Constructor ProximityPolicy");
   }
 
 
-  ProximityMonitor::~ProximityMonitor()
+  ProximityPolicy::~ProximityPolicy()
   {
     delete action_executer_;
   }
 
-  void ProximityMonitor::dyn_reconfigureCB(gr_safety_monitors::ProximityMonitorConfig &config, uint32_t level){
+  void ProximityPolicy::dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level){
     region_radius_ = config.region_radius;
 
     visualization_msgs::Marker marker;
@@ -104,18 +103,18 @@ namespace gr_safety_monitors
   }
 
 
-  fault_core::FaultTopology ProximityMonitor::getFault()
+  fault_core::FaultTopology ProximityPolicy::getFault()
   {
      return fault_;
   }
 
   //This function is called on the navigation_manager, register n number of subscribers
-  void ProximityMonitor::initialize(int sensor_number)
+  void ProximityPolicy::initialize(int sensor_number)
   {
     ROS_WARN("Function initialized deprecated for proximity_monitor");
   }
 
-  void ProximityMonitor::createRingMarker(visualization_msgs::Marker& marker, int level){
+  void ProximityPolicy::createRingMarker(visualization_msgs::Marker& marker, int level){
     marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
     marker.ns = "proximity_regions"+std::to_string(level);
@@ -165,7 +164,7 @@ namespace gr_safety_monitors
 
   }
 
-  void ProximityMonitor::publishTopics()
+  void ProximityPolicy::publishTopics()
   {
     for (auto i=0; i< marker_array_.markers.size(); i++){
       marker_array_.markers[i].header.stamp = ros::Time::now();
@@ -173,7 +172,7 @@ namespace gr_safety_monitors
      marker_pub_.publish(marker_array_);
   }
 
-  bool ProximityMonitor::detectFault()
+  bool ProximityPolicy::detectFault()
   {
     //The next condition is true when is obstacle not detected and
     // and executer is initialized (obstacle not anymore on danger region)
@@ -188,11 +187,11 @@ namespace gr_safety_monitors
     return is_obstacle_detected_;
   }
 
-  void ProximityMonitor::isolateFault(){
+  void ProximityPolicy::isolateFault(){
     diagnoseFault();
   }
 
-  void ProximityMonitor::diagnoseFault(){
+  void ProximityPolicy::diagnoseFault(){
     fault_.cause_ = FaultTopology::DYNAMIC_OBSTACLE;
     fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
 

@@ -1,7 +1,0 @@
-<library path="lib/libgr_safety_monitors">
-  <class name="gr_safety_monitors/ProximityMonitor" type="gr_obstacle_monitor::ProximityMonitor" base_class_type="fault_core::FaultDetector">
-    <description>
-      A simple proximity monitor.
-    </description>
-  </class>
-</library>
