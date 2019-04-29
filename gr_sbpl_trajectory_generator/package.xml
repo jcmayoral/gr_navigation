@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gr_sbpl_trajectory_generator</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>sbpl wrapper for agricultural proposes</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
@@ -50,15 +50,8 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>dependencies</build_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>sbpl</build_depend>
-  <build_export_depend>dependencies</build_export_depend>
-  <build_export_depend>roscpp</build_export_depend>
-  <build_export_depend>sbpl</build_export_depend>
-  <exec_depend>dependencies</exec_depend>
   <exec_depend>roscpp</exec_depend>
-  <exec_depend>sbpl</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
