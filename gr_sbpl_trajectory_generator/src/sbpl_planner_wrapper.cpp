@@ -2,7 +2,7 @@
 
 using namespace gr_sbpl_trajectory_generator;       
 
-GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_("DEFAULT"){
+GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""){
     env_ = new EnvironmentNAVXYTHETALAT();
     ROS_INFO("Wait for Map");
     boost::shared_ptr<nav_msgs::OccupancyGrid const> map_msg;
@@ -11,9 +11,12 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_("DEFAULT"){
     double nominalvel_mpersecs,timetoturn45degsinplace_secs;
     int obst_cost_thresh = costMapCostToSBPLCost(costmap_2d::LETHAL_OBSTACLE);
     nh_.param("nominalvel_mpersecs", nominalvel_mpersecs, 0.4);
-    nh_.param("primitives_file", primitive_filename_);
+    ros::param::get("~primitives_file", primitive_filename_);
+    //TODO check why the next line does not work
+    //nh_.param("primitives_file", primitive_filename_);
     nh_.param("timetoturn45degsinplace_secs", timetoturn45degsinplace_secs, 0.6);
-   
+    ROS_INFO_STREAM("Primitives file on "<< primitive_filename_.c_str());
+
     lethal_obstacle_ = (unsigned char)  nh_.param("lethal_obstacle",20);;
     inscribed_inflated_obstacle_ = lethal_obstacle_-1;
 
@@ -40,9 +43,9 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_("DEFAULT"){
       pt.y = footprint[ii].y;
       perimeterptsV.push_back(pt);
     }
-    double width;
-    double height;
-    double resolution;
+    double width=100;
+    double height=100;
+    double resolution=0.025;
     bool ret;
     try{
       ret = env_->InitializeEnv(width,
@@ -56,9 +59,12 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_("DEFAULT"){
                                 primitive_filename_.c_str());
     }
     catch(SBPL_Exception e){
+      ROS_ERROR_STREAM(e.what());
       ROS_ERROR("SBPL encountered a fatal exception!");
       ret = false;
     }
+
+    ROS_ERROR("DONE FOR NOW");
 
 }
 
