@@ -11,6 +11,7 @@ using namespace std;
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/footprint.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PointStamped.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/MapMetaData.h>
 
@@ -25,6 +26,7 @@ namespace gr_sbpl_trajectory_generator{
             unsigned char costMapCostToSBPLCost(unsigned char newcost);
             bool makePlan(geometry_msgs::PoseStamped start,
                           geometry_msgs::PoseStamped goal);
+            void point_cb(const geometry_msgs::PointStampedConstPtr msg);
         private:
             SBPLPlanner* planner_;
             EnvironmentNAVXYTHETALAT* env_;
@@ -38,6 +40,10 @@ namespace gr_sbpl_trajectory_generator{
             double initial_epsilon_;
             double allocated_time_;
             ros::Publisher plan_pub_;
+            ros::Subscriber point_sub_;
+            geometry_msgs::PoseStamped start_;
+            geometry_msgs::PoseStamped goal_;
+            bool is_start_received_;
     };
 };
 

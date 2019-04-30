@@ -2,7 +2,7 @@
 
 using namespace gr_sbpl_trajectory_generator;       
 
-GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0){
+GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),is_start_received_(false){
     env_ = new EnvironmentNAVXYTHETALAT();
     planner_ = new ARAPlanner(env_, true); //forward_search
     ROS_INFO("Wait for Map");
@@ -72,13 +72,40 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
 
 
     plan_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
-    ROS_ERROR("DONE FOR NOW");
-
+    point_sub_ = nh_.subscribe("clicked_point", 1, &GRSBPLPlanner::point_cb, this);
    
-    ros::spinOnce();
-    //ros::spin();
+    //ros::spinOnce();
+    ros::spin();
 
 }
+
+
+void GRSBPLPlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
+  if (is_start_received_){
+    ROS_INFO("Receiving Start");
+    goal_.header = msg->header;
+    goal_.pose.position = msg->point;
+    goal_.pose.orientation.w = 1.0;
+  }
+  else{
+    ROS_INFO("Receiving Goal");
+    start_.header = msg->header;
+    start_.pose.position = msg->point;
+    start_.pose.orientation.w = 1.0;
+    is_start_received_ = true;
+    return;
+  }
+
+
+  if (makePlan(start_,goal_)){
+      ROS_INFO("WORKING");
+    }
+    else{
+      ROS_ERROR("ERROR");
+    }
+
+}
+
 
 unsigned char GRSBPLPlanner::costMapCostToSBPLCost(unsigned char newcost){
   if(newcost == costmap_2d::LETHAL_OBSTACLE)
@@ -269,7 +296,7 @@ bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     gui_path.poses[i] = plan[i];
   }
   plan_pub_.publish(gui_path);
-  ROS_INFO_STREAM(gui_path);
+  //ROS_INFO_STREAM(gui_path);
   //publishStats(solution_cost, sbpl_path.size(), start, goal);
   return true;
 };
