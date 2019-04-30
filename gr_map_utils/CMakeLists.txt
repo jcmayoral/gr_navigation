@@ -74,7 +74,7 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(gr_tf_utils src/tf_frame_publisher.cpp)
+add_library(gr_map_utils src/tf_frame_publisher.cpp)
 
 add_executable(multi_map_server src/multi_map_server_node.cpp)
 target_link_libraries(multi_map_server

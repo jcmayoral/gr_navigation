@@ -113,6 +113,7 @@ MyViz::MyViz( QWidget* parent )
   manager_->setFixedFrame("map");
   manager_->initialize();
   manager_->startUpdate();
+  update_client_ = nh_.serviceClient<gr_map_utils::UpdateMap>("update_metric_map");
 
 }
 
@@ -382,5 +383,8 @@ void MyViz::saveMap(){
 
 void MyViz::executeTopoMap(){
   reset_publisher_.publish(std_msgs::Time());
-
+  gr_map_utils::UpdateMap req;
+  if(update_client_.call(req)){
+    ROS_INFO("Client Succeded");
+  }
 }

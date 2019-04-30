@@ -17,6 +17,8 @@ namespace gr_safety_policies
             int httpCode(0);
             std::unique_ptr<std::string> httpData(new std::string());
             std::string url("https://www.yr.no/place/Mexico/Distrito_Federal/Mexico_City/forecast.xml");
+            //std::string url("https://www.yr.no/place/Mexico/Distrito_Federal/Mexico_City/data.html");
+            std::string buffer;
 
             if(curl) {
                   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -40,6 +42,7 @@ namespace gr_safety_policies
                   // callback handling function).  Can be any pointer type, since it will
                   // internally be passed as a void pointer.
                   curl_easy_setopt(curl, CURLOPT_WRITEDATA, httpData.get());
+                  //curl_easy_setopt(curl, CURLOPT_WRITEDATA, buffer);
 
                   // Run our HTTP GET command, capture the HTTP response code, and clean up.
                   curl_easy_perform(curl);
@@ -57,6 +60,7 @@ namespace gr_safety_policies
                   // and print them out.
                   Json::Value jsonData;
                   Json::Reader jsonReader;
+
 
                   if (jsonReader.parse(*httpData.get(), jsonData)){
                         std::cout << "Successfully parsed JSON data" << std::endl;

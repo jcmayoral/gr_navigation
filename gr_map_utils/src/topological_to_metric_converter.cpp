@@ -62,10 +62,10 @@ namespace gr_map_utils{
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalMap> > results_map;
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
 
-
         std::string name("trash_map_5");
 
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
+            topological_map_.nodes.clear();
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
                 ROS_INFO_STREAM("Got by name: " << *topological_map_);
             }
@@ -78,6 +78,7 @@ namespace gr_map_utils{
         //On this version the map is stored by NAME Not anymore nodes stored
         ROS_WARN("QUERY NODES");
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>(name,"map", results_node, false)) {
+            topological_map_.nodes.clear();
             strands_navigation_msgs::TopologicalNode node;
             BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> node,  results_node){
                 ROS_DEBUG_STREAM("Got by name: " << *node);
