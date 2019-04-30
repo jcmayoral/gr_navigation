@@ -10,6 +10,8 @@ using namespace std;
 #include <nav_msgs/OccupancyGrid.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/footprint.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 
 // sbpl headers
 #include <sbpl/headers.h>
@@ -20,6 +22,9 @@ namespace gr_sbpl_trajectory_generator{
             GRSBPLPlanner();
             ~GRSBPLPlanner();
             unsigned char costMapCostToSBPLCost(unsigned char newcost);
+            bool makePlan(const geometry_msgs::PoseStamped& start,
+                          const geometry_msgs::PoseStamped& goal,
+                          std::vector<geometry_msgs::PoseStamped>& plan);
         private:
             SBPLPlanner* planner_;
             EnvironmentNAVXYTHETALAT* env_;
@@ -29,6 +34,9 @@ namespace gr_sbpl_trajectory_generator{
             unsigned char sbpl_cost_multiplier_;
             unsigned char lethal_obstacle_;
             unsigned char inscribed_inflated_obstacle_;
+            double initial_epsilon_;
+            double allocated_time_;
+            ros::Publisher plan_pub_;
     };
 };
 

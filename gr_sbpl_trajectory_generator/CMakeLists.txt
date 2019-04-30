@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   nav_msgs
   costmap_2d
+  geometry_msgs
+  nav_msgs
 )
 
 # Find SBPL from sbpl_lattice_planner
@@ -125,7 +127,7 @@ include_directories(
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}
   LIBRARIES gr_sbpl_trajectory_generator
-  CATKIN_DEPENDS roscpp nav_msgs costmap_2d
+  CATKIN_DEPENDS roscpp nav_msgs costmap_2d geometry_msgs nav_msgs
   DEPENDS SBPL
 )
 
