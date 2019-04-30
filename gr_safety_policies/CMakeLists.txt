@@ -15,16 +15,12 @@ find_package(catkin REQUIRED
         std_msgs
 )
 
-find_package(OpenCV REQUIRED)
-
 generate_dynamic_reconfigure_options(
   cfg/ProximityPolicy.cfg
 )
 
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
-                    ${OpenCV_INCLUDE_DIRS}
-                    ${PCL_INCLUDE_DIRS}
 )
 
 catkin_package(
@@ -52,7 +48,10 @@ add_executable(proximity_policy_node src/proximity_policy_node.cpp)
 add_executable(weather_policy_node src/weather_policy_node.cpp)
 add_executable(policies_manager_node src/policies_manager_node.cpp)
 
-target_link_libraries(gr_safety_policies ${catkin_LIBRARIES}  ${PCL_LIBRARIES})
+
+add_definitions(-DCURL_STATICLIB)
+
+target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl ${JSON_INCLUDE_DIRS})
 #Independent policies
 target_link_libraries(proximity_policy_node gr_safety_policies gr_safe_actions)
 target_link_libraries(weather_policy_node gr_safety_policies gr_safe_actions)
