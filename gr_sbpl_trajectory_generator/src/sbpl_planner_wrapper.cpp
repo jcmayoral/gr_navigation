@@ -4,16 +4,19 @@ using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0){
     env_ = new EnvironmentNAVXYTHETALAT();
+    planner_ = new ARAPlanner(env_, true); //forward_search
     ROS_INFO("Wait for Map");
     boost::shared_ptr<nav_msgs::OccupancyGrid const> map_msg;
     map_msg = ros::topic::waitForMessage< nav_msgs::OccupancyGrid>("map");
+    map_metadata_ = ros::topic::waitForMessage< nav_msgs::MapMetaData>("map_metadata");
+
     ROS_INFO("Map Received");
     double nominalvel_mpersecs,timetoturn45degsinplace_secs;
     int obst_cost_thresh = costMapCostToSBPLCost(costmap_2d::LETHAL_OBSTACLE);
     nh_.param("nominalvel_mpersecs", nominalvel_mpersecs, 0.4);
     ros::param::get("~primitives_file", primitive_filename_);
     nh_.param("initial_epsilon",initial_epsilon_,3.0);
-    nh_.param("allocated_time", allocated_time_, 10.0);
+    nh_.param("allocated_time", allocated_time_, 500.0);
 
     //TODO check why the next line does not work
     //nh_.param("primitives_file", primitive_filename_);
@@ -48,11 +51,11 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
     }
     double width=100;
     double height=100;
-    double resolution=0.025;
+    double resolution=map_metadata_->resolution;
     bool ret;
     try{
-      ret = env_->InitializeEnv(width,
-                                height,
+      ret = env_->InitializeEnv(map_metadata_->width,
+                                map_metadata_->height,
                                 0, // mapdata
                                 0, 0, 0, // start (x, y, theta, t)
                                 0, 0, 0, // goal (x, y, theta)
@@ -70,6 +73,10 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
 
     plan_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
     ROS_ERROR("DONE FOR NOW");
+
+   
+    ros::spinOnce();
+    //ros::spin();
 
 }
 
@@ -93,10 +100,8 @@ GRSBPLPlanner::~GRSBPLPlanner(){
 
 
 
-bool GRSBPLPlanner::makePlan(const geometry_msgs::PoseStamped& start,
-                                 const geometry_msgs::PoseStamped& goal,
-                                 std::vector<geometry_msgs::PoseStamped>& plan){
-
+bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::PoseStamped goal){
+  std::vector<geometry_msgs::PoseStamped> plan;
   plan.clear();
 
   ROS_INFO("[sbpl_lattice_planner] getting start point (%g,%g) goal point (%g,%g)",
@@ -107,13 +112,17 @@ bool GRSBPLPlanner::makePlan(const geometry_msgs::PoseStamped& start,
   try{
     //Check conversion offset of map start with frame -> gr_map_utils
     //Substract offset
-    int ret = env_->SetStart(start.pose.position.x, start.pose.position.y, theta_start);
+
+    ROS_INFO_STREAM("start "<< start.pose.position.x - map_metadata_->origin.position.x << " , " <<  start.pose.position.y - map_metadata_->origin.position.y );
+    int ret = env_->SetStart(start.pose.position.x - map_metadata_->origin.position.x, start.pose.position.y - map_metadata_->origin.position.y, theta_start);
+
     if(ret < 0 || planner_->set_start(ret) == 0){
       ROS_ERROR("ERROR: failed to set start state\n");
       return false;
     }
   }
   catch(SBPL_Exception *e){
+    //ROS_ERROR(e->what());
     ROS_ERROR("SBPL encountered a fatal exception while setting the start state");
     return false;
   }
@@ -121,29 +130,32 @@ bool GRSBPLPlanner::makePlan(const geometry_msgs::PoseStamped& start,
   try{
     //Check conversion offset of map start with frame -> gr_map_utils
     //Substract offset
-    int ret = env_->SetGoal(goal.pose.position.x, goal.pose.position.y, theta_goal);
+
+   ROS_INFO_STREAM("goal "<< goal.pose.position.x - map_metadata_->origin.position.x << " , " <<  goal.pose.position.y - map_metadata_->origin.position.y );
+
+    int ret = env_->SetGoal(goal.pose.position.x - map_metadata_->origin.position.x, goal.pose.position.y - map_metadata_->origin.position.y , theta_goal);
     if(ret < 0 || planner_->set_goal(ret) == 0){
       ROS_ERROR("ERROR: failed to set goal state\n");
       return false;
     }
   }
   catch(SBPL_Exception *e){
+    //ROS_ERROR(e->what());
     ROS_ERROR("SBPL encountered a fatal exception while setting the goal state");
     return false;
   }
 
 
-  /*
   int offOnCount = 0;
   int onOffCount = 0;
   int allCount = 0;
   vector<nav2dcell_t> changedcellsV;
 
-  for(unsigned int ix = 0; ix < costmap_ros_->getCostmap()->getSizeInCellsX(); ix++) {
-    for(unsigned int iy = 0; iy < costmap_ros_->getCostmap()->getSizeInCellsY(); iy++) {
+  for(unsigned int ix = 0; ix < map_metadata_->width; ix++) {
+    for(unsigned int iy = 0; iy < map_metadata_->height; iy++) {
 
       unsigned char oldCost = env_->GetMapCost(ix,iy);
-      unsigned char newCost = costMapCostToSBPLCost(costmap_ros_->getCostmap()->getCost(ix,iy));
+      unsigned char newCost = costMapCostToSBPLCost(0);
 
       if(oldCost == newCost) continue;
 
@@ -160,7 +172,7 @@ bool GRSBPLPlanner::makePlan(const geometry_msgs::PoseStamped& start,
           (newCost != costMapCostToSBPLCost(costmap_2d::LETHAL_OBSTACLE) && newCost != costMapCostToSBPLCost(costmap_2d::INSCRIBED_INFLATED_OBSTACLE))) {
         onOffCount++;
       }
-      env_->UpdateCost(ix, iy, costMapCostToSBPLCost(costmap_ros_->getCostmap()->getCost(ix,iy)));
+      env_->UpdateCost(ix, iy, costMapCostToSBPLCost(0));//costmap_ros_->getCostmap()->getCost(ix,iy)));
 
       nav2dcell_t nav2dcell;
       nav2dcell.x = ix;
@@ -171,19 +183,19 @@ bool GRSBPLPlanner::makePlan(const geometry_msgs::PoseStamped& start,
 
   try{
     if(!changedcellsV.empty()){
-      StateChangeQuery* scq = new LatticeSCQ(env_, changedcellsV);
-      planner_->costs_changed(*scq);
-      delete scq;
+      ROS_ERROR("This matters");
+      //StateChangeQuery* scq = new LatticeSCQ(env_, changedcellsV);
+      //planner_->costs_changed(*scq);
+      //delete scq;
     }
 
-    if(allCount > force_scratch_limit_)
-      planner_->force_planning_from_scratch();
+    //if(allCount > force_scratch_limit_)
+      //planner_->force_planning_from_scratch();
   }
   catch(SBPL_Exception *e){
     ROS_ERROR("SBPL failed to update the costmap");
     return false;
   }
-  */
 
   //setting planner parameters
   //ROS_DEBUG("allocated:%f, init eps:%f\n",allocated_time_,initial_epsilon_);
@@ -234,15 +246,15 @@ bool GRSBPLPlanner::makePlan(const geometry_msgs::PoseStamped& start,
   //create a message for the plan 
   nav_msgs::Path gui_path;
   gui_path.poses.resize(sbpl_path.size());
-  gui_path.header.frame_id = "base_link";//costmap_ros_->getGlobalFrameID();
+  gui_path.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
   gui_path.header.stamp = plan_time;
   for(unsigned int i=0; i<sbpl_path.size(); i++){
     geometry_msgs::PoseStamped pose;
     pose.header.stamp = plan_time;
-    pose.header.frame_id = "base_link";//costmap_ros_->getGlobalFrameID();
+    pose.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
 
-    pose.pose.position.x = sbpl_path[i].x;// + costmap_ros_->getCostmap()->getOriginX();
-    pose.pose.position.y = sbpl_path[i].y;// + costmap_ros_->getCostmap()->getOriginY();
+    pose.pose.position.x = sbpl_path[i].x + map_metadata_->origin.position.x;
+    pose.pose.position.y = sbpl_path[i].y + map_metadata_->origin.position.y;
     pose.pose.position.z = start.pose.position.z;
 
     tf2::Quaternion temp;
@@ -257,6 +269,7 @@ bool GRSBPLPlanner::makePlan(const geometry_msgs::PoseStamped& start,
     gui_path.poses[i] = plan[i];
   }
   plan_pub_.publish(gui_path);
+  ROS_INFO_STREAM(gui_path);
   //publishStats(solution_cost, sbpl_path.size(), start, goal);
   return true;
 };

@@ -9,7 +9,7 @@
   <param name="robot_radius" type="double" value="0.4"/>
 
   <node pkg="gr_sbpl_trajectory_generator" type="gr_sbpl_trajectory_generator_node"
-        name="gr_sbpl_trajectory_generator_node" output="screen" >
+        name="gr_sbpl_trajectory_generator_node" output="screen">
       <param name="primitives_file" type="str" value="$(arg primitives_file)"/>
   </node>
   

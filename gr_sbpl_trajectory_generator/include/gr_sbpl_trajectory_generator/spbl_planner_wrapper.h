@@ -12,6 +12,7 @@ using namespace std;
 #include <costmap_2d/footprint.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+#include <nav_msgs/MapMetaData.h>
 
 // sbpl headers
 #include <sbpl/headers.h>
@@ -22,13 +23,13 @@ namespace gr_sbpl_trajectory_generator{
             GRSBPLPlanner();
             ~GRSBPLPlanner();
             unsigned char costMapCostToSBPLCost(unsigned char newcost);
-            bool makePlan(const geometry_msgs::PoseStamped& start,
-                          const geometry_msgs::PoseStamped& goal,
-                          std::vector<geometry_msgs::PoseStamped>& plan);
+            bool makePlan(geometry_msgs::PoseStamped start,
+                          geometry_msgs::PoseStamped goal);
         private:
             SBPLPlanner* planner_;
             EnvironmentNAVXYTHETALAT* env_;
             nav_msgs::OccupancyGrid costmap_;
+            boost::shared_ptr<nav_msgs::MapMetaData const> map_metadata_;
             ros::NodeHandle nh_;
             std::string primitive_filename_;
             unsigned char sbpl_cost_multiplier_;
