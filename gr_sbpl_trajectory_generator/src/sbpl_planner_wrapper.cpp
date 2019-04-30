@@ -16,7 +16,7 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
     nh_.param("nominalvel_mpersecs", nominalvel_mpersecs, 0.4);
     ros::param::get("~primitives_file", primitive_filename_);
     nh_.param("initial_epsilon",initial_epsilon_,3.0);
-    nh_.param("allocated_time", allocated_time_, 500.0);
+    nh_.param("allocated_time", allocated_time_, 1.0);
 
     //TODO check why the next line does not work
     //nh_.param("primitives_file", primitive_filename_);
@@ -82,13 +82,13 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
 
 void GRSBPLPlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
   if (is_start_received_){
-    ROS_INFO("Receiving Start");
+    ROS_INFO("Receiving Goal");
     goal_.header = msg->header;
     goal_.pose.position = msg->point;
     goal_.pose.orientation.w = 1.0;
   }
   else{
-    ROS_INFO("Receiving Goal");
+    ROS_INFO("Receiving Start");
     start_.header = msg->header;
     start_.pose.position = msg->point;
     start_.pose.orientation.w = 1.0;

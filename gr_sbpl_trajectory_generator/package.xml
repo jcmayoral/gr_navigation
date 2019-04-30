@@ -2,7 +2,9 @@
 <package format="2">
   <name>gr_sbpl_trajectory_generator</name>
   <version>0.1.1</version>
-  <description>sbpl wrapper for agricultural proposes based on https://github.com/tu-darmstadt-ros-pkg/sbpl_lattice_planner</description>
+  <description>sbpl wrapper for agricultural proposes based on https://github.com/tu-darmstadt-ros-pkg/sbpl_lattice_planner.. 
+               this version is intended to be move_base architecture independent
+  </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
