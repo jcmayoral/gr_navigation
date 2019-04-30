@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gr_sbpl_trajectory_generator</name>
-  <version>0.0.2</version>
-  <description>sbpl wrapper for agricultural proposes</description>
+  <version>0.0.3</version>
+  <description>sbpl wrapper for agricultural proposes based on https://github.com/tu-darmstadt-ros-pkg/sbpl_lattice_planner</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -51,8 +51,11 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>costmap_2d</build_depend>
   <exec_depend>roscpp</exec_depend>
-
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>costmap_2d</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

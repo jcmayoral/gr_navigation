@@ -10,6 +10,8 @@ project(gr_sbpl_trajectory_generator)
 find_package(catkin REQUIRED COMPONENTS
   #dependencies
   roscpp
+  nav_msgs
+  costmap_2d
 )
 
 # Find SBPL from sbpl_lattice_planner
@@ -123,8 +125,8 @@ include_directories(
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}
   LIBRARIES gr_sbpl_trajectory_generator
-  CATKIN_DEPENDS roscpp
-#  DEPENDS sbpl
+  CATKIN_DEPENDS roscpp nav_msgs costmap_2d
+  DEPENDS SBPL
 )
 
 
@@ -156,7 +158,7 @@ add_executable(${PROJECT_NAME}_node src/sbpl_planner_node.cpp src/sbpl_planner_w
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
-   ${SBPL_LIBRARY_DIRS}
+   ${SBPL_LIBRARIES}
 )
 
 #############
