@@ -56,6 +56,7 @@
 #include <std_msgs/Time.h>
 #include <boost/foreach.hpp>
 
+#include <gr_map_utils/UpdateMap.h>
 
 namespace rviz
 {
@@ -94,6 +95,7 @@ namespace gr_control_gui{
       ros::NodeHandle nh_;
       ros::Publisher map_publisher_;
       ros::Publisher reset_publisher_;
+      ros::ServiceClient update_client_;
 
       float robot_radius_;
       float terrain_width_;
