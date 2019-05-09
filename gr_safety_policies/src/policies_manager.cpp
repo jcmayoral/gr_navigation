@@ -12,7 +12,7 @@ PoliciesManager::~PoliciesManager(){
 
 }
 
-void PoliciesManager::addPolicy(fault_core::FaultDetector* new_policy){
+void PoliciesManager::addPolicy(safety_core::FaultDetector* new_policy){
     new_policy->instantiateServices(nh_);
     policies_.push_back(new_policy);
 }

@@ -9,7 +9,7 @@ find_package(catkin REQUIRED
         pcl_ros
         fusion_msgs
         pluginlib
-        fault_core
+        safety_core
         visualization_msgs
         sensor_msgs
         std_msgs
@@ -32,7 +32,7 @@ catkin_package(
         pcl_ros
         fusion_msgs
         pluginlib
-        fault_core
+        safety_core
         visualization_msgs
         sensor_msgs
         std_msgs

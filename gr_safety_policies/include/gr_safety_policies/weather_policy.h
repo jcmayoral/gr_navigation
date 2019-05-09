@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <fault_core/fault_detector.h>
+#include <safety_core/fault_detector.h>
 #include <curl/curl.h>
 #include <json/json.h>
 
@@ -19,7 +19,7 @@ namespace gr_safety_policies
       return totalBytes;
   }
 
-  class WeatherPolicy : public fault_core::FaultDetector
+  class WeatherPolicy : public safety_core::FaultDetector
   {
     public:
 
@@ -31,7 +31,7 @@ namespace gr_safety_policies
       bool detectFault();
       void isolateFault();
       void diagnoseFault();
-      fault_core::FaultTopology getFault();
+      safety_core::FaultTopology getFault();
   };
 
 
