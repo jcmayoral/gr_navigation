@@ -7,6 +7,7 @@ find_package(catkin REQUIRED
             geometry_msgs
             tf
             costmap_2d
+            safety_msgs
         )
 
 catkin_package(

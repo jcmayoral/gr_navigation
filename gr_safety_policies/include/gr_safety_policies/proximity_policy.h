@@ -20,7 +20,7 @@
 
 #include <gr_safety_policies/safe_actions/publisher_safe_action.h>
 #include <gr_safety_policies/safe_actions/dynamic_reconfigure_safe_action.h>
-#include <gr_safety_policies/safe_actions/safe_action.h>
+#include <safety_core/safe_action.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 

@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 
-namespace gr_safety_policies{
+namespace safety_core{
     class SafeAction{
         public:
             SafeAction(){
