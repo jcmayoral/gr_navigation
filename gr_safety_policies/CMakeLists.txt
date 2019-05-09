@@ -7,7 +7,6 @@ find_package(catkin REQUIRED
         dynamic_reconfigure
         roscpp
         pcl_ros
-        fusion_msgs
         pluginlib
         safety_core
         visualization_msgs
@@ -30,7 +29,6 @@ catkin_package(
         dynamic_reconfigure
         roscpp
         pcl_ros
-        fusion_msgs
         pluginlib
         safety_core
         visualization_msgs
