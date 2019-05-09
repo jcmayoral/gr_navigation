@@ -1,0 +1,21 @@
+<package>
+    <name>safety_core</name>
+    <version>0.0.1</version>
+    <description>
+
+        This package provides common interfaces for safety actions and policies. 
+    </description>
+    <author>Jose Mayoral</author>
+    <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
+    <license>BSD</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <build_depend>std_msgs</build_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <build_depend>costmap_2d</build_depend>
+    <build_depend>tf</build_depend>
+    <run_depend>std_msgs</run_depend>
+    <run_depend>geometry_msgs</run_depend>
+    <run_depend>costmap_2d</run_depend>
+    <run_depend>tf</run_depend>
+</package>
