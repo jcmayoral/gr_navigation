@@ -3,11 +3,11 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <safety_core/fault_detector.h>
+#include <safety_core/safe_policy.h>
 #include <curl/curl.h>
 #include <json/json.h>
 
-//Based on 
+//Based on
 //https://gist.github.com/connormanning/41efa6075515019e499c
 
 namespace gr_safety_policies
@@ -19,7 +19,7 @@ namespace gr_safety_policies
       return totalBytes;
   }
 
-  class WeatherPolicy : public safety_core::FaultDetector
+  class WeatherPolicy : public safety_core::SafePolicy
   {
     public:
 
@@ -28,10 +28,9 @@ namespace gr_safety_policies
 
       void instantiateServices(ros::NodeHandle nh);
       void initialize(int sensor_number);
-      bool detectFault();
-      void isolateFault();
-      void diagnoseFault();
-      safety_core::FaultTopology getFault();
+      bool checkPolicy();
+      void reportState();
+      void suggestAction();
   };
 
 
