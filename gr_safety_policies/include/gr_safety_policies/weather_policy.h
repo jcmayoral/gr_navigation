@@ -29,7 +29,6 @@ namespace gr_safety_policies
       void instantiateServices(ros::NodeHandle nh);
       void initialize(int sensor_number);
       bool checkPolicy();
-      void reportState();
       void suggestAction();
   };
 

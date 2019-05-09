@@ -12,9 +12,19 @@ namespace safety_core {
         UNKNOWN
       };
 
-    std::string id_;
-    int action_;
-    State state_;
+      enum Type {
+        EVENT,
+        PASSIVE,
+        ACTIVE
+      };
+      Type getType(){
+        return type_;
+      }
+
+      std::string id_;
+      int action_;
+      State state_;
+      Type type_;
   };
 };
 

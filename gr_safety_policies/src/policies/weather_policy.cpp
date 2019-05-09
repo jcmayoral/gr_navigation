@@ -98,9 +98,6 @@ namespace gr_safety_policies
       bool WeatherPolicy::checkPolicy(){
       }
 
-      void WeatherPolicy::reportState(){
-      }
-
       void WeatherPolicy::suggestAction(){
       }
 

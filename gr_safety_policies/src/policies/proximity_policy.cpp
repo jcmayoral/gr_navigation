@@ -76,6 +76,7 @@ namespace gr_safety_policies
     policy_.id_ = "PROXIMITY_POLICY";
     policy_.action_ =  -1;
     policy_.state_ = PolicyDescription::UNKNOWN;
+    policy_.type_ = PolicyDescription::ACTIVE;
 
     dyn_server_cb_ = boost::bind(&ProximityPolicy::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
@@ -173,10 +174,6 @@ namespace gr_safety_policies
       policy_.state_ = PolicyDescription::SAFE;
     }
     return is_obstacle_detected_;
-  }
-
-  void ProximityPolicy::reportState(){
-    suggestAction();
   }
 
   void ProximityPolicy::suggestAction(){
