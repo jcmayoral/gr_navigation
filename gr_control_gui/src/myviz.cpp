@@ -125,7 +125,7 @@ MyViz::~MyViz()
 
 void MyViz::setRobotRadius(int value){
   robot_radius_ = value;
-  width_cells_ = floor(terrain_width_/robot_radius_);
+  width_cells_ = floor(terrain_width_/robot_radius_)/2;
   height_cells_ = floor(terrain_height_/robot_radius_);
   visualizeMap();
 }
