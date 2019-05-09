@@ -9,9 +9,9 @@ int main(int argc, char** argv){
     policy->instantiateServices(nh);
 
     while(ros::ok()){
-        if(policy->detectFault()){
+        if(policy->checkPolicy()){
             //ROS_WARN("Proximity monitor activated");
-            policy->isolateFault();
+            policy->reportState();
         }
         //ros::Duration(0.5).sleep();
         ros::spinOnce();

@@ -1,5 +1,5 @@
 <library path="lib/libgr_safety_policies">
-  <class name="gr_safety_policies/ProximityMonitor" type="gr_safety_policies::ProximityPolicy" base_class_type="safety_core::FaultDetector">
+  <class name="gr_safety_policies/ProximityMonitor" type="gr_safety_policies::ProximityPolicy" base_class_type="safety_core::SafePolicy">
     <description>
       A simple proximity policy.
     </description>
@@ -7,7 +7,7 @@
 </library>
 
 <library path="lib/libgr_safety_policies">
-  <class name="gr_safety_policies/WeatherPolicy" type="gr_safety_policies::WeatherPolicy" base_class_type="safety_core::FaultDetector">
+  <class name="gr_safety_policies/WeatherPolicy" type="gr_safety_policies::WeatherPolicy" base_class_type="safety_core::SafePolicy">
     <description>
       A simple weather policy.
     </description>

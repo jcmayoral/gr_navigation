@@ -3,10 +3,6 @@ project(safety_core)
 
 find_package(catkin REQUIRED
         COMPONENTS
-            std_msgs
-            geometry_msgs
-            tf
-            costmap_2d
             safety_msgs
         )
 
@@ -14,10 +10,7 @@ catkin_package(
     INCLUDE_DIRS
         include
     CATKIN_DEPENDS
-            std_msgs
-            geometry_msgs
-            tf
-            costmap_2d
+            safety_msgs
 )
 
 

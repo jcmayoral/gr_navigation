@@ -3,7 +3,6 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <safety_core/fault_detector.h>
 //message_filters maybe useful if syncronization is needed
 /*
 #include <message_filters/subscriber.h>
@@ -21,6 +20,7 @@
 #include <gr_safety_policies/safe_actions/publisher_safe_action.h>
 #include <gr_safety_policies/safe_actions/dynamic_reconfigure_safe_action.h>
 #include <safety_core/safe_action.h>
+#include <safety_core/safe_policy.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 
@@ -30,7 +30,7 @@
 namespace gr_safety_policies
 {
 
-  class ProximityPolicy : public safety_core::FaultDetector
+  class ProximityPolicy : public safety_core::SafePolicy
   {
     public:
 
@@ -38,12 +38,10 @@ namespace gr_safety_policies
       ~ProximityPolicy();
 
       void instantiateServices(ros::NodeHandle nh);
-      void initialize(int sensor_number);
-      bool detectFault();
-      void isolateFault();
-      void diagnoseFault();
+      bool checkPolicy();
+      void reportState();
+      void suggestAction();
       void publishTopics();
-      safety_core::FaultTopology getFault();
 
       void createRingMarker(visualization_msgs::Marker& marker, int level);
       void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);

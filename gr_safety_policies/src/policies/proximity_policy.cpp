@@ -2,10 +2,9 @@
 #include <pluginlib/class_list_macros.h>
 #include <iostream>
 
-// register this class as a Fault Detector
 PLUGINLIB_DECLARE_CLASS(gr_safety_policies, ProximityPolicy,
                         gr_safety_policies::ProximityPolicy,
-                        safety_core::FaultDetector)
+                        safety_core::SafePolicy)
 
 using namespace safety_core;
 namespace gr_safety_policies
@@ -74,10 +73,9 @@ namespace gr_safety_policies
                                         regions_number_(3), action_executer_(NULL),
                                         fault_region_id_(0)
   {
-    //Define Fault Type as Unknown
-    fault_.type_ =  FaultTopology::UNKNOWN_TYPE;
-    //Define Fault Cause as Unknown
-    fault_.cause_ = FaultTopology::UNKNOWN;
+    policy_.id_ = "PROXIMITY_POLICY";
+    policy_.action_ =  -1;
+    policy_.state_ = PolicyDescription::UNKNOWN;
 
     dyn_server_cb_ = boost::bind(&ProximityPolicy::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
@@ -100,18 +98,6 @@ namespace gr_safety_policies
       createRingMarker(marker, i);
       marker_array_.markers.push_back(marker);
     }
-  }
-
-
-  safety_core::FaultTopology ProximityPolicy::getFault()
-  {
-     return fault_;
-  }
-
-  //This function is called on the navigation_manager, register n number of subscribers
-  void ProximityPolicy::initialize(int sensor_number)
-  {
-    ROS_WARN("Function initialized deprecated for proximity_monitor");
   }
 
   void ProximityPolicy::createRingMarker(visualization_msgs::Marker& marker, int level){
@@ -172,7 +158,7 @@ namespace gr_safety_policies
      marker_pub_.publish(marker_array_);
   }
 
-  bool ProximityPolicy::detectFault()
+  bool ProximityPolicy::checkPolicy()
   {
     //The next condition is true when is obstacle not detected and
     // and executer is initialized (obstacle not anymore on danger region)
@@ -183,17 +169,17 @@ namespace gr_safety_policies
       ROS_WARN("Stopping executer due no obstacle detected");
       action_executer_->stop();
       action_executer_ = NULL;
+      policy_.action_ = -1;
+      policy_.state_ = PolicyDescription::SAFE;
     }
     return is_obstacle_detected_;
   }
 
-  void ProximityPolicy::isolateFault(){
-    diagnoseFault();
+  void ProximityPolicy::reportState(){
+    suggestAction();
   }
 
-  void ProximityPolicy::diagnoseFault(){
-    fault_.cause_ = FaultTopology::DYNAMIC_OBSTACLE;
-    fault_.type_ = FaultTopology::SENSORFAULT; // TODO Include fault definition of fault_core
+  void ProximityPolicy::suggestAction(){
 
     //action_executer_ = new PublisherSafeAction();
     ROS_INFO_STREAM_THROTTLE(5, "Obstacle detected on region with ID "<< fault_region_id_ );
@@ -231,5 +217,7 @@ namespace gr_safety_policies
         ROS_ERROR("Error detecting obstacles");
         break;
     }
+    policy_.state_ = PolicyDescription::UNSAFE;
+    policy_.action_ = action_executer_->getSafetyID();
   }
 }

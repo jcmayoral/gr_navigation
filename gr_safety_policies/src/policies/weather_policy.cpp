@@ -1,10 +1,9 @@
 #include "gr_safety_policies/weather_policy.h"
 #include <pluginlib/class_list_macros.h>
 
-// register this class as a Fault Detector
 PLUGINLIB_DECLARE_CLASS(gr_safety_policies, WeatherPolicy,
                         gr_safety_policies::WeatherPolicy,
-                        safety_core::FaultDetector)
+                        safety_core::SafePolicy)
 
 using namespace safety_core;
 namespace gr_safety_policies
@@ -28,10 +27,10 @@ namespace gr_safety_policies
                   curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10);
                   //redirect if necessary
                   curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-                  /* Perform the request, res will get the return code */ 
+                  /* Perform the request, res will get the return code */
 
                   res = curl_easy_perform(curl);
-                  /* Check for errors */ 
+                  /* Check for errors */
                   if(res != CURLE_OK)
                         fprintf(stderr, "curl_easy_perform() failed: %s\n",
                               curl_easy_strerror(res));
@@ -47,7 +46,7 @@ namespace gr_safety_policies
                   // Run our HTTP GET command, capture the HTTP response code, and clean up.
                   curl_easy_perform(curl);
                   curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
-                  /* always cleanup */ 
+                  /* always cleanup */
                   curl_easy_cleanup(curl);
             }
             else{
@@ -96,15 +95,15 @@ namespace gr_safety_policies
       void WeatherPolicy::initialize(int sensor_number){
       }
 
-      bool WeatherPolicy::detectFault(){
+      bool WeatherPolicy::checkPolicy(){
       }
 
-      void WeatherPolicy::isolateFault(){
+      void WeatherPolicy::reportState(){
       }
 
-      void WeatherPolicy::diagnoseFault(){
+      void WeatherPolicy::suggestAction(){
       }
 
-      safety_core::FaultTopology WeatherPolicy::getFault(){
+      safety_core::PolicyDescription getPolicyDescription(){
       }
 }
