@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <fault_core/fault_detector.h>
+#include <safety_core/fault_detector.h>
 //message_filters maybe useful if syncronization is needed
 /*
 #include <message_filters/subscriber.h>
@@ -31,7 +31,7 @@
 namespace gr_safety_policies
 {
 
-  class ProximityPolicy : public fault_core::FaultDetector
+  class ProximityPolicy : public safety_core::FaultDetector
   {
     public:
 
@@ -44,7 +44,7 @@ namespace gr_safety_policies
       void isolateFault();
       void diagnoseFault();
       void publishTopics();
-      fault_core::FaultTopology getFault();
+      safety_core::FaultTopology getFault();
 
       void createRingMarker(visualization_msgs::Marker& marker, int level);
       void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);

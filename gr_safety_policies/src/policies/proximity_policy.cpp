@@ -5,9 +5,9 @@
 // register this class as a Fault Detector
 PLUGINLIB_DECLARE_CLASS(gr_safety_policies, ProximityPolicy,
                         gr_safety_policies::ProximityPolicy,
-                        fault_core::FaultDetector)
+                        safety_core::FaultDetector)
 
-using namespace fault_core;
+using namespace safety_core;
 namespace gr_safety_policies
 {
 
@@ -103,7 +103,7 @@ namespace gr_safety_policies
   }
 
 
-  fault_core::FaultTopology ProximityPolicy::getFault()
+  safety_core::FaultTopology ProximityPolicy::getFault()
   {
      return fault_;
   }

@@ -1,6 +1,6 @@
 #include <gr_sbpl_trajectory_generator/spbl_planner_wrapper.h>
 
-using namespace gr_sbpl_trajectory_generator;       
+using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),is_start_received_(false){
     env_ = new EnvironmentNAVXYTHETALAT();
@@ -16,7 +16,7 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
     nh_.param("nominalvel_mpersecs", nominalvel_mpersecs, 0.4);
     ros::param::get("~primitives_file", primitive_filename_);
     nh_.param("initial_epsilon",initial_epsilon_,3.0);
-    nh_.param("allocated_time", allocated_time_, 1.0);
+    nh_.param("allocated_time", allocated_time_, 3.0);
 
     //TODO check why the next line does not work
     //nh_.param("primitives_file", primitive_filename_);
@@ -73,7 +73,7 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
 
     plan_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
     point_sub_ = nh_.subscribe("clicked_point", 1, &GRSBPLPlanner::point_cb, this);
-   
+
     //ros::spinOnce();
     ros::spin();
 
@@ -149,7 +149,7 @@ bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     }
   }
   catch(SBPL_Exception *e){
-    //ROS_ERROR(e->what());
+    ROS_ERROR(e->what());
     ROS_ERROR("SBPL encountered a fatal exception while setting the start state");
     return false;
   }
@@ -167,7 +167,7 @@ bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     }
   }
   catch(SBPL_Exception *e){
-    //ROS_ERROR(e->what());
+    ROS_ERROR(e->what());
     ROS_ERROR("SBPL encountered a fatal exception while setting the goal state");
     return false;
   }
@@ -227,7 +227,7 @@ bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
   //setting planner parameters
   //ROS_DEBUG("allocated:%f, init eps:%f\n",allocated_time_,initial_epsilon_);
   planner_->set_initialsolution_eps(initial_epsilon_);
-  planner_->set_search_mode(false);
+  planner_->set_search_mode(true);
 
   ROS_DEBUG("[sbpl_lattice_planner] run planner");
   vector<int> solution_stateIDs;
@@ -270,7 +270,7 @@ bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
   ROS_DEBUG("Plan has %d points.\n", (int)sbpl_path.size());
   ros::Time plan_time = ros::Time::now();
 
-  //create a message for the plan 
+  //create a message for the plan
   nav_msgs::Path gui_path;
   gui_path.poses.resize(sbpl_path.size());
   gui_path.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
