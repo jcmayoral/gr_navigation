@@ -22,6 +22,7 @@ pkg_check_modules(SBPL REQUIRED sbpl)
 find_library(SBPL_LIBRARY NAMES sbpl PATHS ${SBPL_LIBRARY_DIRS} NO_DEFAULT_PATH)
 set(SBPL_LIBRARIES ${SBPL_LIBRARY})
 
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -156,6 +157,8 @@ add_executable(${PROJECT_NAME}_node src/sbpl_planner_node.cpp src/sbpl_planner_w
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+link_directories(${SBPL_LIBRARY_DIRS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
