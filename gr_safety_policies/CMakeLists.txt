@@ -42,6 +42,8 @@ file(GLOB ACTIONS src/safe_actions/*.cpp)
 
 add_library(gr_safety_policies ${POLICIES} src/policies_manager.cpp)
 add_library(gr_safe_actions ${ACTIONS})
+add_library(publisher_safe_action src/safe_actions/publisher_safe_action.cpp)
+
 
 add_executable(proximity_policy_node src/proximity_policy_node.cpp)
 add_executable(weather_policy_node src/weather_policy_node.cpp)
@@ -54,6 +56,7 @@ target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl ${JSON_INCLUDE
 #Independent policies
 target_link_libraries(proximity_policy_node gr_safety_policies gr_safe_actions)
 target_link_libraries(weather_policy_node gr_safety_policies gr_safe_actions)
+target_link_libraries(publisher_safe_action ${catkin_LIBRARIES})
 #Policies Manager
 target_link_libraries(policies_manager_node gr_safety_policies gr_safe_actions)
 #Action Manager
@@ -65,16 +68,16 @@ add_dependencies(weather_policy_node gr_safety_policies gr_safe_actions gr_safet
 add_dependencies(policies_manager_node gr_safety_policies gr_safe_actions gr_safety_policies_gencfg)
 
 ### INSTALLS
-install(TARGETS gr_safety_policies
+install(TARGETS gr_safety_policies gr_safe_actions publisher_safe_action
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 
-install(TARGETS proximity_policy_node weather_policy_node
+install(TARGETS proximity_policy_node weather_policy_node policies_manager_node action_manager_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(FILES policies_plugins.xml
+install(FILES policies_plugins.xml action_policies.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
