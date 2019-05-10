@@ -1,4 +1,9 @@
 #include <gr_safety_policies/safe_actions/publisher_safe_action.h>
+#include <pluginlib/class_list_macros.h>
+
+PLUGINLIB_DECLARE_CLASS(gr_safety_policies, PublisherSafeAction,
+                        gr_safety_policies::PublisherSafeAction,
+                        safety_core::SafeAction)
 
 using namespace gr_safety_policies;
 
