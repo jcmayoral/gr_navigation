@@ -1,4 +1,4 @@
-<library path="lib/libgr_safety_policies">
+<library path="lib/libgr_safe_actions">
   <class type="gr_safety_policies::PublisherSafeAction" base_class_type="safety_core::SafeAction">
     <description>
       Publisher Topic Safe Action

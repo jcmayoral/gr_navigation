@@ -14,6 +14,7 @@ DynamicReconfigureSafeAction::~DynamicReconfigureSafeAction(){
 };
 
 void DynamicReconfigureSafeAction::execute(){
+    ROS_INFO("Execute Dynamic Reconfigure Safe Action");
     dynamic_reconfigure::ReconfigureRequest srv_req;
     dynamic_reconfigure::ReconfigureResponse srv_resp;
     dynamic_reconfigure::DoubleParameter double_param;
