@@ -8,10 +8,8 @@
 #include <dynamic_reconfigure/DoubleParameter.h>
 #include <dynamic_reconfigure/BoolParameter.h>
 
-using namespace safety_core;
-
 namespace gr_safety_policies{
-    class DynamicReconfigureSafeAction : public SafeAction{
+    class DynamicReconfigureSafeAction : public safety_core::SafeAction{
         public:
             DynamicReconfigureSafeAction();
             ~DynamicReconfigureSafeAction();

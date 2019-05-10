@@ -1,0 +1,13 @@
+<library path="lib/libgr_safety_policies">
+  <class type="gr_safety_policies::PublisherSafeAction" base_class_type="safety_core::SafeAction">
+    <description>
+      Publisher Topic Safe Action
+    </description>
+  </class>
+
+  <class type="gr_safety_policies::DynamicReconfigureSafeAction" base_class_type="safety_core::SafeAction">
+    <description>
+      Dynamic Reconfigure Safe Action
+    </description>
+  </class>
+</library>
