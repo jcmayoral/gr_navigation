@@ -18,8 +18,9 @@ generate_dynamic_reconfigure_options(
   cfg/ProximityPolicy.cfg
 )
 
-include_directories(include
-                    ${catkin_INCLUDE_DIRS}
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
 )
 
 catkin_package(
@@ -45,7 +46,7 @@ add_library(gr_safe_actions ${ACTIONS})
 add_executable(proximity_policy_node src/proximity_policy_node.cpp)
 add_executable(weather_policy_node src/weather_policy_node.cpp)
 add_executable(policies_manager_node src/policies_manager_node.cpp)
-
+add_executable(action_manager_node src/action_manager_node.cpp)
 
 add_definitions(-DCURL_STATICLIB)
 
@@ -55,6 +56,8 @@ target_link_libraries(proximity_policy_node gr_safety_policies gr_safe_actions)
 target_link_libraries(weather_policy_node gr_safety_policies gr_safe_actions)
 #Policies Manager
 target_link_libraries(policies_manager_node gr_safety_policies gr_safe_actions)
+#Action Manager
+target_link_libraries(action_manager_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_dependencies(gr_safety_policies ${catkin_EXPORTED_TARGETS} gr_safety_policies_gencfg)
 add_dependencies(proximity_policy_node gr_safety_policies gr_safe_actions gr_safety_policies_gencfg)
