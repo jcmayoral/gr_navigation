@@ -4,6 +4,8 @@ using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"){
+    //set goal_ yaw to zero
+    goal_.pose.orientation.w = 1.0;
 
     as_ = new actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>(ros::NodeHandle(), action_name_, boost::bind(&GRSBPLPlanner::executeCB, this, _1), false);
 
@@ -113,6 +115,18 @@ void GRSBPLPlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 
 void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
   ROS_INFO_STREAM("Action " << action_name_ << "CALLED" );
+  start_ = goal_;
+  goal_ = goal->target_pose;
+  start_.header = goal_.header;
+
+  if (makePlan(start_,goal_)){
+    ROS_INFO("WORKING");
+  }
+  else{
+    ROS_ERROR("ERROR");
+  }
+  as_->setSucceeded();
+
 }
 
 
