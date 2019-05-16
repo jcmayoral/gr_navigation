@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>gr_safety_policies</name>
-  <version>0.4.5</version>
+  <version>0.4.6</version>
   <description>This packages provides safety monitors definition</description>
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
   <license>MIT</license>

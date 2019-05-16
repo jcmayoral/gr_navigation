@@ -46,15 +46,18 @@ namespace gr_safety_policies
       void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
       int getRing(float x, float y);
       void dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level);
+      void timer_cb(const ros::TimerEvent& event);
 
     private:
       std::vector<ros::Subscriber> array_subscribers_;
       bool is_obstacle_detected_;
+      ros::Timer timer_publisher_;
       ros::Publisher marker_pub_;
       ros::Publisher pointcloud_pub_;
       ros::Subscriber pointcloud_sub_;
       visualization_msgs::MarkerArray marker_array_;
 
+      ros::Time last_detection_time_;
       double region_radius_;
       int regions_number_;
       int fault_region_id_;
