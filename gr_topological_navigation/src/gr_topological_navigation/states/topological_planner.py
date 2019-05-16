@@ -12,7 +12,7 @@ from std_msgs.msg import String, Bool
 from gr_topological_navigation.states.move_base_state import command_robot_to_node, move_base
 
 class TopologicalPlanner(SimpleActionState):
-    def __init__(self, gui=False, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
+    def __init__(self, gui=True, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
 
@@ -49,6 +49,7 @@ class TopologicalPlanner(SimpleActionState):
         msg.pointset = self.pointset
         map = get_topological_map(msg)
         self.reset_graph(map)
+        print "MAP gotten"
 
     #Getting FB form topological navigation
     def current_edge_callback(self, edge_raw):
@@ -91,8 +92,8 @@ class TopologicalPlanner(SimpleActionState):
         rospy.loginfo("%d Edges found", self.networkx_graph.number_of_edges())
 
         if self.gui:
-            nx.draw(self.networkx_graph, pos = nodes_poses, with_labels=True, font_weight='bold')
-            nx.draw_networkx_edge_labels(self.networkx_graph, nodes_poses, font_color='red')
+            nx.draw(self.networkx_graph, pos = self.nodes_poses, with_labels=True, font_weight='bold')
+            nx.draw_networkx_edge_labels(self.networkx_graph, self.nodes_poses, font_color='red')
             #nx.draw_networkx_edges(self.networkx_graph, pos = nx.spring_layout(self.networkx_graph))
             plt.show(False)
 
@@ -104,6 +105,7 @@ class TopologicalPlanner(SimpleActionState):
         self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.start_node, orientation='reverse'))
         #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
         #self.topological_plan = list(nx.dfs_preorder_nodes(self.networkx_graph, source=self.start_node))
+        print self.topological_plan 
 
     def go_to_source(self):
         rospy.loginfo("Robot going to start node %s", self.start_node)

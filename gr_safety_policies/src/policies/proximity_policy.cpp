@@ -89,7 +89,7 @@ namespace gr_safety_policies
   }
 
   void ProximityPolicy::timer_cb(const ros::TimerEvent& event){
-    if (last_detection_time_.toSec() - ros::Time::now().toSec() > 5.0){
+    if (ros::Time::now().toSec() - last_detection_time_.toSec() > 5.0){
       if (action_executer_!= NULL){
         if (action_executer_->getSafetyID()==0){
           ROS_ERROR("Enable navigation... PAY ATTENTION");
@@ -215,7 +215,7 @@ namespace gr_safety_policies
       case 1:
         if (action_executer_ != NULL){
           if (action_executer_->getSafetyID()==0){
-            ROS_WARN("Obstacle too close avoiding reconfiguration");
+            ROS_DEBUG("Obstacle too close avoiding reconfiguration");
             return;
           }
           if(action_executer_->getSafetyID()!=1){
