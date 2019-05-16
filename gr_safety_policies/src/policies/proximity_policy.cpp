@@ -33,6 +33,7 @@ namespace gr_safety_policies
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){//FIRST POINT IN DANGER ZONE.. Return
         rgb_cloud.points[i].r = 255;
         fault_region_id_ = 0;
+        last_detection_time_ = ros::Time::now();
         is_obstacle_detected_ = true;
         return;
       }
@@ -41,6 +42,7 @@ namespace gr_safety_policies
         rgb_cloud.points[i].b = 255;
         fault_region_id_ = 1;
         warning_zone = true;
+        last_detection_time_ = ros::Time::now();
         is_obstacle_detected_ = true;
       }
 
@@ -73,6 +75,9 @@ namespace gr_safety_policies
                                         regions_number_(3), action_executer_(NULL),
                                         fault_region_id_(0)
   {
+    ros::NodeHandle nh;
+    timer_publisher_ = nh.createTimer(ros::Duration(5), &ProximityPolicy::timer_cb, this);
+    last_detection_time_ = ros::Time::now();
     policy_.id_ = "PROXIMITY_POLICY";
     policy_.action_ =  -1;
     policy_.state_ = PolicyDescription::UNKNOWN;
@@ -83,6 +88,18 @@ namespace gr_safety_policies
     ROS_INFO("Constructor ProximityPolicy");
   }
 
+  void ProximityPolicy::timer_cb(const ros::TimerEvent& event){
+    if (last_detection_time_.toSec() - ros::Time::now().toSec() > 5.0){
+      if (action_executer_!= NULL){
+        if (action_executer_->getSafetyID()==0){
+          ROS_ERROR("Enable navigation... PAY ATTENTION");
+          action_executer_->stop();
+          action_executer_ = NULL;
+        }
+      }
+    }
+
+  }
 
   ProximityPolicy::~ProximityPolicy()
   {
@@ -197,7 +214,11 @@ namespace gr_safety_policies
         break;
       case 1:
         if (action_executer_ != NULL){
-          if(action_executer_->getSafetyID()!=1 && action_executer_->getSafetyID()!=0){
+          if (action_executer_->getSafetyID()==0){
+            ROS_WARN("Obstacle too close avoiding reconfiguration");
+            return;
+          }
+          if(action_executer_->getSafetyID()!=1){
             //Stop any action which is not DANGER AND WARNING
             ROS_INFO_STREAM("Stopping previous action " << action_executer_->getSafetyID());
             action_executer_->stop();
