@@ -43,6 +43,7 @@ namespace gr_safety_policies
         fault_region_id_ = 1;
         warning_zone = true;
         //last_detection_time_ = ros::Time::now();
+
         is_obstacle_detected_ = true;
       }
 
@@ -89,8 +90,7 @@ namespace gr_safety_policies
   }
 
   void ProximityPolicy::timer_cb(const ros::TimerEvent& event){
-    std::cout << (last_detection_time_.toSec() - ros::Time::now().toSec())<<std::endl;
-      if (ros::Time::now().toSec() - last_detection_time_.toSec() > 5.0){
+    if (ros::Time::now().toSec() - last_detection_time_.toSec() > 5.0){
       if (action_executer_!= NULL){
         if (action_executer_->getSafetyID()==0){
           ROS_ERROR("Enable navigation... PAY ATTENTION");
