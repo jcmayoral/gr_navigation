@@ -42,7 +42,8 @@ namespace gr_safety_policies
         rgb_cloud.points[i].b = 255;
         fault_region_id_ = 1;
         warning_zone = true;
-        last_detection_time_ = ros::Time::now();
+        //last_detection_time_ = ros::Time::now();
+
         is_obstacle_detected_ = true;
       }
 
@@ -184,9 +185,9 @@ namespace gr_safety_policies
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
 
     if(action_executer_!= NULL && !is_obstacle_detected_){
-      ROS_WARN("Stopping executer due no obstacle detected");
-      action_executer_->stop();
-      action_executer_ = NULL;
+      //ROS_WARN("Stopping executer due no obstacle detected");
+      //action_executer_->stop();
+      //action_executer_ = NULL;
       policy_.action_ = -1;
       policy_.state_ = PolicyDescription::SAFE;
     }
