@@ -1,5 +1,5 @@
-#ifndef PROXIMITY_POLICY_H
-#define PROXIMITY_POLICY_H
+#ifndef DEPTH_POLICY_H
+#define DEPTH_POLICY_H
 
 #include <ros/ros.h>
 #include <string>
@@ -30,12 +30,12 @@
 namespace gr_safety_policies
 {
 
-  class ProximityPolicy : public safety_core::SafePolicy
+  class DepthProximityPolicy : public safety_core::SafePolicy
   {
     public:
 
-      ProximityPolicy();
-      ~ProximityPolicy();
+      DepthProximityPolicy();
+      ~DepthProximityPolicy();
 
       void instantiateServices(ros::NodeHandle nh);
       bool checkPolicy();
@@ -49,6 +49,7 @@ namespace gr_safety_policies
       void timer_cb(const ros::TimerEvent& event);
 
     private:
+      std::vector<ros::Subscriber> array_subscribers_;
       bool is_obstacle_detected_;
       ros::Timer timer_publisher_;
       ros::Publisher marker_pub_;
