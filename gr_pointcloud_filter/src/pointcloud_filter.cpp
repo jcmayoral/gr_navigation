@@ -19,13 +19,7 @@ namespace gr_pointcloud_filter
         voxel_filter_.filter(*cloud);
       }
 
-      if(filters_enablers_[5]){
-        //outliers removal filter
-        outliers_filter_.setInputCloud(cloud);
-        outliers_filter_.filter(*cloud);
-      }
-
-      //radius outliers On progress
+      //radius outliers
       if(filters_enablers_[2]){
         // build the filter
         radius_outliers_filter_.setInputCloud(cloud);
@@ -35,9 +29,9 @@ namespace gr_pointcloud_filter
 
       //conditional_filter
       if (filters_enablers_[3]){
-        conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
         //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -config.conditional_distance)));
-        conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, last_ground_height_)));
+        //conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
+        //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, last_ground_height_)));
         condition_removal_.setCondition (conditional_filter_);
         condition_removal_.setKeepOrganized(false);
         condition_removal_.setInputCloud (cloud);
@@ -59,6 +53,13 @@ namespace gr_pointcloud_filter
           extraction_filter_.filter(*cloud);
 			  }
       }
+
+      if(filters_enablers_[5]){
+        //outliers removal filter
+        outliers_filter_.setInputCloud(cloud);
+        outliers_filter_.filter(*cloud);
+      }
+
     	// Convert to ROS data type
     	pcl::toROSMsg(*cloud, output_pointcloud_);
     	// Publish the data
@@ -76,18 +77,19 @@ namespace gr_pointcloud_filter
       filters_enablers_[5] = config.outlier_removal;
       //voxeling
       voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size/2);
+      voxel_filter_.setMinimumPointsNumberPerVoxel(config.min_points_per_voxel);
       //condition
 
       conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
       //Sphere
-      //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -config.conditional_distance)));
-      //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, config.conditional_distance)));
+      conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -config.conditional_distance)));
+      conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, config.conditional_distance)));
       conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::GT, -config.conditional_distance)));
       conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::LT, config.conditional_distance)));
       conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -config.conditional_distance)));
       conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, config.conditional_distance)));
-      //condition_removal_.setCondition (conditional_filter_);
-      //condition_removal_.setKeepOrganized(false);
+      condition_removal_.setCondition (conditional_filter_);
+      condition_removal_.setKeepOrganized(false);
       //segmentating
       //segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
       segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
