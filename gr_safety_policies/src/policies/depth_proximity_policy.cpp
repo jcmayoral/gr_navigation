@@ -13,7 +13,10 @@ namespace gr_safety_policies
   void DepthProximityPolicy::instantiateServices(ros::NodeHandle nh){
     marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
     depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
-    depth_image_sub_ = nh.subscribe("/camera/depth/image_rect_raw", 2, &DepthProximityPolicy::depth_CB, this);
+    sub_1 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/color/image_raw", 2);
+    sub_2 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/depth/image_rect_raw", 2);
+    images_syncronizer_ = new message_filters::Synchronizer<ImagesSyncPolicy>(ImagesSyncPolicy(2), *sub_1,*sub_2);
+    images_syncronizer_->registerCallback(boost::bind(&DepthProximityPolicy::images_CB,this,_1,_2));
   }
 
 
@@ -47,7 +50,7 @@ namespace gr_safety_policies
   }
 
 
-  void DepthProximityPolicy::depth_CB(const sensor_msgs::ImageConstPtr& depth_image){
+  void DepthProximityPolicy::images_CB(const sensor_msgs::ImageConstPtr& color_image, const sensor_msgs::ImageConstPtr& depth_image){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     cv::Mat input_frame;
 
@@ -55,8 +58,17 @@ namespace gr_safety_policies
       return;
     }  
 
-    ROS_INFO_STREAM_THROTTLE(2, "SOME PROCESS TO DO");
-    
+    try{
+      ROS_INFO_STREAM_THROTTLE(2, "SOME PROCESS TO DO");
+      //cv::cvtColor(input_frame, input_frame, cv::CV_BGR2GRAY );
+      cv::GaussianBlur(input_frame, input_frame, cv::Size(3,3), 1, 0, cv::BORDER_DEFAULT);
+      //cv::Canny(input_frame, input_frame,0, 200, 3, false );
+      //cv::circle(input_frame, cv::Point(50, 50), 10,cv::Scalar(0xffff));
+    }
+    catch( cv::Exception& e ){
+      ROS_ERROR("cv exception: %s", e.what());
+      return;
+    }
     publishOutput(input_frame);
 
     /*
