@@ -1,23 +1,65 @@
-#include "gr_safety_policies/proximity_policy.h"
+#include "gr_safety_policies/depth_proximity_policy.h"
 #include <pluginlib/class_list_macros.h>
 #include <iostream>
 
-PLUGINLIB_DECLARE_CLASS(gr_safety_policies, ProximityPolicy,
-                        gr_safety_policies::ProximityPolicy,
+PLUGINLIB_DECLARE_CLASS(gr_safety_policies, DepthProximityPolicy,
+                        gr_safety_policies::DepthProximityPolicy,
                         safety_core::SafePolicy)
 
 using namespace safety_core;
 namespace gr_safety_policies
 {
 
-  void ProximityPolicy::instantiateServices(ros::NodeHandle nh){
+  void DepthProximityPolicy::instantiateServices(ros::NodeHandle nh){
     marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
-    pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("proximity_pointcloud", 1);
-    pointcloud_sub_ = nh.subscribe("/velodyne_points/filtered", 2, &ProximityPolicy::pointcloud_CB, this);
+    depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
+    depth_image_sub_ = nh.subscribe("/camera/depth/image_rect_raw", 2, &DepthProximityPolicy::depth_CB, this);
   }
 
-  void ProximityPolicy::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
+
+  bool DepthProximityPolicy::convertDepth2Mat(cv::Mat& frame, const sensor_msgs::ImageConstPtr& depth_image){
+    try{
+      //cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
+      //input_frame = cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_16UC1)->image;
+      frame = cv_bridge::toCvShare(depth_image, sensor_msgs::image_encodings::TYPE_16UC1)->image;
+      return true;
+    }
+    catch (cv_bridge::Exception& e){
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return false;
+    }
+  }
+
+  void DepthProximityPolicy::publishOutput(cv::Mat frame){
+    sensor_msgs::Image out_msg;
+    cv_bridge::CvImage img_bridge;
+    std_msgs::Header header;
+
+    try{
+      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_16UC1, frame);
+      img_bridge.toImageMsg(out_msg); // from cv_bridge to sensor_msgs::Image
+    }
+    catch (cv_bridge::Exception& e){
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
+    depth_image_pub_.publish(out_msg);
+  }
+
+
+  void DepthProximityPolicy::depth_CB(const sensor_msgs::ImageConstPtr& depth_image){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    cv::Mat input_frame;
+
+    if (!convertDepth2Mat(input_frame, depth_image)){
+      return;
+    }  
+
+    ROS_INFO_STREAM_THROTTLE(2, "SOME PROCESS TO DO");
+    
+    publishOutput(input_frame);
+
+    /*
     pcl::PointCloud<pcl::PointXYZ> cloud;
     pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
     sensor_msgs::PointCloud2 output_pointcloud;
@@ -47,11 +89,9 @@ namespace gr_safety_policies
         is_obstacle_detected_ = true;
       }
 
-      /*
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) > 1){
         rgb_cloud.points[i].g = 255;
       }
-      */
 
     }
 
@@ -64,32 +104,33 @@ namespace gr_safety_policies
     pcl::toROSMsg(rgb_cloud, output_pointcloud);
     // Publish the data
     pointcloud_pub_.publish(output_pointcloud);
+    */
   }
 
-  int ProximityPolicy::getRing(float x, float y){
+  int DepthProximityPolicy::getRing(float x, float y){
     float distance = 0.0;
     distance = sqrt(pow(x,2) + pow(y,2));
     return int(distance/region_radius_);
   }
 
-  ProximityPolicy::ProximityPolicy(): is_obstacle_detected_(false), region_radius_(2.5),
+  DepthProximityPolicy::DepthProximityPolicy(): is_obstacle_detected_(false), region_radius_(2.5),
                                         regions_number_(3), action_executer_(NULL),
                                         fault_region_id_(0)
   {
     ros::NodeHandle nh;
-    timer_publisher_ = nh.createTimer(ros::Duration(5), &ProximityPolicy::timer_cb, this);
+    timer_publisher_ = nh.createTimer(ros::Duration(5), &DepthProximityPolicy::timer_cb, this);
     last_detection_time_ = ros::Time::now();
     policy_.id_ = "PROXIMITY_POLICY";
     policy_.action_ =  -1;
     policy_.state_ = PolicyDescription::UNKNOWN;
     policy_.type_ = PolicyDescription::ACTIVE;
 
-    dyn_server_cb_ = boost::bind(&ProximityPolicy::dyn_reconfigureCB, this, _1, _2);
+    dyn_server_cb_ = boost::bind(&DepthProximityPolicy::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
     ROS_INFO("Constructor ProximityPolicy");
   }
 
-  void ProximityPolicy::timer_cb(const ros::TimerEvent& event){
+  void DepthProximityPolicy::timer_cb(const ros::TimerEvent& event){
     if (ros::Time::now().toSec() - last_detection_time_.toSec() > 5.0){
       if (action_executer_!= NULL){
         if (action_executer_->getSafetyID()==0){
@@ -102,12 +143,12 @@ namespace gr_safety_policies
 
   }
 
-  ProximityPolicy::~ProximityPolicy()
+  DepthProximityPolicy::~DepthProximityPolicy()
   {
     delete action_executer_;
   }
 
-  void ProximityPolicy::dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level){
+  void DepthProximityPolicy::dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level){
     region_radius_ = config.region_radius;
 
     visualization_msgs::Marker marker;
@@ -119,7 +160,7 @@ namespace gr_safety_policies
     }
   }
 
-  void ProximityPolicy::createRingMarker(visualization_msgs::Marker& marker, int level){
+  void DepthProximityPolicy::createRingMarker(visualization_msgs::Marker& marker, int level){
     marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
     marker.ns = "proximity_regions"+std::to_string(level);
@@ -169,7 +210,7 @@ namespace gr_safety_policies
 
   }
 
-  void ProximityPolicy::publishTopics()
+  void DepthProximityPolicy::publishTopics()
   {
     for (auto i=0; i< marker_array_.markers.size(); i++){
       marker_array_.markers[i].header.stamp = ros::Time::now();
@@ -177,7 +218,7 @@ namespace gr_safety_policies
      marker_pub_.publish(marker_array_);
   }
 
-  bool ProximityPolicy::checkPolicy()
+  bool DepthProximityPolicy::checkPolicy()
   {
     //The next condition is true when is obstacle not detected and
     // and executer is initialized (obstacle not anymore on danger region)
@@ -194,7 +235,7 @@ namespace gr_safety_policies
     return is_obstacle_detected_;
   }
 
-  void ProximityPolicy::suggestAction(){
+  void DepthProximityPolicy::suggestAction(){
 
     //action_executer_ = new PublisherSafeAction();
     ROS_INFO_STREAM_THROTTLE(5, "Obstacle detected on region with ID "<< fault_region_id_ );

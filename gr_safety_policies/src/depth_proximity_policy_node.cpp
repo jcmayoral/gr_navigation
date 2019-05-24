@@ -1,0 +1,20 @@
+#include <gr_safety_policies/depth_proximity_policy.h>
+
+using namespace gr_safety_policies;
+
+int main(int argc, char** argv){
+    ros::init(argc, argv, "depth_proximity_policy_node");
+    ros::NodeHandle nh;
+    DepthProximityPolicy* policy = new DepthProximityPolicy();
+    policy->instantiateServices(nh);
+
+    while(ros::ok()){
+        if(policy->checkPolicy()){
+            //ROS_WARN("Proximity monitor activated");
+            policy->reportState();
+        }
+        //ros::Duration(0.5).sleep();
+        ros::spinOnce();
+    }
+    return 1;
+}

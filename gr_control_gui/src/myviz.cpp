@@ -364,7 +364,7 @@ void MyViz::saveMap(){
       if (e.first.compare(node.first)==0){
         edge.edge_id = e.first + "_" + e.second;
         edge.node = e.second;
-        edge.action = "move_base";
+        edge.action = "sbpl_action";
         topo_node.edges.push_back(edge);
       }
     }

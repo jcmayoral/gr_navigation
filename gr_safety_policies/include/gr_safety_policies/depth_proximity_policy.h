@@ -1,5 +1,5 @@
-#ifndef PROXIMITY_POLICY_H
-#define PROXIMITY_POLICY_H
+#ifndef DEPTH_POLICY_H
+#define DEPTH_POLICY_H
 
 #include <ros/ros.h>
 #include <string>
@@ -27,15 +27,18 @@
 #include <dynamic_reconfigure/server.h>
 #include <gr_safety_policies/ProximityPolicyConfig.h>
 
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
 namespace gr_safety_policies
 {
 
-  class ProximityPolicy : public safety_core::SafePolicy
+  class DepthProximityPolicy : public safety_core::SafePolicy
   {
     public:
 
-      ProximityPolicy();
-      ~ProximityPolicy();
+      DepthProximityPolicy();
+      ~DepthProximityPolicy();
 
       void instantiateServices(ros::NodeHandle nh);
       bool checkPolicy();
@@ -43,17 +46,22 @@ namespace gr_safety_policies
       void publishTopics();
 
       void createRingMarker(visualization_msgs::Marker& marker, int level);
-      void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+      void depth_CB(const sensor_msgs::ImageConstPtr& depth_image);
       int getRing(float x, float y);
       void dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level);
       void timer_cb(const ros::TimerEvent& event);
 
+    protected:
+      bool convertDepth2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& depth_image);
+      void publishOutput(cv::Mat frame);
+
     private:
+      std::vector<ros::Subscriber> array_subscribers_;
       bool is_obstacle_detected_;
       ros::Timer timer_publisher_;
       ros::Publisher marker_pub_;
-      ros::Publisher pointcloud_pub_;
-      ros::Subscriber pointcloud_sub_;
+      ros::Publisher depth_image_pub_;
+      ros::Subscriber depth_image_sub_;
       visualization_msgs::MarkerArray marker_array_;
 
       ros::Time last_detection_time_;

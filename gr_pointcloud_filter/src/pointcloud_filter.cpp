@@ -19,7 +19,7 @@ namespace gr_pointcloud_filter
         voxel_filter_.filter(*cloud);
       }
 
-      //radius outliers On progress
+      //radius outliers
       if(filters_enablers_[2]){
         // build the filter
         radius_outliers_filter_.setInputCloud(cloud);
@@ -29,6 +29,11 @@ namespace gr_pointcloud_filter
 
       //conditional_filter
       if (filters_enablers_[3]){
+        //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -config.conditional_distance)));
+        //conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
+        //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, last_ground_height_)));
+        condition_removal_.setCondition (conditional_filter_);
+        condition_removal_.setKeepOrganized(false);
         condition_removal_.setInputCloud (cloud);
         condition_removal_.filter (*cloud);
       }
@@ -41,6 +46,7 @@ namespace gr_pointcloud_filter
         segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
         if (filter_inliers->indices.size () != 0){
 		    	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
+          last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
 		    	//extracting inliers (removing ground)
           extraction_filter_.setInputCloud(cloud);
           extraction_filter_.setIndices(filter_inliers);
@@ -70,8 +76,10 @@ namespace gr_pointcloud_filter
       filters_enablers_[4] = config.ground_removal;
       filters_enablers_[5] = config.outlier_removal;
       //voxeling
-      voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size);
+      voxel_filter_.setLeafSize(config.leaf_size, config.leaf_size, config.leaf_size/2);
+      voxel_filter_.setMinimumPointsNumberPerVoxel(config.min_points_per_voxel);
       //condition
+
       conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
       //Sphere
       conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -config.conditional_distance)));
@@ -129,6 +137,7 @@ namespace gr_pointcloud_filter
     	dyn_server_.setCallback(dyn_server_cb_);
     	pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
     	pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 10);
+      last_ground_height_ = 0;
     	NODELET_DEBUG("Initializing nodelet...");
     }
 }

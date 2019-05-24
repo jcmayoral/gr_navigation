@@ -44,6 +44,7 @@ namespace gr_pointcloud_filter
             float eps_angle_;
             float min_radius_;
             int min_neighbours_;
+            float last_ground_height_;
 
             //Dynamic Reconfigure
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig> dyn_server_;
