@@ -12,12 +12,54 @@ namespace gr_safety_policies
 
   void DepthProximityPolicy::instantiateServices(ros::NodeHandle nh){
     marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
-    pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("proximity_pointcloud", 1);
-    pointcloud_sub_ = nh.subscribe("/velodyne_points/filtered", 2, &DepthProximityPolicy::pointcloud_CB, this);
+    depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
+    depth_image_sub_ = nh.subscribe("/camera/depth/image_rect_raw", 2, &DepthProximityPolicy::depth_CB, this);
   }
 
-  void DepthProximityPolicy::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
+
+  bool DepthProximityPolicy::convertDepth2Mat(cv::Mat& frame, const sensor_msgs::ImageConstPtr& depth_image){
+    try{
+      //cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
+      //input_frame = cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_16UC1)->image;
+      frame = cv_bridge::toCvShare(depth_image, sensor_msgs::image_encodings::TYPE_16UC1)->image;
+      return true;
+    }
+    catch (cv_bridge::Exception& e){
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return false;
+    }
+  }
+
+  void DepthProximityPolicy::publishOutput(cv::Mat frame){
+    sensor_msgs::Image out_msg;
+    cv_bridge::CvImage img_bridge;
+    std_msgs::Header header;
+
+    try{
+      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_16UC1, frame);
+      img_bridge.toImageMsg(out_msg); // from cv_bridge to sensor_msgs::Image
+    }
+    catch (cv_bridge::Exception& e){
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
+    depth_image_pub_.publish(out_msg);
+  }
+
+
+  void DepthProximityPolicy::depth_CB(const sensor_msgs::ImageConstPtr& depth_image){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    cv::Mat input_frame;
+
+    if (!convertDepth2Mat(input_frame, depth_image)){
+      return;
+    }  
+
+    ROS_INFO_STREAM_THROTTLE(2, "SOME PROCESS TO DO");
+    
+    publishOutput(input_frame);
+
+    /*
     pcl::PointCloud<pcl::PointXYZ> cloud;
     pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
     sensor_msgs::PointCloud2 output_pointcloud;
@@ -47,11 +89,9 @@ namespace gr_safety_policies
         is_obstacle_detected_ = true;
       }
 
-      /*
       if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) > 1){
         rgb_cloud.points[i].g = 255;
       }
-      */
 
     }
 
@@ -64,6 +104,7 @@ namespace gr_safety_policies
     pcl::toROSMsg(rgb_cloud, output_pointcloud);
     // Publish the data
     pointcloud_pub_.publish(output_pointcloud);
+    */
   }
 
   int DepthProximityPolicy::getRing(float x, float y){
