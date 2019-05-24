@@ -25,8 +25,11 @@
 
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/video/background_segm.hpp>
+
 
 namespace gr_safety_policies
 {
@@ -52,7 +55,7 @@ namespace gr_safety_policies
       void timer_cb(const ros::TimerEvent& event);
 
     protected:
-      bool convertDepth2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& depth_image);
+      bool convertROSImage2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& ros_image);
       void publishOutput(cv::Mat frame);
 
     private:
@@ -64,6 +67,7 @@ namespace gr_safety_policies
       ros::Subscriber depth_image_sub_;
       visualization_msgs::MarkerArray marker_array_;
 
+      cv::Ptr<cv::BackgroundSubtractorMOG2> background_substractor_;
 
       message_filters::Subscriber<sensor_msgs::Image>* sub_1;
       message_filters::Subscriber<sensor_msgs::Image>* sub_2;

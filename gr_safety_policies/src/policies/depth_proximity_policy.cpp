@@ -15,16 +15,22 @@ namespace gr_safety_policies
     depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
     sub_1 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/color/image_raw", 2);
     sub_2 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/depth/image_rect_raw", 2);
+    
+    background_substractor_ = cv::createBackgroundSubtractorMOG2();
+    //background_substractor_->setNMixtures(3);
+    //background_substractor_->setHistory(3);
+    //background_substractor_ =  new cv::BackgroundSubtractorMOG2(1, 16, true); //MOG2 approach
     images_syncronizer_ = new message_filters::Synchronizer<ImagesSyncPolicy>(ImagesSyncPolicy(2), *sub_1,*sub_2);
     images_syncronizer_->registerCallback(boost::bind(&DepthProximityPolicy::images_CB,this,_1,_2));
   }
 
 
-  bool DepthProximityPolicy::convertDepth2Mat(cv::Mat& frame, const sensor_msgs::ImageConstPtr& depth_image){
+  bool DepthProximityPolicy::convertROSImage2Mat(cv::Mat& frame, const sensor_msgs::ImageConstPtr& ros_image){
     try{
       //cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
       //input_frame = cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_16UC1)->image;
-      frame = cv_bridge::toCvShare(depth_image, sensor_msgs::image_encodings::TYPE_16UC1)->image;
+      //frame = cv_bridge::toCvShare(ros_image, sensor_msgs::image_encodings::TYPE_16UC1)->image; \\this to convert from Depth
+      frame = cv_bridge::toCvShare(ros_image, sensor_msgs::image_encodings::RGB8)->image; //this to convert from color
       return true;
     }
     catch (cv_bridge::Exception& e){
@@ -39,7 +45,16 @@ namespace gr_safety_policies
     std_msgs::Header header;
 
     try{
-      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_16UC1, frame);
+      //these lines are just for testing rotating image
+      cv::Mat rot=cv::getRotationMatrix2D(cv::Point2f(0,0), 3.1416, 1.0);
+      //cv::warpAffine(frame,frame, rot, frame.size());
+      cv::rotate(frame,frame,1);
+
+
+      //img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, frame);//COLOR
+      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO8, frame);//GRAY
+      
+      //img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_16UC1, frame);//DEPTH
       img_bridge.toImageMsg(out_msg); // from cv_bridge to sensor_msgs::Image
     }
     catch (cv_bridge::Exception& e){
@@ -52,24 +67,29 @@ namespace gr_safety_policies
 
   void DepthProximityPolicy::images_CB(const sensor_msgs::ImageConstPtr& color_image, const sensor_msgs::ImageConstPtr& depth_image){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
-    cv::Mat input_frame;
+    cv::Mat input_frame, output_frame;
 
-    if (!convertDepth2Mat(input_frame, depth_image)){
+    //if (!convertROSImage2Mat(input_frame, depth_image)){//DEPTH
+    if (!convertROSImage2Mat(input_frame, color_image)){//COLOR
       return;
     }  
 
     try{
-      ROS_INFO_STREAM_THROTTLE(2, "SOME PROCESS TO DO");
-      //cv::cvtColor(input_frame, input_frame, cv::CV_BGR2GRAY );
-      cv::GaussianBlur(input_frame, input_frame, cv::Size(3,3), 1, 0, cv::BORDER_DEFAULT);
-      //cv::Canny(input_frame, input_frame,0, 200, 3, false );
+      ROS_INFO_STREAM_THROTTLE(2, "TO DO");
+      cv::cvtColor(input_frame, input_frame, cv::COLOR_BGR2GRAY );
+
+      background_substractor_->apply(input_frame, input_frame);
+
+      cv::GaussianBlur(input_frame, input_frame, cv::Size(5,5), 1, 0, cv::BORDER_DEFAULT);
+      cv::Canny(input_frame, output_frame,100, 200 );
       //cv::circle(input_frame, cv::Point(50, 50), 10,cv::Scalar(0xffff));
     }
     catch( cv::Exception& e ){
       ROS_ERROR("cv exception: %s", e.what());
       return;
     }
-    publishOutput(input_frame);
+
+    publishOutput(output_frame);
 
     /*
     pcl::PointCloud<pcl::PointXYZ> cloud;
