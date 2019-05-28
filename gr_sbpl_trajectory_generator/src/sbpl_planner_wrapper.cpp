@@ -104,7 +104,8 @@ void GRSBPLPlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 
 
   if (makePlan(start_,goal_)){
-      ROS_INFO("WORKING");
+      ROS_INFO("Executing path");
+      executePath();
     }
     else{
       ROS_ERROR("ERROR");
@@ -147,12 +148,30 @@ GRSBPLPlanner::~GRSBPLPlanner(){
 }
 
 
+void GRSBPLPlanner::executePath(){
+  tf2_ros::Buffer tfBuffer;
+  tf2_ros::TransformListener tf2_listener(tfBuffer);
+  geometry_msgs::TransformStamped base_link_to_map;
+  base_link_to_map = tfBuffer.lookupTransform("map", "base_link", ros::Time(0), ros::Duration(1.0) );
+  
+  geometry_msgs::PoseStamped tmp_pose;
+  geometry_msgs::Twist cmd_vel;
 
+  while(plan_.size()>1){
+    expected_pose_ = plan_.front();
+    plan_.erase(plan_.begin());
+    tf2::doTransform(expected_pose_, expected_pose_, base_link_to_map);
+    tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
+    cmd_vel.linear.x = plan_[0].pose.position.x - expected_pose_.pose.position.x;
+    ROS_INFO_STREAM(expected_pose_.header.frame_id);
+    ROS_INFO_STREAM(cmd_vel);
+  }
+}
 
 
 bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::PoseStamped goal){
-  std::vector<geometry_msgs::PoseStamped> plan;
-  plan.clear();
+ 
+  plan_.clear();
 
   ROS_INFO("[sbpl_lattice_planner] getting start point (%g,%g) goal point (%g,%g)",
            start.pose.position.x, start.pose.position.y,goal.pose.position.x, goal.pose.position.y);
@@ -314,9 +333,9 @@ bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     pose.pose.orientation.z = temp.getZ();
     pose.pose.orientation.w = temp.getW();
 
-    plan.push_back(pose);
+    plan_.push_back(pose);
 
-    gui_path.poses[i] = plan[i];
+    gui_path.poses[i] = plan_[i];
   }
   plan_pub_.publish(gui_path);
   //ROS_INFO_STREAM(gui_path);

@@ -16,6 +16,8 @@ using namespace std;
 #include <nav_msgs/MapMetaData.h>
 #include <actionlib/server/simple_action_server.h>
 #include <move_base_msgs/MoveBaseAction.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
 
 // sbpl headers
 #include <sbpl/headers.h>
@@ -30,7 +32,11 @@ namespace gr_sbpl_trajectory_generator{
                           geometry_msgs::PoseStamped goal);
             void point_cb(const geometry_msgs::PointStampedConstPtr msg);
             void executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal);
+            void executePath();
+
         private:
+            std::vector<geometry_msgs::PoseStamped> plan_;
+            geometry_msgs::PoseStamped expected_pose_;
             //same as carrot action and actionlib tutorial
             actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>* as_;
             std::string action_name_;
