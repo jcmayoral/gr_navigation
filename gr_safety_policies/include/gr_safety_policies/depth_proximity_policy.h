@@ -11,7 +11,7 @@
 #include <std_msgs/String.h>
 #include <geometry_msgs/AccelStamped.h>
 #include <visualization_msgs/MarkerArray.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/CameraInfo.h>
 
 #include <gr_safety_policies/safe_actions/publisher_safe_action.h>
 #include <gr_safety_policies/safe_actions/dynamic_reconfigure_safe_action.h>
@@ -68,6 +68,10 @@ namespace gr_safety_policies
       visualization_msgs::MarkerArray marker_array_;
 
       cv::Ptr<cv::BackgroundSubtractorMOG2> background_substractor_;
+
+      //intrinsic params
+      sensor_msgs::CameraInfo camera_color_info_;
+      sensor_msgs::CameraInfo camera_depth_info_;
 
       message_filters::Subscriber<sensor_msgs::Image>* sub_1;
       message_filters::Subscriber<sensor_msgs::Image>* sub_2;

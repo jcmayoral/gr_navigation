@@ -11,17 +11,26 @@ namespace gr_safety_policies
 {
 
   void DepthProximityPolicy::instantiateServices(ros::NodeHandle nh){
-    marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
+    ROS_INFO("Waiting for rgb camera info");
+    boost::shared_ptr<sensor_msgs::CameraInfo const> camera_info;
+    camera_info =  ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/camera/color/camera_info");
+    camera_color_info_ = *camera_info;
+
+    ROS_INFO("Waiting for depth camera info");
+    camera_info =  ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/camera/depth/camera_info");
+    camera_depth_info_ = *camera_info;
+
+    marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("depth_visualization", 1);
     depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
     sub_1 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/color/image_raw", 2);
     sub_2 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/depth/image_rect_raw", 2);
-    
     background_substractor_ = cv::createBackgroundSubtractorMOG2();
     //background_substractor_->setNMixtures(3);
     //background_substractor_->setHistory(3);
     //background_substractor_ =  new cv::BackgroundSubtractorMOG2(1, 16, true); //MOG2 approach
     images_syncronizer_ = new message_filters::Synchronizer<ImagesSyncPolicy>(ImagesSyncPolicy(2), *sub_1,*sub_2);
     images_syncronizer_->registerCallback(boost::bind(&DepthProximityPolicy::images_CB,this,_1,_2));
+    ROS_INFO("Depth Proximity Policy initialized");
   }
 
 
@@ -78,11 +87,18 @@ namespace gr_safety_policies
       ROS_INFO_STREAM_THROTTLE(2, "TO DO");
       cv::cvtColor(input_frame, input_frame, cv::COLOR_BGR2GRAY );
 
-      background_substractor_->apply(input_frame, input_frame);
+      //background_substractor_->apply(input_frame, input_frame);
 
-      cv::GaussianBlur(input_frame, input_frame, cv::Size(5,5), 1, 0, cv::BORDER_DEFAULT);
-      cv::Canny(input_frame, output_frame,100, 200 );
+      cv::GaussianBlur(input_frame, input_frame, cv::Size(7,7), 1, 0, cv::BORDER_DEFAULT);
+      cv::Canny(input_frame, output_frame,150, 200 );
       //cv::circle(input_frame, cv::Point(50, 50), 10,cv::Scalar(0xffff));
+      int erosion_size = 2.0;
+      cv::Mat element = cv::getStructuringElement( cv::MORPH_ELLIPSE,
+                                       cv::Size( 2*erosion_size + 1, 2*erosion_size+1 ),
+                                       cv::Point( erosion_size, erosion_size ) );
+      cv::erode(input_frame, input_frame, element);
+      cv::dilate(input_frame, input_frame, element);
+
     }
     catch( cv::Exception& e ){
       ROS_ERROR("cv exception: %s", e.what());
