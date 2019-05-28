@@ -78,6 +78,9 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
 
 
     plan_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
+    ros::NodeHandle nh;
+    cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("nav_vel", 1);
+
     point_sub_ = nh_.subscribe("clicked_point", 1, &GRSBPLPlanner::point_cb, this);
     //ros::spinOnce();
     as_->start();
@@ -122,6 +125,7 @@ void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
 
   if (makePlan(start_,goal_)){
     ROS_INFO("WORKING");
+    executePath();
   }
   else{
     ROS_ERROR("ERROR");
@@ -152,19 +156,34 @@ void GRSBPLPlanner::executePath(){
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tf2_listener(tfBuffer);
   geometry_msgs::TransformStamped base_link_to_map;
-  base_link_to_map = tfBuffer.lookupTransform("map", "base_link", ros::Time(0), ros::Duration(1.0) );
+  base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
+
+  for (int i=0; i < plan_.size(); i++){
+    tf2::doTransform(plan_[i], plan_[i], base_link_to_map);
+  }
   
   geometry_msgs::PoseStamped tmp_pose;
   geometry_msgs::Twist cmd_vel;
+  tf::Pose pose;
+  double yaw1, yaw2;
 
   while(plan_.size()>1){
+    ROS_INFO_STREAM("SIZE " << plan_.size());
     expected_pose_ = plan_.front();
     plan_.erase(plan_.begin());
-    tf2::doTransform(expected_pose_, expected_pose_, base_link_to_map);
-    tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
-    cmd_vel.linear.x = plan_[0].pose.position.x - expected_pose_.pose.position.x;
-    ROS_INFO_STREAM(expected_pose_.header.frame_id);
-    ROS_INFO_STREAM(cmd_vel);
+    //tf2::doTransform(expected_pose_, expected_pose_, base_link_to_map);
+    cmd_vel.linear.x = (plan_[0].pose.position.x - expected_pose_.pose.position.x)*10;
+    
+    tf::poseMsgToTF(expected_pose_.pose, pose);
+    yaw1 = tf::getYaw(pose.getRotation());
+
+    tf::poseMsgToTF(plan_[0].pose, pose);
+    yaw2 = tf::getYaw(pose.getRotation());
+    cmd_vel.angular.z = (yaw2 - yaw1)*10;
+    //cmd_vel.angular.z = tf::getYaw(q)plan_[0].pose.angular.z - expected_pose_.pose.angular.z;
+    tf::poseMsgToTF(expected_pose_.pose, pose);
+    cmd_vel_pub_.publish(cmd_vel);
+    ros::Duration(0.1).sleep();
   }
 }
 

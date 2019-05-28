@@ -12,6 +12,7 @@ using namespace std;
 #include <costmap_2d/footprint.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PointStamped.h>
+#include <geometry_msgs/Twist.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/MapMetaData.h>
 #include <actionlib/server/simple_action_server.h>
@@ -42,6 +43,7 @@ namespace gr_sbpl_trajectory_generator{
             std::string action_name_;
             move_base_msgs::MoveBaseFeedback feedback_;
             move_base_msgs::MoveBaseResult result_;
+            ros::Publisher cmd_vel_pub_;
 
             SBPLPlanner* planner_;
             EnvironmentNAVXYTHETALAT* env_;
@@ -59,6 +61,7 @@ namespace gr_sbpl_trajectory_generator{
             geometry_msgs::PoseStamped start_;
             geometry_msgs::PoseStamped goal_;
             bool is_start_received_;
+
     };
 };
 
