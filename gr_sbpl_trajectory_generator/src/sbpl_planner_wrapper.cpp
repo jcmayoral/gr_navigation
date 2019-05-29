@@ -3,7 +3,8 @@
 using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
-                                is_start_received_(false),action_name_("sbpl_action"){
+                                is_start_received_(false),action_name_("sbpl_action"),
+                                odom_received_(false){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
 
@@ -82,6 +83,8 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("nav_vel", 1);
 
     point_sub_ = nh_.subscribe("clicked_point", 1, &GRSBPLPlanner::point_cb, this);
+    odom_sub_ = nh.subscribe("/odometry/base_raw", 1, &GRSBPLPlanner::odom_cb, this);
+
     //ros::spinOnce();
     as_->start();
     ros::spin();
@@ -156,35 +159,58 @@ void GRSBPLPlanner::executePath(){
   tf2_ros::Buffer tfBuffer;
   tf2_ros::TransformListener tf2_listener(tfBuffer);
   geometry_msgs::TransformStamped base_link_to_map;
-  base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
-
-  for (int i=0; i < plan_.size(); i++){
-    tf2::doTransform(plan_[i], plan_[i], base_link_to_map);
-  }
+  geometry_msgs::TransformStamped base_link_to_odom;
   
   geometry_msgs::PoseStamped tmp_pose;
   geometry_msgs::Twist cmd_vel;
   tf::Pose pose;
   double yaw1, yaw2;
 
+
   while(plan_.size()>1){
+
+    if (odom_received_){
+      odom_received_ = false;
+    }
+    else{
+      continue;
+    }
+    geometry_msgs::PoseStamped tmp;
+    tmp.header = odom_msg_.header;
+    tmp.header.stamp = ros::Time::now();
+    tmp.pose = odom_msg_.pose.pose;
+    plan_[0].header.stamp = ros::Time::now();
+    base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
+    tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
+
+    base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+    tf2::doTransform(tmp, expected_pose_, base_link_to_odom);
     ROS_INFO_STREAM("SIZE " << plan_.size());
-    expected_pose_ = plan_.front();
-    plan_.erase(plan_.begin());
+    //expected_pose_ = plan_.front();
     //tf2::doTransform(expected_pose_, expected_pose_, base_link_to_map);
-    cmd_vel.linear.x = (plan_[0].pose.position.x - expected_pose_.pose.position.x)*10;
+    cmd_vel.linear.x = (plan_[0].pose.position.x - expected_pose_.pose.position.x); 
+    cmd_vel.linear.y = (plan_[0].pose.position.y - expected_pose_.pose.position.y); 
     
     tf::poseMsgToTF(expected_pose_.pose, pose);
     yaw1 = tf::getYaw(pose.getRotation());
 
     tf::poseMsgToTF(plan_[0].pose, pose);
     yaw2 = tf::getYaw(pose.getRotation());
-    cmd_vel.angular.z = (yaw2 - yaw1)*10;
+    cmd_vel.angular.z = (yaw2 - yaw1);
     //cmd_vel.angular.z = tf::getYaw(q)plan_[0].pose.angular.z - expected_pose_.pose.angular.z;
     tf::poseMsgToTF(expected_pose_.pose, pose);
     cmd_vel_pub_.publish(cmd_vel);
     ros::Duration(0.1).sleep();
+    plan_.erase(plan_.begin());
+
+    ROS_INFO_STREAM("TMP " << cmd_vel);
+
   }
+}
+
+void GRSBPLPlanner::odom_cb(const nav_msgs::OdometryConstPtr odom_msg){
+  odom_received_ = true;
+  odom_msg_ = *odom_msg;
 }
 
 

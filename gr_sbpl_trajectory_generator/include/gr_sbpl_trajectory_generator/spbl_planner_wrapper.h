@@ -8,6 +8,7 @@ using namespace std;
 
 #include <ros/ros.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <nav_msgs/Odometry.h>
 #include <costmap_2d/costmap_2d_ros.h>
 #include <costmap_2d/footprint.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -34,10 +35,13 @@ namespace gr_sbpl_trajectory_generator{
             void point_cb(const geometry_msgs::PointStampedConstPtr msg);
             void executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal);
             void executePath();
+            void odom_cb(const nav_msgs::OdometryConstPtr odom_msg);
 
         private:
             std::vector<geometry_msgs::PoseStamped> plan_;
             geometry_msgs::PoseStamped expected_pose_;
+            bool odom_received_;
+            nav_msgs::Odometry odom_msg_;
             //same as carrot action and actionlib tutorial
             actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>* as_;
             std::string action_name_;
@@ -58,6 +62,7 @@ namespace gr_sbpl_trajectory_generator{
             double allocated_time_;
             ros::Publisher plan_pub_;
             ros::Subscriber point_sub_;
+            ros::Subscriber odom_sub_;
             geometry_msgs::PoseStamped start_;
             geometry_msgs::PoseStamped goal_;
             bool is_start_received_;

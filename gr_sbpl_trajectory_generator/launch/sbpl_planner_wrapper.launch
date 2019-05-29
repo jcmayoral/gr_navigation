@@ -4,7 +4,11 @@
   <arg name="maps_package" default="gr_config_files" />
   <arg name="maps_folder" default="maps" />
   <arg name="map_filename" default="map.yaml" />
-  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim" />
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim"/>
+
+
+
+   <!-- my_mprim_test.mprim   -default pr2.mprim -->
 
   <param name="robot_radius" type="double" value="0.4"/>
 
