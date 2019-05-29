@@ -39,8 +39,8 @@ namespace gr_sbpl_trajectory_generator{
 
         private:
             std::vector<geometry_msgs::PoseStamped> plan_;
-            geometry_msgs::PoseStamped expected_pose_;
             bool odom_received_;
+            int time_scale_factor_;
             nav_msgs::Odometry odom_msg_;
             //same as carrot action and actionlib tutorial
             actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>* as_;
