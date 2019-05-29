@@ -185,7 +185,7 @@ void GRSBPLPlanner::executePath(){
 
     base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
     tf2::doTransform(tmp, expected_pose_, base_link_to_odom);
-    ROS_INFO_STREAM("SIZE " << plan_.size());
+    ROS_INFO_STREAM("Time to GO " << plan_.size()*0.1);
     //expected_pose_ = plan_.front();
     //tf2::doTransform(expected_pose_, expected_pose_, base_link_to_map);
     cmd_vel.linear.x = (plan_[0].pose.position.x - expected_pose_.pose.position.x); 
