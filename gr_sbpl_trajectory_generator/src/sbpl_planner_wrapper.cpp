@@ -4,7 +4,7 @@ using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"),
-                                odom_received_(false), time_scale_factor_(2){
+                                odom_received_(false), time_scale_factor_(1){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
 
@@ -189,7 +189,11 @@ void GRSBPLPlanner::executePath(){
       base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
       tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
 
-      cmd_vel.linear.x += (plan_[0].pose.position.x - tmp.pose.position.x);
+      cmd_vel.linear.x = 0;//(plan_[0].pose.position.x - tmp.pose.position.x);
+      if (plan_.size()>2){
+        cmd_vel.linear.x = (plan_[0].pose.position.x - tmp.pose.position.x);
+        cmd_vel.linear.x -= 0.2*(plan_[1].pose.position.x - plan_[0].pose.position.x);
+      }
       cmd_vel.linear.y += (plan_[0].pose.position.y - tmp.pose.position.y);
       tf::poseMsgToTF(tmp.pose, pose);
       yaw1 = tf::getYaw(pose.getRotation());
