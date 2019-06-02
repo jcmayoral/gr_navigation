@@ -62,7 +62,7 @@ namespace gr_map_utils{
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalMap> > results_map;
         std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
 
-        std::string name("trash_map_5");
+        std::string name("wish_map_move_base");
 
         if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
             topological_map_.nodes.clear();
