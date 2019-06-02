@@ -14,6 +14,17 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/transforms.h>
 
+
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/search/search.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/segmentation/region_growing.h>
+
 //dynamic_reconfigure
 #include <dynamic_reconfigure/server.h>
 #include <gr_pointcloud_filter/FiltersConfig.h>
@@ -45,6 +56,9 @@ namespace gr_pointcloud_filter
             float min_radius_;
             int min_neighbours_;
             float last_ground_height_;
+            float smoothness_threshold_;
+            int cluster_neighbours_number_;
+            ros::Time last_processing_time_;
 
             //Dynamic Reconfigure
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig> dyn_server_;
