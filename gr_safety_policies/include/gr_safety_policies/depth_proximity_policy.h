@@ -53,6 +53,7 @@ namespace gr_safety_policies
       int getRing(float x, float y);
       void dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level);
       void timer_cb(const ros::TimerEvent& event);
+      cv::Mat detectPeople(cv::Mat frame_gray);
 
     protected:
       bool convertROSImage2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& ros_image);
