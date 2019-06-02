@@ -43,7 +43,7 @@ if __name__ == '__main__':
                                 'shared_string':'bag_family',
                                 'restart_requested_out':'restart_requested',
                                 'stop_requested_out':'stop_requested'})
-        smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(start_node = "node_0", pointset= "trash_map_5"),
+        smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(start_node = "node_0", pointset= "wish_map_move_base"),
               transitions={'NODE_REACHED':'SETUP', 'ERROR_NAVIGATION': 'END_SM'},
               remapping={'restart_requested_out':'restart_requested',
                              'stop_requested_out':'stop_requested',
