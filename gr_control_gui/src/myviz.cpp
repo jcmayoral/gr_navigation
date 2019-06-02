@@ -54,9 +54,9 @@ MyViz::MyViz( QWidget* parent )
   height_slider->setMaximum( 100.0 );
 
   QLabel* robot_radius_label = new QLabel("Robot Radius");
-  QSpinBox* robot_radius_spinbox = new QSpinBox;
-  robot_radius_spinbox->setRange(1, 30);
-  robot_radius_spinbox->setSingleStep(1);
+  QDoubleSpinBox* robot_radius_spinbox = new QDoubleSpinBox;
+  robot_radius_spinbox->setRange(0.1, 30.0);
+  robot_radius_spinbox->setSingleStep(0.5);
   robot_radius_spinbox->setValue(robot_radius_);
 
   QPushButton* save_topological_map = new QPushButton ("Store Map");
@@ -86,7 +86,7 @@ MyViz::MyViz( QWidget* parent )
   connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainHeight(  int)));
   connect( execute_map, SIGNAL( released( )), this, SLOT( executeTopoMap( )));
   connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
-  connect( robot_radius_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setRobotRadius(int)));
+  connect( robot_radius_spinbox, SIGNAL(valueChanged(double)), this, SLOT(setRobotRadius(double)));
 
   // Next we initialize the main RViz classes.
   //
@@ -123,7 +123,7 @@ MyViz::~MyViz()
   delete manager_;
 }
 
-void MyViz::setRobotRadius(int value){
+void MyViz::setRobotRadius(double value){
   robot_radius_ = value;
   width_cells_ = floor(terrain_width_/robot_radius_)/2;
   height_cells_ = floor(terrain_height_/robot_radius_);
@@ -312,7 +312,8 @@ void MyViz::saveMap(){
 
   strands_navigation_msgs::Edge edge;
 
-  std::string map_id("trash_map_5");
+  //std::string map_id("trash_map_5");
+  std::string map_id("wish_map_move_base");
   deleteTopoMap(map_id);
   topo_map.map = map_id;
   topo_map.name =  map_id;

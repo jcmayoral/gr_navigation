@@ -3,7 +3,8 @@
 using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
-                                is_start_received_(false),action_name_("sbpl_action"){
+                                is_start_received_(false),action_name_("sbpl_action"),
+                                odom_received_(false), time_scale_factor_(1){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
 
@@ -78,7 +79,12 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
 
 
     plan_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
+    ros::NodeHandle nh;
+    cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("nav_vel", 1);
+
     point_sub_ = nh_.subscribe("clicked_point", 1, &GRSBPLPlanner::point_cb, this);
+    odom_sub_ = nh.subscribe("/odometry/base_raw", 1, &GRSBPLPlanner::odom_cb, this);
+
     //ros::spinOnce();
     as_->start();
     ros::spin();
@@ -104,7 +110,8 @@ void GRSBPLPlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 
 
   if (makePlan(start_,goal_)){
-      ROS_INFO("WORKING");
+      ROS_INFO("Executing path");
+      executePath();
     }
     else{
       ROS_ERROR("ERROR");
@@ -121,6 +128,7 @@ void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
 
   if (makePlan(start_,goal_)){
     ROS_INFO("WORKING");
+    executePath();
   }
   else{
     ROS_ERROR("ERROR");
@@ -147,12 +155,74 @@ GRSBPLPlanner::~GRSBPLPlanner(){
 }
 
 
+void GRSBPLPlanner::executePath(){
+  tf2_ros::Buffer tfBuffer;
+  tf2_ros::TransformListener tf2_listener(tfBuffer);
+  geometry_msgs::TransformStamped base_link_to_map;
+  geometry_msgs::TransformStamped base_link_to_odom;
+  
+  geometry_msgs::PoseStamped tmp_pose;
+  tf::Pose pose;
+  double yaw1, yaw2;
 
+
+  while(plan_.size()>1){
+
+    if (odom_received_){
+      odom_received_ = false;
+    }
+    else{
+      continue;
+    }
+
+    geometry_msgs::Twist cmd_vel;
+
+    for (int i=0;i < time_scale_factor_; i++){
+      geometry_msgs::PoseStamped tmp;
+      tmp.header = odom_msg_.header;
+      tmp.pose = odom_msg_.pose.pose;
+      base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+      tmp.header.stamp = ros::Time::now();
+      tf2::doTransform(tmp, tmp, base_link_to_odom);
+
+      plan_[0].header.stamp = ros::Time::now();
+      base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
+      tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
+
+      cmd_vel.linear.x = 0;//(plan_[0].pose.position.x - tmp.pose.position.x);
+      if (plan_.size()>2){
+        cmd_vel.linear.x = (plan_[0].pose.position.x - tmp.pose.position.x);
+        cmd_vel.linear.x -= 0.2*(plan_[1].pose.position.x - plan_[0].pose.position.x);
+      }
+      cmd_vel.linear.y += (plan_[0].pose.position.y - tmp.pose.position.y);
+      tf::poseMsgToTF(tmp.pose, pose);
+      yaw1 = tf::getYaw(pose.getRotation());
+
+      tf::poseMsgToTF(plan_[0].pose, pose);
+      yaw2 = tf::getYaw(pose.getRotation());
+      cmd_vel.angular.z += (yaw2 - yaw1);
+
+      tmp = plan_[0];
+      plan_.erase(plan_.begin());
+    }
+
+    ROS_INFO_STREAM("TMP " << cmd_vel);
+    cmd_vel_pub_.publish(cmd_vel);
+    ROS_INFO_STREAM("Time to GO " << plan_.size()/time_scale_factor_*0.1);
+    ros::Duration(0.05).sleep();
+  }
+  ROS_INFO("Motion Completed");
+}
+
+void GRSBPLPlanner::odom_cb(const nav_msgs::OdometryConstPtr odom_msg){
+  odom_received_ = true;
+  odom_msg_ = *odom_msg;
+}
 
 
 bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::PoseStamped goal){
-  std::vector<geometry_msgs::PoseStamped> plan;
-  plan.clear();
+ 
+  plan_.clear();
 
   ROS_INFO("[sbpl_lattice_planner] getting start point (%g,%g) goal point (%g,%g)",
            start.pose.position.x, start.pose.position.y,goal.pose.position.x, goal.pose.position.y);
@@ -314,9 +384,9 @@ bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     pose.pose.orientation.z = temp.getZ();
     pose.pose.orientation.w = temp.getW();
 
-    plan.push_back(pose);
+    plan_.push_back(pose);
 
-    gui_path.poses[i] = plan[i];
+    gui_path.poses[i] = plan_[i];
   }
   plan_pub_.publish(gui_path);
   //ROS_INFO_STREAM(gui_path);

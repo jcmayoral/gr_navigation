@@ -13,9 +13,10 @@ find_package(catkin REQUIRED
         sensor_msgs
         std_msgs
         cv_bridge
+        message_filters
 )
 
-find_package(OpenCV 2.4 REQUIRED)
+find_package(OpenCV 3 REQUIRED)
 
 generate_dynamic_reconfigure_options(
   cfg/ProximityPolicy.cfg
@@ -40,6 +41,7 @@ catkin_package(
         sensor_msgs
         std_msgs
         cv_bridge
+        message_filters
 )
 
 file(GLOB POLICIES src/policies/*.cpp)
@@ -56,10 +58,10 @@ add_executable(action_manager_node src/action_manager_node.cpp)
 
 add_definitions(-DCURL_STATICLIB)
 
-target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl ${JSON_INCLUDE_DIRS})
+target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl ${JSON_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
 #Independent policies
 target_link_libraries(proximity_policy_node gr_safety_policies gr_safe_actions)
-target_link_libraries(depth_proximity_policy_node gr_safety_policies gr_safe_actions ${OpenCV_LIBRARIES})
+target_link_libraries(depth_proximity_policy_node gr_safety_policies gr_safe_actions)
 target_link_libraries(weather_policy_node gr_safety_policies gr_safe_actions)
 #Policies Manager
 target_link_libraries(policies_manager_node gr_safety_policies gr_safe_actions)

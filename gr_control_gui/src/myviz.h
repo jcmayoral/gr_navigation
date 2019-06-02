@@ -39,7 +39,7 @@
 
 #include <QGridLayout>
 #include <QVBoxLayout>
-#include <QSpinBox>
+#include <QDoubleSpinBox>
 
 #include <rviz/visualization_manager.h>
 #include <rviz/render_panel.h>
@@ -78,7 +78,7 @@ namespace gr_control_gui{
       private Q_SLOTS:
       void setTerrainWidth( int value);
       void setTerrainHeight( int value);
-      void setRobotRadius(int radius);
+      void setRobotRadius(double radius);
 
       void executeTopoMap();
       void visualizeMap();
@@ -97,7 +97,7 @@ namespace gr_control_gui{
       ros::Publisher reset_publisher_;
       ros::ServiceClient update_client_;
 
-      float robot_radius_;
+      double robot_radius_;
       float terrain_width_;
       float terrain_height_;
       visualization_msgs::MarkerArray marker_array_;

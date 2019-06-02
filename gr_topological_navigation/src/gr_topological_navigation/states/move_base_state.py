@@ -35,3 +35,19 @@ def move_base(x =0, y=0, yaw = 0):
     action_client.send_goal(goal)
     action_client.wait_for_result()
     return action_client.get_result()
+
+
+def sbpl_action_mode(node_id, no_orientation=True):
+    action_client = actionlib.SimpleActionClient('topological_navigation', GotoNodeAction)
+    rospy.loginfo("Waiting for Action Server /topological_navigation")
+    action_client.wait_for_server()
+    rospy.loginfo("Action Server Found")
+
+    rospy.loginfo("Commanding robot to %s", node_id)
+    navgoal = GotoNodeGoal()
+    navgoal.target = node_id
+    navgoal.no_orientation = no_orientation
+    action_client.send_goal(navgoal)
+    action_client.wait_for_result()
+    rospy.loginfo("Is node %s reached? %r", node_id,  action_client.get_result())
+    return action_client.get_result()

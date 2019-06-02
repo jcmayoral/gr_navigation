@@ -5,7 +5,7 @@ from gr_topological_navigation.states.move_base_state import command_robot_to_no
 
 if __name__ == '__main__':
     rospy.init_node("topological_full_coverage_planner")
-    topological_planner = TopologicalPlanner(start_node = "Row0a0", pointset="wish_map_move_base")
+    topological_planner = TopologicalPlanner(start_node = "node_0", pointset="wish_map_move_base")
     topological_planner.go_to_source()
 
     next_transition = topological_planner.get_next_transition()
