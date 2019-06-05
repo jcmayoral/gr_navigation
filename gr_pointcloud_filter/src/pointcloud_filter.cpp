@@ -47,7 +47,7 @@ namespace gr_pointcloud_filter
         if (filter_inliers->indices.size () != 0){
 		    	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
           last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
-		    	//extracting inliers (removing ground)
+          //extracting inliers (removing ground)
           extraction_filter_.setInputCloud(cloud);
           extraction_filter_.setIndices(filter_inliers);
           extraction_filter_.filter(*cloud);
@@ -71,11 +71,12 @@ namespace gr_pointcloud_filter
     	normal_estimator.setKSearch (1);
     	normal_estimator.compute (*normals);
 
+
     	pcl::IndicesPtr indices (new std::vector <int>);
     	pcl::PassThrough<pcl::PointXYZ> pass;
     	pass.setInputCloud (cloud);
     	pass.setFilterFieldName ("z");
-    	pass.setFilterLimits (0.0, 1.0);
+      pass.setFilterLimits (-0.1,1.0);
     	pass.filter (*indices);
 
       pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
