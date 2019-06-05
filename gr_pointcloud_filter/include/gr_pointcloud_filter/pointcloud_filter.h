@@ -2,6 +2,8 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PoseArray.h>
+
 //PCL
 #include <pcl/ModelCoefficients.h>
 #include <pcl/segmentation/sac_segmentation.h>
@@ -43,6 +45,7 @@ namespace gr_pointcloud_filter
     	private:
     		ros::Subscriber pointcloud_sub_;
     		ros::Publisher pointcloud_pub_;
+            ros::Publisher obstacle_pub_;
             sensor_msgs::PointCloud2 output_pointcloud_;
             pcl::VoxelGrid<pcl::PointXYZ> voxel_filter_;
             pcl::SACSegmentation<pcl::PointXYZ> segmentation_filter_;
@@ -50,7 +53,7 @@ namespace gr_pointcloud_filter
             pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
             pcl::RadiusOutlierRemoval<pcl::PointXYZ> radius_outliers_filter_;
             pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_;
-      		pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
+            pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
 
             float eps_angle_;
             float min_radius_;
@@ -71,6 +74,7 @@ namespace gr_pointcloud_filter
             void applyFilters(const sensor_msgs::PointCloud2 msg);
             void setFiltersParams(gr_pointcloud_filter::FiltersConfig &config);
             void dyn_reconfigureCB(gr_pointcloud_filter::FiltersConfig &config, uint32_t level);
+            void publishResults(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
             boost::recursive_mutex mutex;
 
     };

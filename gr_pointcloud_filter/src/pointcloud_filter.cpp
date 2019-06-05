@@ -7,8 +7,11 @@
 // watch the capitalization carefully
 PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 
-namespace gr_pointcloud_filter
-{
+namespace gr_pointcloud_filter{
+
+    void MyNodeletClass::publishResults(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud){
+
+    }
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
@@ -104,6 +107,26 @@ namespace gr_pointcloud_filter
         return;
       }
 
+      int j = 0;
+      geometry_msgs::PoseArray clusters_msg;
+      clusters_msg.header.frame_id = "velodyne";
+      clusters_msg.header.stamp = ros::Time::now();
+
+      for (std::vector<pcl::PointIndices>::const_iterator it = clusters.begin (); it != clusters.end (); ++it){
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+        geometry_msgs::Pose cluster_center;
+        cluster_center.orientation.w = 1.0;
+        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
+          cloud_cluster->points.push_back (cloud->points[*pit]);
+          cluster_center.position.x += cloud->points[*pit].x/it->indices.size();
+          cluster_center.position.y += cloud->points[*pit].y/it->indices.size();
+          cluster_center.position.z += cloud->points[*pit].z/it->indices.size();
+        }
+        std::cout << std::endl;
+        clusters_msg.poses.push_back(cluster_center);
+      }
+      obstacle_pub_.publish(clusters_msg);
+
     	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud ();
     	pcl::toROSMsg(*colored_cloud, output_pointcloud_);
     	// Publish the data
@@ -178,7 +201,7 @@ namespace gr_pointcloud_filter
 		  }
 
         if((last_processing_time_-msg->header.stamp).toSec() > 0.05){
-          ROS_DEBUG("PointCloud msg skipped");
+          ROS_ERROR("Too old PointCloud msg skippinh");
           return;
       }
 
@@ -197,7 +220,8 @@ namespace gr_pointcloud_filter
     	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
     	dyn_server_.setCallback(dyn_server_cb_);
     	pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
-    	pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 10);
+    	pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
+      obstacle_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
       last_ground_height_ = 0;
       last_processing_time_ = ros::Time::now();
     	NODELET_DEBUG("Initializing nodelet...");
