@@ -12,7 +12,7 @@ namespace gr_safety_policies
 
   void ProximityPolicy::instantiateServices(ros::NodeHandle nh){
     marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
-    pointcloud_sub_ = nh.subscribe("/detected_objects", 2, &ProximityPolicy::poses_CB, this);
+    pointcloud_sub_ = nh.subscribe("/detected_objects", 1, &ProximityPolicy::poses_CB, this);
   }
 
   void ProximityPolicy::poses_CB(const geometry_msgs::PoseArray::ConstPtr& poses){
@@ -59,10 +59,10 @@ namespace gr_safety_policies
 
   ProximityPolicy::ProximityPolicy(): is_obstacle_detected_(false), region_radius_(2.5),
                                         regions_number_(3), action_executer_(NULL),
-                                        fault_region_id_(0)
+                                        fault_region_id_(0), enabling_after_timeout_(1.0)
   {
     ros::NodeHandle nh;
-    timer_publisher_ = nh.createTimer(ros::Duration(5), &ProximityPolicy::timer_cb, this);
+    timer_publisher_ = nh.createTimer(ros::Duration(1), &ProximityPolicy::timer_cb, this);
     last_detection_time_ = ros::Time::now();
     policy_.id_ = "PROXIMITY_POLICY";
     policy_.action_ =  -1;
@@ -75,13 +75,13 @@ namespace gr_safety_policies
   }
 
   void ProximityPolicy::timer_cb(const ros::TimerEvent& event){
-    if (ros::Time::now().toSec() - last_detection_time_.toSec() > 5.0){
+    if (ros::Time::now().toSec() - last_detection_time_.toSec() > enabling_after_timeout_){
       if (action_executer_!= NULL){
-        if (action_executer_->getSafetyID()==0){
-          ROS_ERROR("Enable navigation... PAY ATTENTION");
-          action_executer_->stop();
-          action_executer_ = NULL;
-        }
+        ROS_ERROR("Enable default navigation... PAY ATTENTION");
+        action_executer_->stop();
+        action_executer_ = NULL;
+        policy_.action_ = -1;
+        policy_.state_ = PolicyDescription::SAFE;
       }
     }
 
@@ -94,7 +94,7 @@ namespace gr_safety_policies
 
   void ProximityPolicy::dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level){
     region_radius_ = config.region_radius;
-
+    enabling_after_timeout_ = config.sensor_timeout;
     visualization_msgs::Marker marker;
 
     marker_array_.markers.clear();
@@ -164,11 +164,11 @@ namespace gr_safety_policies
 
   bool ProximityPolicy::checkPolicy()
   {
-    //The next condition is true when is obstacle not detected and
-    // and executer is initialized (obstacle not anymore on danger region)
-    publishTopics();
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    publishTopics();
 
+    //The next condition is true when is obstacle not detected and
+    // and executer is initialized (obstacle not anymore on danger region)    
     if(action_executer_!= NULL && !is_obstacle_detected_){
       //ROS_WARN("Stopping executer due no obstacle detected");
       //action_executer_->stop();
@@ -182,7 +182,7 @@ namespace gr_safety_policies
   void ProximityPolicy::suggestAction(){
 
     //action_executer_ = new PublisherSafeAction();
-    ROS_INFO_STREAM_THROTTLE(5, "Obstacle detected on region with ID "<< fault_region_id_ );
+    //ROS_INFO_STREAM_THROTTLE(5, "Obstacle detected on region with ID "<< fault_region_id_ );
     switch (fault_region_id_){
       case 0: // if DANGER REGION... stop whatever is it and
       //if executer not initialized initialized it just if lock was not locked before
@@ -201,7 +201,7 @@ namespace gr_safety_policies
       case 1:
         if (action_executer_ != NULL){
           if (action_executer_->getSafetyID()==0){
-            ROS_DEBUG("Obstacle too close avoiding reconfiguration");
+            ROS_DEBUG("Obstacle previously detected on hazard zone ... ignoring Warning Zone");
             return;
           }
           if(action_executer_->getSafetyID()!=1){

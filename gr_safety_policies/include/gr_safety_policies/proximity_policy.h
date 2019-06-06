@@ -58,6 +58,7 @@ namespace gr_safety_policies
 
       ros::Time last_detection_time_;
       double region_radius_;
+      double enabling_after_timeout_;
       int regions_number_;
       int fault_region_id_;
       SafeAction* action_executer_;
