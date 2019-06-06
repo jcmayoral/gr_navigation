@@ -15,6 +15,7 @@
 #include <geometry_msgs/AccelStamped.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PoseArray.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <gr_safety_policies/safe_actions/publisher_safe_action.h>
@@ -43,7 +44,7 @@ namespace gr_safety_policies
       void publishTopics();
 
       void createRingMarker(visualization_msgs::Marker& marker, int level);
-      void pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud);
+      void poses_CB(const geometry_msgs::PoseArray::ConstPtr& poses);
       int getRing(float x, float y);
       void dyn_reconfigureCB(gr_safety_policies::ProximityPolicyConfig &config, uint32_t level);
       void timer_cb(const ros::TimerEvent& event);
@@ -52,7 +53,6 @@ namespace gr_safety_policies
       bool is_obstacle_detected_;
       ros::Timer timer_publisher_;
       ros::Publisher marker_pub_;
-      ros::Publisher pointcloud_pub_;
       ros::Subscriber pointcloud_sub_;
       visualization_msgs::MarkerArray marker_array_;
 

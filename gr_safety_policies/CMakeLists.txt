@@ -11,6 +11,7 @@ find_package(catkin REQUIRED
         safety_core
         visualization_msgs
         sensor_msgs
+        geometry_msgs
         std_msgs
         cv_bridge
         message_filters
@@ -39,6 +40,7 @@ catkin_package(
         safety_core
         visualization_msgs
         sensor_msgs
+        geometry_msgs
         std_msgs
         cv_bridge
         message_filters

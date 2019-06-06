@@ -12,34 +12,23 @@ namespace gr_safety_policies
 
   void ProximityPolicy::instantiateServices(ros::NodeHandle nh){
     marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
-    pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("proximity_pointcloud", 1);
-    pointcloud_sub_ = nh.subscribe("/velodyne_points/filtered", 2, &ProximityPolicy::pointcloud_CB, this);
+    pointcloud_sub_ = nh.subscribe("/detected_objects", 2, &ProximityPolicy::poses_CB, this);
   }
 
-  void ProximityPolicy::pointcloud_CB(const sensor_msgs::PointCloud2::ConstPtr& pointcloud){
+  void ProximityPolicy::poses_CB(const geometry_msgs::PoseArray::ConstPtr& poses){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
-    pcl::PointCloud<pcl::PointXYZ> cloud;
-    pcl::PointCloud<pcl::PointXYZRGBA> rgb_cloud;
-    sensor_msgs::PointCloud2 output_pointcloud;
-
-    pcl::fromROSMsg(*pointcloud, cloud);
-    //pcl2 to pclxyzrgba
-    pcl::copyPointCloud(cloud,rgb_cloud);
-
     //color
     bool warning_zone = false;
 
-    for (int i = 0; i < rgb_cloud.points.size(); i++) {
-      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 0){//FIRST POINT IN DANGER ZONE.. Return
-        rgb_cloud.points[i].r = 255;
+    for (int i = 0; i < poses->poses.size(); i++) {
+      if (getRing(poses->poses[i].position.x, poses->poses[i].position.y) == 0){//FIRST POINT IN DANGER ZONE.. Return
         fault_region_id_ = 0;
         last_detection_time_ = ros::Time::now();
         is_obstacle_detected_ = true;
         return;
       }
 
-      if (getRing(rgb_cloud.points[i].x, rgb_cloud.points[i].y) == 1){
-        rgb_cloud.points[i].b = 255;
+      if (getRing(poses->poses[i].position.x, poses->poses[i].position.y) == 1){
         fault_region_id_ = 1;
         warning_zone = true;
         //last_detection_time_ = ros::Time::now();
@@ -60,10 +49,6 @@ namespace gr_safety_policies
         is_obstacle_detected_ = false;
     }
 
-    // Convert to ROS data type
-    pcl::toROSMsg(rgb_cloud, output_pointcloud);
-    // Publish the data
-    pointcloud_pub_.publish(output_pointcloud);
   }
 
   int ProximityPolicy::getRing(float x, float y){
