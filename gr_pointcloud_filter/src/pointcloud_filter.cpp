@@ -9,9 +9,21 @@ PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 
 namespace gr_pointcloud_filter{
 
-    void MyNodeletClass::publishResults(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud){
+     template <class T> void MyNodeletClass::publishPointCloud(T t){
+       ROS_INFO("Template Function");
+       if (!enable_visualization_){
+        return;
+      }
 
-    }
+      pcl::toROSMsg(t, output_pointcloud_);
+      output_pointcloud_.header.frame_id = "velodyne";
+    	output_pointcloud_.header.stamp = ros::Time::now();
+      // Publish the data
+      pointcloud_pub_.publish(output_pointcloud_);
+      last_processing_time_ = ros::Time::now();
+     }
+
+      
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
@@ -19,7 +31,7 @@ namespace gr_pointcloud_filter{
       //voxeling
       if (filters_enablers_[1]){
         voxel_filter_.setInputCloud(cloud);
-        //voxel_filter_.filter(*cloud);
+        voxel_filter_.filter(*cloud);
       }
 
       //radius outliers
@@ -82,6 +94,12 @@ namespace gr_pointcloud_filter{
       pass.setFilterLimits (-0.1,1.0);
     	pass.filter (*indices);
 
+
+      if (indices->size() <1){
+        ROS_WARN("Not enough indices");
+        publishPointCloud<pcl::PointCloud<pcl::PointXYZ>>(*cloud);
+        return;
+      }
       pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
     	reg.setMinClusterSize (1);
     	reg.setMaxClusterSize (100);
@@ -99,11 +117,7 @@ namespace gr_pointcloud_filter{
       ROS_DEBUG_STREAM("Clusters size" << clusters.size());
       if (clusters.size()== 0){
         ROS_WARN("Not clusters found");
-       	// Convert to ROS data type// Convert to ROS data type
-        pcl::toROSMsg(*cloud, output_pointcloud_);
-        // Publish the data
-        pointcloud_pub_.publish(output_pointcloud_);
-        last_processing_time_ = ros::Time::now();
+        publishPointCloud<pcl::PointCloud<pcl::PointXYZ>>(*cloud);
         return;
       }
 
@@ -126,23 +140,15 @@ namespace gr_pointcloud_filter{
         clusters_msg.poses.push_back(cluster_center);
       }
       obstacle_pub_.publish(clusters_msg);
-
-    	pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud ();
-    	pcl::toROSMsg(*colored_cloud, output_pointcloud_);
-    	// Publish the data
-      output_pointcloud_.header.frame_id = "velodyne";
-    	output_pointcloud_.header.stamp = ros::Time::now();
-    	pointcloud_pub_.publish (output_pointcloud_);
-
-      last_processing_time_ = ros::Time::now();
-      //todo remove until here ***
-
+      pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud ();
+    	publishPointCloud<pcl::PointCloud <pcl::PointXYZRGB>>(*colored_cloud);
 
     }
 
     void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
       //boost::recursive_mutex::scoped_lock scoped_lock(mutex); //if params are bad the PC process takes too long and no way to change them
-		  //Enable
+		  enable_visualization_ = config.visualize_pointcloud;
+      //Enable
       filters_enablers_[0] = config.enable_filters;
       filters_enablers_[1] = config.voxel_filter;
       filters_enablers_[2] = config.radius_outlier_removal;
@@ -201,7 +207,7 @@ namespace gr_pointcloud_filter{
 		  }
 
         if((last_processing_time_-msg->header.stamp).toSec() > 0.05){
-          ROS_ERROR("Too old PointCloud msg skippinh");
+          ROS_ERROR("Too old PointCloud msg skipping");
           return;
       }
 

@@ -67,6 +67,7 @@ namespace gr_pointcloud_filter
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig> dyn_server_;
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig>::CallbackType dyn_server_cb_;
             bool filters_enablers_[6];
+            bool enable_visualization_;
 
     	public:
             virtual void onInit();
@@ -74,7 +75,7 @@ namespace gr_pointcloud_filter
             void applyFilters(const sensor_msgs::PointCloud2 msg);
             void setFiltersParams(gr_pointcloud_filter::FiltersConfig &config);
             void dyn_reconfigureCB(gr_pointcloud_filter::FiltersConfig &config, uint32_t level);
-            void publishResults(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
+            template <class T> void publishPointCloud(T);
             boost::recursive_mutex mutex;
 
     };
