@@ -21,7 +21,7 @@ PublisherSafeAction::~PublisherSafeAction(){
 };
 
 void PublisherSafeAction::execute(){
-    ROS_INFO_THROTTLE(5,"Executing  Publisher SafeAction");
+    ROS_ERROR("Executing  Stop Publisher SafeAction");
     std_msgs::Bool topic;
     topic.data = true;
     topic_publisher_.publish(topic);

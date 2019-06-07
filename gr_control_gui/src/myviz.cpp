@@ -35,9 +35,10 @@ using namespace gr_control_gui;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
-  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0)
+  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(1.0), current_row_(0)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
+  region_publisher_ = nh_.advertise<visualization_msgs::Marker>("region", 1 );
   reset_publisher_ = nh_.advertise<std_msgs::Time>("update_map", 1);
   //collection and database as arguments to messageStoreProxy
   message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps","message_store");
@@ -45,7 +46,7 @@ MyViz::MyViz( QWidget* parent )
   // Construct and lay out labels and slider controls.
   QLabel* width_label = new QLabel( "Width Terrain" );
   QSlider* width_slider = new QSlider( Qt::Horizontal );
-  width_slider->setMinimum( 0.00 );
+  width_slider->setMinimum( 1.00 );
   width_slider->setMaximum( 100.0 );
 
   QLabel* height_label = new QLabel( "Height Terrain" );
@@ -53,11 +54,11 @@ MyViz::MyViz( QWidget* parent )
   height_slider->setMinimum( 1.0 );
   height_slider->setMaximum( 100.0 );
 
-  QLabel* robot_radius_label = new QLabel("Robot Radius");
-  QDoubleSpinBox* robot_radius_spinbox = new QDoubleSpinBox;
-  robot_radius_spinbox->setRange(0.1, 30.0);
-  robot_radius_spinbox->setSingleStep(0.5);
-  robot_radius_spinbox->setValue(robot_radius_);
+  QLabel* column_label = new QLabel("Desired Row");
+  QSpinBox* column_spinbox = new QSpinBox;
+  column_spinbox->setRange(0, 100);
+  column_spinbox->setSingleStep(1);
+  column_spinbox->setValue(0);
 
   QPushButton* save_topological_map = new QPushButton ("Store Map");
   QPushButton* execute_map = new QPushButton ("Execute Map");
@@ -67,8 +68,8 @@ MyViz::MyViz( QWidget* parent )
   controls_layout->addWidget( width_slider, 0, 1 );
   controls_layout->addWidget( height_label, 1, 0 );
   controls_layout->addWidget( height_slider, 1, 1 );
-  controls_layout->addWidget( robot_radius_label, 2, 0 );
-  controls_layout->addWidget( robot_radius_spinbox, 2, 1 );
+  controls_layout->addWidget( column_label, 2, 0 );
+  controls_layout->addWidget( column_spinbox, 2, 1 );
   controls_layout->addWidget( save_topological_map, 3, 0 );
   controls_layout->addWidget( execute_map, 3, 1 );
 
@@ -86,7 +87,7 @@ MyViz::MyViz( QWidget* parent )
   connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainHeight(  int)));
   connect( execute_map, SIGNAL( released( )), this, SLOT( executeTopoMap( )));
   connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
-  connect( robot_radius_spinbox, SIGNAL(valueChanged(double)), this, SLOT(setRobotRadius(double)));
+  connect( column_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setDesiredRow(int)));
 
   // Next we initialize the main RViz classes.
   //
@@ -97,19 +98,22 @@ MyViz::MyViz( QWidget* parent )
   manager_ = new rviz::VisualizationManager( render_panel_ );
   render_panel_->initialize( manager_->getSceneManager(), manager_ );
 
-  // Create a MARKER
-  marker_display_ = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
-  ROS_ASSERT( marker_display_ != NULL );
-
-  //subscribe to temproal topological_map
-  marker_display_->subProp( "Marker Topic" )->setValue("temporal_topological_map");
+  // Create Subscribers
+  rviz::Display* marker_display;
+  marker_display = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
+  ROS_ASSERT( marker_display != NULL );
+  marker_display->subProp( "Marker Topic" )->setValue("temporal_topological_map");
+  marker_display->subProp("Reference Frame")->setValue("map");
+ 
+  rviz::Display* region_marker;
+  region_marker = manager_->createDisplay( "rviz/Marker", "topological map", true );
+  ROS_ASSERT( region_marker != NULL );
+  region_marker->subProp( "Marker Topic" )->setValue("region");
 
   // Initialize the slider values.
   height_slider->setValue( 10.0 );
   width_slider->setValue( 10.0 );
 
-  //marker_array_->subProp("Reference Frame")->setValue("map"); // This probably works by itself, I added the next line just in case
-  //marker_array_->initialize(visualization_manager_);
   manager_->setFixedFrame("map");
   manager_->initialize();
   manager_->startUpdate();
@@ -123,22 +127,63 @@ MyViz::~MyViz()
   delete manager_;
 }
 
-void MyViz::setRobotRadius(double value){
-  robot_radius_ = value;
-  width_cells_ = floor(terrain_width_/robot_radius_)/2;
-  height_cells_ = floor(terrain_height_/robot_radius_);
-  visualizeMap();
+void MyViz::publishRegion(){
+  visualization_msgs::Marker region;
+  region.header.frame_id = "map";
+  region.ns = "region";
+  region.id = 20001;
+  region.type = visualization_msgs::Marker::LINE_STRIP;
+  region.action = visualization_msgs::Marker::DELETE;
+
+  region_publisher_.publish(region);
+  region.action = visualization_msgs::Marker::ADD;
+
+  region.scale.x = 0.1;
+  region.scale.y = 0.1;
+  region.scale.z = 0.1;
+  region.color.r = 0.0;
+  region.color.g = 1.0;
+  region.color.a = 1.0;
+
+  geometry_msgs::Point p;
+  p.x = -robot_radius_/2;
+  p.y = -robot_radius_/2;
+  p.z = 0.0;
+  region.points.push_back(p);
+
+  p.x = terrain_height_ - robot_radius_/2;
+  p.y = - robot_radius_/2;
+  p.z = 0.0;
+  region.points.push_back(p);
+
+  p.x = terrain_height_ - robot_radius_/2;
+  p.y = terrain_width_ - robot_radius_/2;
+  p.z = 0.0;
+  region.points.push_back(p);
+
+  p.x = -robot_radius_/2;
+  p.y = terrain_width_ - robot_radius_/2;
+  p.z = 0.0;
+  region.points.push_back(p);
+
+  p.x = -robot_radius_/2;
+  p.y = -robot_radius_/2;
+  p.z = 0.0;
+  region.points.push_back(p);
+
+  region_publisher_.publish(region);
+
 }
 
 void MyViz::setTerrainWidth( int value){
   terrain_width_ = value;
-  width_cells_ = floor(value/robot_radius_);
+  width_cells_ = ceil(value/1);
   visualizeMap();
 }
 
 void MyViz::setTerrainHeight( int value ){
   terrain_height_ = value;
-  height_cells_ = floor(value/robot_radius_);
+  height_cells_ = ceil(value/1);
   visualizeMap();
 }
 
@@ -163,8 +208,8 @@ void MyViz::visualizeMap(){
 
   //Create New Nodes
   temporal_marker.action = visualization_msgs::Marker::ADD;
-  temporal_marker.scale.x = robot_radius_/2;//divided by two just o see edges
-  temporal_marker.scale.y = robot_radius_/2;
+  temporal_marker.scale.x = robot_radius_/3;//divided by three just o see edges
+  temporal_marker.scale.y = robot_radius_/3;
   temporal_marker.scale.z = 0.05;
   temporal_marker.color.r = 1.0;
   temporal_marker.color.a = 1.0;
@@ -180,7 +225,7 @@ void MyViz::visualizeMap(){
   temporal_edges.ns = "edges"; //TODO maybe add segmentation layers
   temporal_edges.type = visualization_msgs::Marker::LINE_LIST;
   temporal_edges.action = visualization_msgs::Marker::ADD;
-  temporal_edges.scale.x = 0.5;
+  temporal_edges.scale.x = 0.1;
   temporal_edges.scale.y = 0.1;
   temporal_edges.scale.z = 0.5;
   temporal_edges.color.r = 1.0;
@@ -191,17 +236,18 @@ void MyViz::visualizeMap(){
 
   std::vector<std::pair<float,float> > vector;
 
-  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, robot_radius_, robot_radius_);
-
+  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, 1.0, 1.0);
+  std::cout << "cells " << height_cells_ << " , " << width_cells_ << std::endl;
   int id, index_1, index_2 = 0;
   int col;
   int row;
 
-  for( std::vector <std::pair <float,float> >::iterator it = vector.begin(); it != vector.end(); it++ ){
+  for( std::vector <std::pair <float,float> >::iterator it = vector.begin()+(current_row_*width_cells_); it != vector.begin()+(current_row_*height_cells_)+width_cells_; it++ ){
     //Storing Nodes
     id = std::distance(vector.begin(), it);
-    col = round(id/height_cells_);
-    row = id - col *height_cells_;
+    std::cout <<id << std::endl;
+    row = current_row_;//round(id/height_cells_);
+    col = id - row *height_cells_;
 
     temporal_marker.id = std::distance(vector.begin(), it);
     temporal_marker.pose.position.x = it->first;
@@ -224,7 +270,7 @@ void MyViz::visualizeMap(){
     }
 
     //is the last node of a row
-    if (col==(width_cells_-1)){
+    if ((col)==(width_cells_-1)){
       //select direction of border
       //from index_1 to index_2
       if (row%2==0){
@@ -267,16 +313,17 @@ void MyViz::visualizeMap(){
       temporal_edges.points.push_back(temporal_point);
       //Edges ids
       edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_1 + 1));
+      std::cout << "NO BORDER " << index_1 << " , " << index_1+1 << std::endl;
       //birectional
       edges_.emplace_back("node_"+ std::to_string(index_1 + 1),"node_" + std::to_string(index_1));
 
     }
-
       marker_array_.markers.push_back(temporal_edges);
 
   }
 
   map_publisher_.publish(marker_array_);
+  publishRegion();
 }
 
 void MyViz::deleteTopoMap(std::string map_id){
@@ -347,12 +394,12 @@ void MyViz::saveMap(){
     ids[3] = node.first;
     topo_node.name = node.first;
 
-
     vertex.x = -robot_radius_/2;
     vertex.y = robot_radius_/2;
     topo_node.verts.push_back(vertex);
     vertex.x = robot_radius_/2;
     vertex.y = robot_radius_/2;
+
     topo_node.verts.push_back(vertex);
     vertex.x = robot_radius_/2;
     vertex.y = -robot_radius_/2;
@@ -380,6 +427,12 @@ void MyViz::saveMap(){
 
   //std::string result(message_store_->insertNamed( field, name, topo_map));
   //ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
+}
+
+void MyViz::setDesiredRow(int row){
+  current_row_ = row;
+  ROS_INFO_STREAM("Desired row");
+  visualizeMap();
 }
 
 void MyViz::executeTopoMap(){

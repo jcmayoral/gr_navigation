@@ -40,6 +40,9 @@ catkin_package(
     dynamic_reconfigure
 )
 
+
+add_definitions(${PCL_DEFINITIONS})
+
 add_library(${PROJECT_NAME}
             src/pointcloud_filter.cpp
 )
