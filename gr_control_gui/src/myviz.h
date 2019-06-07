@@ -78,23 +78,25 @@ namespace gr_control_gui{
       private Q_SLOTS:
       void setTerrainWidth( int value);
       void setTerrainHeight( int value);
-      void setRobotRadius(double radius);
-
+      void setDesiredRow(int row);
       void executeTopoMap();
       void visualizeMap();
       void saveMap();
       void deleteTopoMap(std::string map_id);
 
+      void publishRegion();
+
     private:
       rviz::VisualizationManager* manager_;
       rviz::RenderPanel* render_panel_;
-      rviz::Display* marker_display_;
       MapGenerator* map_utils_;
       int height_cells_;
       int width_cells_;
+      int current_row_;
       ros::NodeHandle nh_;
       ros::Publisher map_publisher_;
       ros::Publisher reset_publisher_;
+      ros::Publisher region_publisher_;
       ros::ServiceClient update_client_;
 
       double robot_radius_;
