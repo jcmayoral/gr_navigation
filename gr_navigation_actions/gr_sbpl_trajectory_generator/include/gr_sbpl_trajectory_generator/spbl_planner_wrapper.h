@@ -66,6 +66,8 @@ namespace gr_sbpl_trajectory_generator{
             geometry_msgs::PoseStamped start_;
             geometry_msgs::PoseStamped goal_;
             bool is_start_received_;
+            tf2_ros::Buffer tfBuffer;
+            tf2_ros::TransformListener tf2_listener;
 
     };
 };

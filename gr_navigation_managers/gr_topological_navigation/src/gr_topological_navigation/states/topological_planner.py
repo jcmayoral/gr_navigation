@@ -119,19 +119,21 @@ class TopologicalPlanner(SimpleActionState):
         rospy.logwarn(self.start_node)
         if not self.networkx_graph.has_node(self.start_node):
             rospy.logerr("HELP")
-            self.topological_plan = list(nx.edge_dfs(self.networkx_graph, orientation='reverse'))
+            self.topological_plan = list(nx.edge_dfs(self.networkx_graph))
             self.start_node = self.topological_plan[0][0]
             return
         self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.start_node, orientation='reverse'))
         #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
         #self.topological_plan = list(nx.dfs_preorder_nodes(self.networkx_graph, source=self.start_node))
-        self.start_node = self.topological_plan[0][0]
+        #self.start_node = self.topological_plan[0][0]
 
     def go_to_source(self):
         rospy.loginfo("Robot going to start node %s", self.start_node)
         if self.nodes_poses is not None:
-            return
-        move_base(self.nodes_poses[self.start_node])
+            self.get_map()
+
+        if self.nodes_poses[self.start_node]:
+            move_base(self.nodes_poses[self.start_node])
         #self.current_node = self.start_node
         self.is_task_initialized = True
         self.generate_full_coverage_plan()
