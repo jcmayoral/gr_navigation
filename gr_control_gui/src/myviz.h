@@ -76,8 +76,8 @@ namespace gr_control_gui{
       virtual ~MyViz();
 
       private Q_SLOTS:
-      void setTerrainWidth( int value);
-      void setTerrainHeight( int value);
+      void setTerrainY( int value);
+      void setTerrainX( int value);
       void setDesiredRow(int row);
       void executeTopoMap();
       void visualizeMap();
@@ -90,8 +90,8 @@ namespace gr_control_gui{
       rviz::VisualizationManager* manager_;
       rviz::RenderPanel* render_panel_;
       MapGenerator* map_utils_;
-      int height_cells_;
-      int width_cells_;
+      int x_cells_;
+      int y_cells_;
       int current_row_;
       ros::NodeHandle nh_;
       ros::Publisher map_publisher_;
@@ -100,8 +100,8 @@ namespace gr_control_gui{
       ros::ServiceClient update_client_;
 
       double robot_radius_;
-      float terrain_width_;
-      float terrain_height_;
+      float terrain_y_;
+      float terrain_x_;
       visualization_msgs::MarkerArray marker_array_;
      	mongodb_store::MessageStoreProxy* message_store_;
 

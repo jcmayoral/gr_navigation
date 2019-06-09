@@ -1,6 +1,6 @@
 <package>
   <name>gr_control_gui</name>
-  <version>0.5.0</version>
+  <version>0.5.1</version>
   <description>
      Based on the librviz_tutorial from William Woodall. This package allows an interaction to the topological map.
   </description>

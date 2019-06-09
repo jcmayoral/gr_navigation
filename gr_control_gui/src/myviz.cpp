@@ -35,7 +35,7 @@ using namespace gr_control_gui;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
-  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(1.0), current_row_(0)
+  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0), current_row_(0), terrain_x_(1.0), terrain_y_(1.0)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
   region_publisher_ = nh_.advertise<visualization_msgs::Marker>("region", 1 );
@@ -44,12 +44,12 @@ MyViz::MyViz( QWidget* parent )
   message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps","message_store");
 
   // Construct and lay out labels and slider controls.
-  QLabel* width_label = new QLabel( "Width Terrain" );
+  QLabel* width_label = new QLabel( "Y Terrain" );
   QSlider* width_slider = new QSlider( Qt::Horizontal );
   width_slider->setMinimum( 1.00 );
   width_slider->setMaximum( 100.0 );
 
-  QLabel* height_label = new QLabel( "Height Terrain" );
+  QLabel* height_label = new QLabel( "X Terrain" );
   QSlider* height_slider = new QSlider( Qt::Horizontal );
   height_slider->setMinimum( 1.0 );
   height_slider->setMaximum( 100.0 );
@@ -83,8 +83,8 @@ MyViz::MyViz( QWidget* parent )
   setLayout( main_layout );
 
   // Make signal/slot connections.
-  connect( width_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainWidth(  int )));
-  connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainHeight(  int)));
+  connect( width_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainY(  int )));
+  connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainX(  int)));
   connect( execute_map, SIGNAL( released( )), this, SLOT( executeTopoMap( )));
   connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
   connect( column_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setDesiredRow(int)));
@@ -103,7 +103,6 @@ MyViz::MyViz( QWidget* parent )
   marker_display = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
   ROS_ASSERT( marker_display != NULL );
   marker_display->subProp( "Marker Topic" )->setValue("temporal_topological_map");
-  marker_display->subProp("Reference Frame")->setValue("map");
  
   rviz::Display* region_marker;
   region_marker = manager_->createDisplay( "rviz/Marker", "topological map", true );
@@ -151,18 +150,18 @@ void MyViz::publishRegion(){
   p.z = 0.0;
   region.points.push_back(p);
 
-  p.x = terrain_height_ - robot_radius_/2;
+  p.x = terrain_x_ - robot_radius_/2;
   p.y = - robot_radius_/2;
   p.z = 0.0;
   region.points.push_back(p);
 
-  p.x = terrain_height_ - robot_radius_/2;
-  p.y = terrain_width_ - robot_radius_/2;
+  p.x = terrain_x_ - robot_radius_/2;
+  p.y = terrain_y_ - robot_radius_/2;
   p.z = 0.0;
   region.points.push_back(p);
 
   p.x = -robot_radius_/2;
-  p.y = terrain_width_ - robot_radius_/2;
+  p.y = terrain_y_ - robot_radius_/2;
   p.z = 0.0;
   region.points.push_back(p);
 
@@ -175,16 +174,16 @@ void MyViz::publishRegion(){
 
 }
 
-void MyViz::setTerrainWidth( int value){
-  terrain_width_ = value;
-  width_cells_ = ceil(value/1);
-  visualizeMap();
+void MyViz::setTerrainY( int value){
+  terrain_y_ = value;
+  y_cells_ = ceil(value/1);
+  //visualizeMap();
 }
 
-void MyViz::setTerrainHeight( int value ){
-  terrain_height_ = value;
-  height_cells_ = ceil(value/1);
-  visualizeMap();
+void MyViz::setTerrainX( int value ){
+  terrain_x_ = value;
+  x_cells_ = ceil(value/1);
+  //visualizeMap();
 }
 
 void MyViz::visualizeMap(){
@@ -236,25 +235,24 @@ void MyViz::visualizeMap(){
 
   std::vector<std::pair<float,float> > vector;
 
-  map_utils_->calculateCenters(vector,  height_cells_, width_cells_, 1.0, 1.0);
-  std::cout << "cells " << height_cells_ << " , " << width_cells_ << std::endl;
+  map_utils_->calculateCenters(vector,  x_cells_, y_cells_, 1.0, 1.0);
+  std::cout << "cells " << x_cells_ << " , " << y_cells_ << std::endl;
   int id, index_1, index_2 = 0;
   int col;
-  int row;
 
-  for( std::vector <std::pair <float,float> >::iterator it = vector.begin()+(current_row_*width_cells_); it != vector.begin()+(current_row_*height_cells_)+width_cells_; it++ ){
+  int min_index = (current_row_*y_cells_);
+  int max_index = (current_row_*y_cells_) + y_cells_;
+  std::cout << "indices  " << min_index << " , " << max_index << std::endl;
+  std::cout << "size  " << vector.size() << std::endl;
+  double yaw =(current_row_%2) ? -1.57 : 1.57;
+    
+
+  for( auto id = min_index; id< max_index; ++id){
     //Storing Nodes
-    id = std::distance(vector.begin(), it);
-    std::cout <<id << std::endl;
-    row = current_row_;//round(id/height_cells_);
-    col = id - row *height_cells_;
-
-    temporal_marker.id = std::distance(vector.begin(), it);
-    temporal_marker.pose.position.x = it->first;
-    temporal_marker.pose.position.y = it->second;
-
-    int floor_col = floor(id/width_cells_);
-    double yaw =(floor_col%2) ? -1.57 : 1.57;
+    col = id - current_row_ *y_cells_;
+    temporal_marker.id = id;
+    temporal_marker.pose.position.x = vector[id].first;
+    temporal_marker.pose.position.y = vector[id].second;
     tf2::Quaternion quat_tf;
     quat_tf.setRPY(0.0, 0.0, yaw);
     geometry_msgs::Quaternion quat_msg;
@@ -264,62 +262,24 @@ void MyViz::visualizeMap(){
     std::string id_str("node_" + std::to_string(id));
     node_map_[id_str] = temporal_marker.pose;
 
-    //Edges Creation
-    if (col ==(width_cells_-1)&& row==(height_cells_-1)){//Since LINE_LIST Requires pair of points last point does not have a match
+    if (id == max_index-1){
+      ROS_ERROR("AAAAAA");
       continue;
     }
+    temporal_edges.id = 100+id;
+    temporal_point.x = vector[id].first;
+    temporal_point.y = vector[id].second;
+    temporal_edges.points.push_back(temporal_point);
+    temporal_point.x = vector[id+1].first;
+    temporal_point.y = vector[id+1].second;
+    //Marker
+    temporal_edges.points.push_back(temporal_point);
+    //Edges ids
+    edges_.emplace_back("node_"+ std::to_string(id),"node_" + std::to_string(id + 1));
+    //birectional
+    edges_.emplace_back("node_"+ std::to_string(id + 1),"node_" + std::to_string(id));
 
-    //is the last node of a row
-    if ((col)==(width_cells_-1)){
-      //select direction of border
-      //from index_1 to index_2
-      if (row%2==0){
-        index_1 = col + row*width_cells_;
-        temporal_edges.id = 100+index_1;
-        temporal_point.x = vector[index_1].first;
-        temporal_point.y = vector[index_1].second;
-        temporal_edges.points.push_back(temporal_point);
-        index_2 = col + (row+1)*width_cells_;
-      }
-      else{
-        index_1 = row*width_cells_;
-        temporal_edges.id = 1020+index_1;
-        temporal_point.x = vector[index_1].first;
-        temporal_point.y = vector[index_1].second;
-        temporal_edges.points.push_back(temporal_point);
-        index_2 = (row+1)*width_cells_;
-      }
-      temporal_edges.id = 1001+index_1;
-      temporal_point.x = vector[index_2].first;
-      temporal_point.y = vector[index_2].second;
-      //Marker
-      temporal_edges.points.push_back(temporal_point);
-      //Edges ids
-      edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_2));
-      //bidirectional
-      edges_.emplace_back("node_"+ std::to_string(index_2),"node_" + std::to_string(index_1));
-
-    }
-    else{
-      //no border nodes
-      index_1 = col + row*width_cells_;
-      temporal_edges.id = 100+index_1;
-      temporal_point.x = vector[index_1].first;
-      temporal_point.y = vector[index_1].second;
-      temporal_edges.points.push_back(temporal_point);
-      temporal_point.x = vector[index_1+1].first;
-      temporal_point.y = vector[index_1+1].second;
-      //Marker
-      temporal_edges.points.push_back(temporal_point);
-      //Edges ids
-      edges_.emplace_back("node_"+ std::to_string(index_1),"node_" + std::to_string(index_1 + 1));
-      std::cout << "NO BORDER " << index_1 << " , " << index_1+1 << std::endl;
-      //birectional
-      edges_.emplace_back("node_"+ std::to_string(index_1 + 1),"node_" + std::to_string(index_1));
-
-    }
-      marker_array_.markers.push_back(temporal_edges);
-
+    marker_array_.markers.push_back(temporal_edges);
   }
 
   map_publisher_.publish(marker_array_);
@@ -418,8 +378,6 @@ void MyViz::saveMap(){
     }
 
     std::string result(message_store_->insertNamed( fields, ids, topo_node));
-
-    std::cout << result << std::endl;
     //std::string result(message_store_->insertNamed("pointset", map_id, topo_node));
     topo_map.nodes.push_back(topo_node);
   }
