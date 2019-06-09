@@ -213,7 +213,7 @@ void GRSBPLPlanner::executePath(){
       plan_.erase(plan_.begin());
     }
 
-    ROS_INFO_STREAM("TMP " << cmd_vel);
+    //ROS_INFO_STREAM("TMP " << cmd_vel);
     cmd_vel_pub_.publish(cmd_vel);
     ROS_INFO_STREAM("Time to GO " << plan_.size()/time_scale_factor_*0.1);
     ros::Duration(0.05).sleep();

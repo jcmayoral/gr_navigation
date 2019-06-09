@@ -15,7 +15,7 @@ from std_msgs.msg import String, Bool
 from gr_topological_navigation.states.move_base_state import command_robot_to_node, move_base, sbpl_action_mode
 
 class TopologicalPlanner(SimpleActionState):
-    def __init__(self, gui=False, start_node='cold_storage', pointset="riseholme_bidirectional_sim"):
+    def __init__(self, gui=False, pointset="riseholme_bidirectional_sim"):
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         self.current_node = None
         current_edge_subscriber = rospy.Subscriber("/current_node", String, self.current_node_callback, queue_size=2)
@@ -23,7 +23,6 @@ class TopologicalPlanner(SimpleActionState):
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
 
         #TODO ask for the parameter
-        self.start_node = start_node
         self.gui = gui
         self.pointset = pointset
         self.topological_plan = None
@@ -44,6 +43,9 @@ class TopologicalPlanner(SimpleActionState):
                          output_keys=['restart_requested_out', 'stop_requested_out','next_transition', 'nodes_to_go', 'execution_requested_out'])
 
     def current_node_callback(self, node):
+        if node.data == "none":
+            print "AA"
+            return
         self.current_node = node.data
 
     def reset_graph(self,map):
@@ -116,24 +118,26 @@ class TopologicalPlanner(SimpleActionState):
     def generate_full_coverage_plan(self):
         rospy.logwarn("Generating Full Coverage Plan")
         #bfs_edges Not recommended
-        rospy.logwarn(self.start_node)
-        if not self.networkx_graph.has_node(self.start_node):
+        if not self.networkx_graph.has_node(self.current_node):
             rospy.logerr("HELP")
-            self.topological_plan = list(nx.edge_dfs(self.networkx_graph))
-            self.start_node = self.topological_plan[0][0]
             return
-        self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.start_node, orientation='reverse'))
+        self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.current_node, orientation='original'))
         #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
         #self.topological_plan = list(nx.dfs_preorder_nodes(self.networkx_graph, source=self.start_node))
         #self.start_node = self.topological_plan[0][0]
+        print self.topological_plan
+        print self.current_node
 
     def go_to_source(self):
-        rospy.loginfo("Robot going to start node %s", self.start_node)
+        rospy.loginfo("Robot going to start node %s", self.current_node)
         if self.nodes_poses is not None:
             self.get_map()
 
-        if self.nodes_poses[self.start_node]:
-            move_base(self.nodes_poses[self.start_node])
+        if self.current_node is None:
+            rospy.logerr("Localize robot")
+            return
+        if self.nodes_poses[self.current_node]:
+            move_base(self.nodes_poses[self.current_node])
         #self.current_node = self.start_node
         self.is_task_initialized = True
         self.generate_full_coverage_plan()
@@ -184,6 +188,10 @@ class TopologicalPlanner(SimpleActionState):
 
         next_transition = self.get_next_transition()
         userdata.next_transition = next_transition
+
+        if self.current_node is None:
+            return None
+
         if next_transition is None: #this could happens
             pose = self.nodes_poses[self.current_node]
         else:
@@ -203,11 +211,12 @@ class TopologicalPlanner(SimpleActionState):
         if results:
             userdata.nodes_to_go = len(self.topological_plan)
             userdata.restart_requested_out = True
-            self.current_node = userdata.next_transition
             return "NODE_REACHED"
         else: #if anything fails stop
-            userdata.missing_edges = len(self.topological_plan)
             userdata.stop_requested_out = True
+            if self.topological_plan is None:
+                return
+            userdata.missing_edges = len(self.topological_plan)
             return "ERROR_NAVIGATION"
 
 
