@@ -4,7 +4,7 @@ using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"),
-                                odom_received_(false), time_scale_factor_(1){
+                                odom_received_(false), time_scale_factor_(1), tf2_listener(tfBuffer){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
 
@@ -121,10 +121,14 @@ void GRSBPLPlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 
 
 void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
-  ROS_INFO_STREAM("Action " << action_name_ << "CALLED" );
-  start_ = goal_;
+  ROS_INFO_STREAM("Action " << action_name_ << " CALLED" );
   goal_ = goal->target_pose;
-  start_.header = goal_.header;
+  geometry_msgs::TransformStamped map_to_odom;
+  start_.header = odom_msg_.header;
+  start_.pose = odom_msg_.pose.pose;
+  map_to_odom = tfBuffer.lookupTransform(goal_.header.frame_id, start_.header.frame_id, ros::Time(0));
+  start_.header.stamp = ros::Time::now();
+  tf2::doTransform(start_, start_, map_to_odom);
 
   if (makePlan(start_,goal_)){
     ROS_INFO("WORKING");
@@ -160,11 +164,11 @@ void GRSBPLPlanner::executePath(){
   tf2_ros::TransformListener tf2_listener(tfBuffer);
   geometry_msgs::TransformStamped base_link_to_map;
   geometry_msgs::TransformStamped base_link_to_odom;
-  
+
   geometry_msgs::PoseStamped tmp_pose;
   tf::Pose pose;
   double yaw1, yaw2;
-
+  geometry_msgs::PoseStamped tmp;
 
   while(plan_.size()>1){
 
@@ -178,8 +182,9 @@ void GRSBPLPlanner::executePath(){
     geometry_msgs::Twist cmd_vel;
 
     for (int i=0;i < time_scale_factor_; i++){
-      geometry_msgs::PoseStamped tmp;
+
       tmp.header = odom_msg_.header;
+      tmp.header.stamp = ros::Time::now();
       tmp.pose = odom_msg_.pose.pose;
       base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
       tmp.header.stamp = ros::Time::now();
@@ -202,15 +207,37 @@ void GRSBPLPlanner::executePath(){
       yaw2 = tf::getYaw(pose.getRotation());
       cmd_vel.angular.z += (yaw2 - yaw1);
 
+      //this store the last pose while finish
       tmp = plan_[0];
       plan_.erase(plan_.begin());
     }
 
-    ROS_INFO_STREAM("TMP " << cmd_vel);
+    //ROS_INFO_STREAM("TMP " << cmd_vel);
     cmd_vel_pub_.publish(cmd_vel);
-    ROS_INFO_STREAM("Time to GO " << plan_.size()/time_scale_factor_*0.1);
-    ros::Duration(0.05).sleep();
+    //ROS_INFO_STREAM_THROTTLE(2,"Time to GO " << plan_.size()/time_scale_factor_*0.1);
+    ros::Duration(0.1).sleep();
   }
+  ROS_WARN_STREAM(abs(yaw2-yaw1));
+  if (abs(yaw2-yaw1) > 0.2){//TODO this should be reconfigurable
+    ROS_ERROR("Misallignment");
+    geometry_msgs::Twist cmd_vel;
+
+    ROS_ERROR("Replanning");
+    geometry_msgs::TransformStamped map_to_odom;
+    start_.header = odom_msg_.header;
+    start_.pose = odom_msg_.pose.pose;
+    map_to_odom = tfBuffer.lookupTransform(goal_.header.frame_id, start_.header.frame_id, ros::Time::now());
+    start_.header.stamp = ros::Time::now();
+    tf2::doTransform(start_, start_, map_to_odom);
+
+    if (makePlan(start_,goal_)){
+      executePath();
+    }
+    else{
+      ROS_ERROR("ERROR");
+    }
+  }
+
   ROS_INFO("Motion Completed");
 }
 
@@ -221,7 +248,7 @@ void GRSBPLPlanner::odom_cb(const nav_msgs::OdometryConstPtr odom_msg){
 
 
 bool GRSBPLPlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::PoseStamped goal){
- 
+
   plan_.clear();
 
   ROS_INFO("[sbpl_lattice_planner] getting start point (%g,%g) goal point (%g,%g)",
