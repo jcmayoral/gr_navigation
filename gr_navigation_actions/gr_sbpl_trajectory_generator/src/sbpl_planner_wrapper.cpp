@@ -123,12 +123,8 @@ void GRSBPLPlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
   ROS_INFO_STREAM("Action " << action_name_ << " CALLED" );
   goal_ = goal->target_pose;
-  geometry_msgs::TransformStamped map_to_odom;
-  start_.header = odom_msg_.header;
-  start_.pose = odom_msg_.pose.pose;
-  map_to_odom = tfBuffer.lookupTransform(goal_.header.frame_id, start_.header.frame_id, ros::Time(0));
-  start_.header.stamp = ros::Time::now();
-  tf2::doTransform(start_, start_, map_to_odom);
+
+  setStart();
 
   if (makePlan(start_,goal_)){
     ROS_INFO("WORKING");
@@ -159,9 +155,28 @@ GRSBPLPlanner::~GRSBPLPlanner(){
 }
 
 
+void GRSBPLPlanner::setStart(){
+  geometry_msgs::TransformStamped transformStamped;
+
+  try{
+    transformStamped = tfBuffer.lookupTransform("map", "base_link",
+                             ros::Time(0));
+    start_.header = transformStamped.header;
+    ROS_INFO_STREAM(start_.header);
+    start_.pose.position.x = transformStamped.transform.translation.x;
+    start_.pose.position.y = transformStamped.transform.translation.y;
+    start_.pose.orientation = transformStamped.transform.rotation;
+  }
+  catch (tf2::TransformException &ex) {
+    ROS_WARN("%s",ex.what());
+    ros::Duration(1.0).sleep();
+    return;
+
+  }
+}
+
+
 void GRSBPLPlanner::executePath(){
-  tf2_ros::Buffer tfBuffer;
-  tf2_ros::TransformListener tf2_listener(tfBuffer);
   geometry_msgs::TransformStamped base_link_to_map;
   geometry_msgs::TransformStamped base_link_to_odom;
 
@@ -223,12 +238,18 @@ void GRSBPLPlanner::executePath(){
     geometry_msgs::Twist cmd_vel;
 
     ROS_ERROR("Replanning");
+
+    /*
     geometry_msgs::TransformStamped map_to_odom;
     start_.header = odom_msg_.header;
     start_.pose = odom_msg_.pose.pose;
     map_to_odom = tfBuffer.lookupTransform(goal_.header.frame_id, start_.header.frame_id, ros::Time::now());
     start_.header.stamp = ros::Time::now();
     tf2::doTransform(start_, start_, map_to_odom);
+    */
+
+    setStart();
+
 
     if (makePlan(start_,goal_)){
       executePath();
