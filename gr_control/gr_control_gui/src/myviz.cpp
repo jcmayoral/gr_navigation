@@ -103,7 +103,7 @@ MyViz::MyViz( QWidget* parent )
   marker_display = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
   ROS_ASSERT( marker_display != NULL );
   marker_display->subProp( "Marker Topic" )->setValue("temporal_topological_map");
- 
+
   rviz::Display* region_marker;
   region_marker = manager_->createDisplay( "rviz/Marker", "topological map", true );
   ROS_ASSERT( region_marker != NULL );
@@ -243,13 +243,13 @@ void MyViz::visualizeMap(){
   int min_index = (current_row_*y_cells_);
   int max_index = (current_row_*y_cells_) + y_cells_;
   std::cout << "indices  " << min_index << " , " << max_index << std::endl;
-  std::cout << "size  " << vector.size() << std::endl;
   double yaw =(current_row_%2) ? -1.57 : 1.57;
-    
+
 
   for( auto id = min_index; id< max_index; ++id){
     //Storing Nodes
-    col = id - current_row_ *y_cells_;
+    col = id/y_cells_;
+    std::cout << "COOOOOOOOOOOL " << col << std::endl;
     temporal_marker.id = id;
     temporal_marker.pose.position.x = vector[id].first;
     temporal_marker.pose.position.y = vector[id].second;
@@ -259,13 +259,54 @@ void MyViz::visualizeMap(){
     tf2::convert(quat_tf, temporal_marker.pose.orientation);
 
     marker_array_.markers.push_back(temporal_marker);
-    std::string id_str("node_" + std::to_string(id));
+
+    std::string id_str("error");
+    std::string next_id_str("error");
+
+    id_str ="node_" + std::to_string(id);
+    next_id_str ="node_" + std::to_string(id+1);
+
+    //Nasty Hack
+    if (id == min_index){
+      id_str = "start_node";
+      if (col%2 == 1){
+         id_str = "end_node";
+      }
+    }
+    else if(id == max_index-1){
+      id_str = "end_node";
+      if (col%2 == 1){
+         id_str = "start_node";
+      }
+    }
+    else{
+      id_str ="node_" + std::to_string(id);
+    }
+
+    if ((id+1) == min_index){
+      next_id_str = "start_node";
+      if (col%2 == 1){
+         next_id_str = "end_node";
+      }
+    }
+    else if(id == (max_index-2)){
+      next_id_str = "end_node";
+      if (col%2 == 1){
+         next_id_str = "start_node";
+      }
+    }
+    else{
+      next_id_str ="node_" + std::to_string(id+1);
+    }
+    //end of nasty hack
     node_map_[id_str] = temporal_marker.pose;
 
     if (id == max_index-1){
       ROS_ERROR("AAAAAA");
       continue;
     }
+
+
     temporal_edges.id = 100+id;
     temporal_point.x = vector[id].first;
     temporal_point.y = vector[id].second;
@@ -275,9 +316,11 @@ void MyViz::visualizeMap(){
     //Marker
     temporal_edges.points.push_back(temporal_point);
     //Edges ids
-    edges_.emplace_back("node_"+ std::to_string(id),"node_" + std::to_string(id + 1));
+
     //birectional
-    edges_.emplace_back("node_"+ std::to_string(id + 1),"node_" + std::to_string(id));
+    std::cout << id_str << next_id_str << std::endl;
+    edges_.emplace_back(id_str, next_id_str);
+    edges_.emplace_back(next_id_str,id_str);
 
     marker_array_.markers.push_back(temporal_edges);
   }

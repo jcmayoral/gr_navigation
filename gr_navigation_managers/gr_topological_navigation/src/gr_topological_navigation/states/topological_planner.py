@@ -44,7 +44,6 @@ class TopologicalPlanner(SimpleActionState):
 
     def current_node_callback(self, node):
         if node.data == "none":
-            print "AA"
             return
         self.current_node = node.data
 
@@ -59,7 +58,6 @@ class TopologicalPlanner(SimpleActionState):
         msg.pointset = self.pointset
         map = get_topological_map(msg)
         self.reset_graph(map)
-        print "MAP gotten"
 
     #Getting FB form topological navigation
     def current_edge_callback(self, edge_raw):
@@ -86,6 +84,10 @@ class TopologicalPlanner(SimpleActionState):
         self.is_task_initialized = False
         self.visited_edges = list()
         self.get_map()
+
+    def calculate_weight(self,a,b):
+        return b[2]-a[2]
+
 
     def create_graph(self, map):
         self.networkx_graph = nx.Graph()
@@ -118,26 +120,27 @@ class TopologicalPlanner(SimpleActionState):
     def generate_full_coverage_plan(self):
         rospy.logwarn("Generating Full Coverage Plan")
         #bfs_edges Not recommended
-        if not self.networkx_graph.has_node(self.current_node):
+        """
+        if self.networkx_graph.has_node(self.current_node):
             rospy.logerr("HELP")
+            print "A Star",  nx.astar_path(self.networkx_graph, source=self.current_node, target="end_node")
+            #self.topological_plan = list(nx.edge_dfs(self.networkx_graph, orientation='original'))
+            self.topological_plan = nx.astar_path(self.networkx_graph, source= self.current_node, target="end_node")
             return
-        self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.current_node, orientation='original'))
+        """
+        print "A Star",  nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
+        self.topological_plan = nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
+        #self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.current_node, orientation='inverse'))
         #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
         #self.topological_plan = list(nx.dfs_preorder_nodes(self.networkx_graph, source=self.start_node))
         #self.start_node = self.topological_plan[0][0]
         print self.topological_plan
-        print self.current_node
 
     def go_to_source(self):
-        rospy.loginfo("Robot going to start node %s", self.current_node)
-        if self.nodes_poses is not None:
-            self.get_map()
-
-        if self.current_node is None:
-            rospy.logerr("Localize robot")
-            return
-        if self.nodes_poses[self.current_node]:
-            move_base(self.nodes_poses[self.current_node])
+        rospy.loginfo("Robot going to start node %s", self.topological_plan[0])
+        next_pose = self.topological_plan[0]
+        rospy.loginfo("Going to first point %s", next_pose)
+        move_base(self.nodes_poses[next_pose])
         #self.current_node = self.start_node
         self.is_task_initialized = True
         self.generate_full_coverage_plan()
@@ -165,22 +168,17 @@ class TopologicalPlanner(SimpleActionState):
 
     def get_orientation (self, edge):
         #this is in map c
-        p0 = self.nodes_poses[edge[0]]
-        p1 = self.nodes_poses[edge[1]]
+        p0 = self.nodes_poses[edge]
 
-        dx = p1[0] - p0[0]
-        dy = p1[1] - p0[0]
-        print "edge ", edge, "angle ", np.arctan2(dy, dx) * 180 / np.pi
-        return np.arctan2(dy, dx) * 180 / np.pi
+        print "edge ", edge, "angle ", np.arctan2(p0[0], p0[1]) * 180 / np.pi
+        return np.arctan2(p0[0], p0[1]) * 180 / np.pi
 
     def goal_cb(self, userdata, goal):
 
-        if userdata.execution_requested: #not implemented yet
-            self.reset()
+        if userdata.execution_requested:
             userdata.execution_requested_out = False
-            self.go_to_source()
-        if not self.is_task_initialized:
-            self.go_to_source()
+            #self.r()
+            self.reset()
 
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "map"
@@ -195,7 +193,7 @@ class TopologicalPlanner(SimpleActionState):
         if next_transition is None: #this could happens
             pose = self.nodes_poses[self.current_node]
         else:
-            pose = self.nodes_poses[next_transition[1]]
+            pose = self.nodes_poses[next_transition]
 
         goal.target_pose.pose.position.x = pose[0]
         goal.target_pose.pose.position.y = pose[1]
@@ -211,6 +209,7 @@ class TopologicalPlanner(SimpleActionState):
         if results:
             userdata.nodes_to_go = len(self.topological_plan)
             userdata.restart_requested_out = True
+            self.is_task_initialized = False
             return "NODE_REACHED"
         else: #if anything fails stop
             userdata.stop_requested_out = True
