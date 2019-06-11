@@ -33,7 +33,6 @@ def move_base(commands):
     action_client.wait_for_server()
     rospy.loginfo("Action Server Found")
     goal = MoveBaseGoal()
-    #to do add orientation
     goal.target_pose.pose.position.x = commands[0]
     goal.target_pose.pose.position.y = commands[1]
 
@@ -50,18 +49,24 @@ def move_base(commands):
     return action_client.get_result()
 
 
-def sbpl_action_mode(x =0, y=0, yaw = 0):
-    action_client = actionlib.SimpleActionClient('sbpl_action', GotoNodeAction)
+def sbpl_action_mode(commands):
+    action_client = actionlib.SimpleActionClient('sbpl_action', MoveBaseAction)
     rospy.loginfo("Waiting for Action Server /sbpl_action")
     action_client.wait_for_server()
     rospy.loginfo("Action Server Found")
     goal = MoveBaseGoal()
-    #to do add orientation
-    goal.target_pose.pose.position.x = x
-    goal.target_pose.pose.position.y = y
-    goal.target_pose.pose.orientation.w = 1.0
+    goal.target_pose.pose.position.x = commands[0]
+    goal.target_pose.pose.position.y = commands[1]
+
+    quaternion = tf.transformations.quaternion_from_euler(0,0,commands[2])
+    goal.target_pose.pose.orientation.x = quaternion[0]
+    goal.target_pose.pose.orientation.y = quaternion[1]
+    goal.target_pose.pose.orientation.z = quaternion[2]
+    goal.target_pose.pose.orientation.w = quaternion[3]
+
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
     action_client.send_goal(goal)
     action_client.wait_for_result()
+    return action_client.get_result()
     return action_client.get_result()

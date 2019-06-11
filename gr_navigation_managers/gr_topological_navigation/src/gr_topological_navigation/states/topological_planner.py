@@ -128,7 +128,7 @@ class TopologicalPlanner(SimpleActionState):
             self.topological_plan = nx.astar_path(self.networkx_graph, source= self.current_node, target="end_node")
             return
         """
-        print "A Star",  nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
+        #print "A Star",  nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
         self.topological_plan = nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
         #self.topological_plan = list(nx.edge_dfs(self.networkx_graph, source=self.current_node, orientation='inverse'))
         #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
@@ -138,12 +138,10 @@ class TopologicalPlanner(SimpleActionState):
 
     def go_to_source(self):
         rospy.loginfo("Robot going to start node %s", self.topological_plan[0])
-        next_pose = self.topological_plan[0]
-        rospy.loginfo("Going to first point %s", next_pose)
-        move_base(self.nodes_poses[next_pose])
+        sbpl_action_mode(self.nodes_poses[self.topological_plan[0]])
         #self.current_node = self.start_node
         self.is_task_initialized = True
-        self.generate_full_coverage_plan()
+        #self.generate_full_coverage_plan()
 
     def get_next_transition(self):
         if self.topological_plan is None:
@@ -157,7 +155,8 @@ class TopologicalPlanner(SimpleActionState):
         #TODO find a better condition
         #for example analyzing path before proceed....
         # possible at move_base_flex
-        while np.fabs(self.get_orientation(next_edge)) == 90:
+        angle = np.fabs(self.get_orientation(next_edge))
+        while angle == 0 or  angle == 180:
             rospy.logwarn("skipping region")
             if len(self.topological_plan) == 0:
                 rospy.logerr("Topological plan size is zero returning last edge")
@@ -169,9 +168,9 @@ class TopologicalPlanner(SimpleActionState):
     def get_orientation (self, edge):
         #this is in map c
         p0 = self.nodes_poses[edge]
-
-        print "edge ", edge, "angle ", np.arctan2(p0[0], p0[1]) * 180 / np.pi
-        return np.arctan2(p0[0], p0[1]) * 180 / np.pi
+        p1 = self.nodes_poses[self.current_node]
+        print np.arctan2(p0[0]- p1[0], p0[1] - p1[1]) * 180 / np.pi
+        return np.arctan2(p0[0]- p1[0], p0[1] - p1[1]) * 180 / np.pi
 
     def goal_cb(self, userdata, goal):
 
@@ -179,6 +178,7 @@ class TopologicalPlanner(SimpleActionState):
             userdata.execution_requested_out = False
             #self.r()
             self.reset()
+            self.go_to_source()
 
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "map"
