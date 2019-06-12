@@ -174,17 +174,48 @@ void GRSBPLPlanner::setStart(){
   }
 }
 
+void GRSBPLPlanner::stop(){
+  geometry_msgs::Twist cmd_vel;
+  cmd_vel_pub_.publish(cmd_vel);
+}
+
+void::GRSBPLPlanner::getCurrentPose(geometry_msgs::PoseStamped& pose){
+  geometry_msgs::TransformStamped base_link_to_odom;
+
+  //Error between odometry and last know position (base_link frame)
+  pose.header = odom_msg_.header;
+  pose.header.stamp = ros::Time::now();
+  pose.pose = odom_msg_.pose.pose;
+  base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+  pose.header.stamp = ros::Time::now();
+  //Error in base_link coordinates
+  tf2::doTransform(pose, pose, base_link_to_odom);
+
+}
+
+double GRSBPLPlanner::getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame){
+  geometry_msgs::TransformStamped transform_stamped;
+  tf::Pose tf_pose;
+  double yaw;
+
+  transform_stamped = tfBuffer.lookupTransform(frame, pose.header.frame_id, ros::Time(0), ros::Duration(1.0) );
+  tf2::doTransform(pose, pose, transform_stamped);
+  tf::poseMsgToTF(pose.pose, tf_pose);
+
+  return tf::getYaw(tf_pose.getRotation());
+}
+
+
 
 void GRSBPLPlanner::executePath(){
   geometry_msgs::TransformStamped base_link_to_map;
-  geometry_msgs::TransformStamped base_link_to_odom;
 
   tf::Pose pose;
   double yaw1, yaw2;
   geometry_msgs::PoseStamped current_pose;
 
   while(plan_.size()>1){
-
+    ros::Duration(0.1).sleep();
     if (odom_received_){
       odom_received_ = false;
     }
@@ -193,18 +224,7 @@ void GRSBPLPlanner::executePath(){
     }
 
     geometry_msgs::Twist cmd_vel;
-    geometry_msgs::TransformStamped transformStamped;
-    transformStamped.transform.rotation.w = 1.0;
-
-    //Error between odometry and last know position (base_link frame)
-    current_pose.header = odom_msg_.header;
-    current_pose.header.stamp = ros::Time::now();
-    current_pose.pose = odom_msg_.pose.pose;
-    base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
-    current_pose.header.stamp = ros::Time::now();
-    //Error in base_link coordinates
-    tf2::doTransform(current_pose, current_pose, base_link_to_odom);
-
+    getCurrentPose(current_pose);
 
     //Transforming next waypoint on map_coordinates to base_libk
     plan_[0].header.stamp = ros::Time::now();
@@ -212,11 +232,8 @@ void GRSBPLPlanner::executePath(){
     tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
 
     //Calculating Angles
-    tf::poseMsgToTF(current_pose.pose, pose);
-    yaw1 = tf::getYaw(pose.getRotation());
-
-    tf::poseMsgToTF(plan_[0].pose, pose);
-    yaw2 = tf::getYaw(pose.getRotation());
+    yaw1 = getRotationInFrame(current_pose, "base_link");
+    yaw2 = getRotationInFrame(plan_[0], "base_link");
 
     //Difference between expected and actual position on time t (P Controller)
     cmd_vel.linear.x = plan_[0].pose.position.x- current_pose.pose.position.x;
@@ -227,10 +244,11 @@ void GRSBPLPlanner::executePath(){
     if (plan_.size()>2){
       double yaw3;
       cmd_vel.linear.x -= 0.2*(plan_[1].pose.position.x - plan_[0].pose.position.x);
+      /*
       tf::poseMsgToTF(plan_[1].pose, pose);
       yaw3 = tf::getYaw(pose.getRotation());
       cmd_vel.angular.z -= 0.2*(yaw3 - yaw2);
-
+      */
     }
 
     //TODO I Controller
@@ -241,22 +259,24 @@ void GRSBPLPlanner::executePath(){
 
     cmd_vel_pub_.publish(cmd_vel);
     ROS_INFO_STREAM_THROTTLE(2,"Time to GO " << plan_.size()*0.1);
-    ros::Duration(0.1).sleep();
   }
-  ROS_WARN_STREAM(abs(yaw2-yaw1));
-  if (abs(yaw2-yaw1) > 0.2){//TODO this should be reconfigurable
-    ROS_ERROR("Misallignment");
-    ROS_ERROR("Replanning");
 
-    setStart();
+  stop();
 
-    if (makePlan(start_,goal_)){
-      executePath();
-    }
-    else{
-      ROS_ERROR("ERROR");
-    }
+  yaw2 = getRotationInFrame(goal_, "map");
+
+  geometry_msgs::Twist vel;
+  while (abs(yaw2-yaw1) > 0.15){//TODO this should be reconfigurable
+    vel.angular.z = 0.1;
+    cmd_vel_pub_.publish(vel);
+    ROS_ERROR_STREAM("Correcting "<< yaw2 - yaw1);
+    ros::Duration(0.05).sleep();
+
+    getCurrentPose(current_pose);
+    yaw1 = getRotationInFrame(current_pose, "map");
   }
+
+  stop();
 
   ROS_INFO("Motion Completed");
 }

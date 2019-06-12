@@ -38,6 +38,9 @@ namespace gr_sbpl_trajectory_generator{
             void executePath();
             void odom_cb(const nav_msgs::OdometryConstPtr odom_msg);
             void setStart();
+            void stop();
+            void getCurrentPose(geometry_msgs::PoseStamped& pose);
+            double getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame);
 
         private:
             std::vector<geometry_msgs::PoseStamped> plan_;
