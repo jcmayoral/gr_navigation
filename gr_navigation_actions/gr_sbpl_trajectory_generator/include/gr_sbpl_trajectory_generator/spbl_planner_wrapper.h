@@ -14,6 +14,7 @@ using namespace std;
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/MapMetaData.h>
 #include <actionlib/server/simple_action_server.h>
@@ -36,11 +37,14 @@ namespace gr_sbpl_trajectory_generator{
             void executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal);
             void executePath();
             void odom_cb(const nav_msgs::OdometryConstPtr odom_msg);
+            void setStart();
+            void stop();
+            void getCurrentPose(geometry_msgs::PoseStamped& pose);
+            double getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame);
 
         private:
             std::vector<geometry_msgs::PoseStamped> plan_;
             bool odom_received_;
-            int time_scale_factor_;
             nav_msgs::Odometry odom_msg_;
             //same as carrot action and actionlib tutorial
             actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>* as_;
