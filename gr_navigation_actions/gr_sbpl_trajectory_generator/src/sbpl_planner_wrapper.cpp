@@ -4,7 +4,7 @@ using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"),
-                                odom_received_(false), time_scale_factor_(1), tf2_listener(tfBuffer){
+                                odom_received_(false), tfBuffer(ros::Duration(5)),tf2_listener(tfBuffer){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
 
@@ -162,7 +162,6 @@ void GRSBPLPlanner::setStart(){
     transformStamped = tfBuffer.lookupTransform("map", "base_link",
                              ros::Time(0));
     start_.header = transformStamped.header;
-    ROS_INFO_STREAM(start_.header);
     start_.pose.position.x = transformStamped.transform.translation.x;
     start_.pose.position.y = transformStamped.transform.translation.y;
     start_.pose.orientation = transformStamped.transform.rotation;
@@ -180,10 +179,9 @@ void GRSBPLPlanner::executePath(){
   geometry_msgs::TransformStamped base_link_to_map;
   geometry_msgs::TransformStamped base_link_to_odom;
 
-  geometry_msgs::PoseStamped tmp_pose;
   tf::Pose pose;
   double yaw1, yaw2;
-  geometry_msgs::PoseStamped tmp;
+  geometry_msgs::PoseStamped current_pose;
 
   while(plan_.size()>1){
 
@@ -195,61 +193,62 @@ void GRSBPLPlanner::executePath(){
     }
 
     geometry_msgs::Twist cmd_vel;
+    geometry_msgs::TransformStamped transformStamped;
+    transformStamped.transform.rotation.w = 1.0;
 
-    for (int i=0;i < time_scale_factor_; i++){
+    //Error between odometry and last know position (base_link frame)
+    current_pose.header = odom_msg_.header;
+    current_pose.header.stamp = ros::Time::now();
+    current_pose.pose = odom_msg_.pose.pose;
+    base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+    current_pose.header.stamp = ros::Time::now();
+    //Error in base_link coordinates
+    tf2::doTransform(current_pose, current_pose, base_link_to_odom);
 
-      tmp.header = odom_msg_.header;
-      tmp.header.stamp = ros::Time::now();
-      tmp.pose = odom_msg_.pose.pose;
-      base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
-      tmp.header.stamp = ros::Time::now();
-      tf2::doTransform(tmp, tmp, base_link_to_odom);
 
-      plan_[0].header.stamp = ros::Time::now();
-      base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
-      tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
+    //Transforming next waypoint on map_coordinates to base_libk
+    plan_[0].header.stamp = ros::Time::now();
+    base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
+    tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
 
-      cmd_vel.linear.x = 0;//(plan_[0].pose.position.x - tmp.pose.position.x);
-      if (plan_.size()>2){
-        cmd_vel.linear.x = (plan_[0].pose.position.x - tmp.pose.position.x);
-        cmd_vel.linear.x -= 0.2*(plan_[1].pose.position.x - plan_[0].pose.position.x);
-      }
-      cmd_vel.linear.y += (plan_[0].pose.position.y - tmp.pose.position.y);
-      tf::poseMsgToTF(tmp.pose, pose);
-      yaw1 = tf::getYaw(pose.getRotation());
+    //Calculating Angles
+    tf::poseMsgToTF(current_pose.pose, pose);
+    yaw1 = tf::getYaw(pose.getRotation());
 
-      tf::poseMsgToTF(plan_[0].pose, pose);
-      yaw2 = tf::getYaw(pose.getRotation());
-      cmd_vel.angular.z += (yaw2 - yaw1);
+    tf::poseMsgToTF(plan_[0].pose, pose);
+    yaw2 = tf::getYaw(pose.getRotation());
 
-      //this store the last pose while finish
-      tmp = plan_[0];
-      plan_.erase(plan_.begin());
+    //Difference between expected and actual position on time t (P Controller)
+    cmd_vel.linear.x = plan_[0].pose.position.x- current_pose.pose.position.x;
+    cmd_vel.linear.y = (plan_[0].pose.position.y - current_pose.pose.position.y);
+    cmd_vel.angular.z = (yaw2 - yaw1);
+
+    //D Controller TODO configurable
+    if (plan_.size()>2){
+      double yaw3;
+      cmd_vel.linear.x -= 0.2*(plan_[1].pose.position.x - plan_[0].pose.position.x);
+      tf::poseMsgToTF(plan_[1].pose, pose);
+      yaw3 = tf::getYaw(pose.getRotation());
+      cmd_vel.angular.z -= 0.2*(yaw3 - yaw2);
+
     }
 
-    //ROS_INFO_STREAM("TMP " << cmd_vel);
+    //TODO I Controller
+
+    //this store the last pose while finish
+    current_pose = plan_[0];
+    plan_.erase(plan_.begin());
+
     cmd_vel_pub_.publish(cmd_vel);
-    //ROS_INFO_STREAM_THROTTLE(2,"Time to GO " << plan_.size()/time_scale_factor_*0.1);
+    ROS_INFO_STREAM_THROTTLE(2,"Time to GO " << plan_.size()*0.1);
     ros::Duration(0.1).sleep();
   }
   ROS_WARN_STREAM(abs(yaw2-yaw1));
   if (abs(yaw2-yaw1) > 0.2){//TODO this should be reconfigurable
     ROS_ERROR("Misallignment");
-    geometry_msgs::Twist cmd_vel;
-
     ROS_ERROR("Replanning");
 
-    /*
-    geometry_msgs::TransformStamped map_to_odom;
-    start_.header = odom_msg_.header;
-    start_.pose = odom_msg_.pose.pose;
-    map_to_odom = tfBuffer.lookupTransform(goal_.header.frame_id, start_.header.frame_id, ros::Time::now());
-    start_.header.stamp = ros::Time::now();
-    tf2::doTransform(start_, start_, map_to_odom);
-    */
-
     setStart();
-
 
     if (makePlan(start_,goal_)){
       executePath();
