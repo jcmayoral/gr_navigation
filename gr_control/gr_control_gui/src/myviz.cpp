@@ -100,14 +100,26 @@ MyViz::MyViz( QWidget* parent )
 
   // Create Subscribers
   rviz::Display* marker_display;
-  marker_display = manager_->createDisplay( "rviz/MarkerArray", "topological map", true );
+  marker_display = manager_->createDisplay( "rviz/MarkerArray", "topological_map", true );
   ROS_ASSERT( marker_display != NULL );
   marker_display->subProp( "Marker Topic" )->setValue("temporal_topological_map");
 
   rviz::Display* region_marker;
-  region_marker = manager_->createDisplay( "rviz/Marker", "topological map", true );
+  region_marker = manager_->createDisplay( "rviz/Marker", "region_marker", true );
   ROS_ASSERT( region_marker != NULL );
   region_marker->subProp( "Marker Topic" )->setValue("region");
+
+  rviz::Display* proximity_marker;
+  proximity_marker = manager_->createDisplay( "rviz/Marker", "proximity_marker", true );
+  ROS_ASSERT( proximity_marker != NULL );
+  proximity_marker->subProp( "Marker Topic" )->setValue("proximity_visualization");
+
+  rviz::Display* robot_display;
+  robot_display = manager_->createDisplay( "rviz/RobotModel", "thorvald", true );
+  ROS_ASSERT( robot_display != NULL );
+  //robot_display->subProp( "Marker Topic" )->setValue("region");
+
+
 
   // Initialize the slider values.
   height_slider->setValue( 10.0 );
