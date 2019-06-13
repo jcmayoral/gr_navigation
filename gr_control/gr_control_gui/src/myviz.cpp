@@ -110,7 +110,7 @@ MyViz::MyViz( QWidget* parent )
   region_marker->subProp( "Marker Topic" )->setValue("region");
 
   rviz::Display* proximity_marker;
-  proximity_marker = manager_->createDisplay( "rviz/Marker", "proximity_marker", true );
+  proximity_marker = manager_->createDisplay( "rviz/MarkerArray", "proximity_marker", true );
   ROS_ASSERT( proximity_marker != NULL );
   proximity_marker->subProp( "Marker Topic" )->setValue("proximity_visualization");
 
