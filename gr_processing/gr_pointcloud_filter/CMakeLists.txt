@@ -6,7 +6,6 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED
     COMPONENTS
     geometry_msgs
-    cv_bridge
     sensor_msgs
     roscpp
     pcl_ros
@@ -15,7 +14,6 @@ find_package(catkin REQUIRED
 )
 
 find_package(cmake_modules REQUIRED)
-find_package(OpenCV 3.2 REQUIRED)
 
 generate_dynamic_reconfigure_options(
   cfg/Filters.cfg
@@ -24,7 +22,6 @@ generate_dynamic_reconfigure_options(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
 )
 
@@ -33,7 +30,6 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     geometry_msgs
-    cv_bridge
     roscpp
     pcl_ros
     pcl_conversions
@@ -53,7 +49,6 @@ add_dependencies(${PROJECT_NAME} gr_poincloud_filter_gencfg)
 target_link_libraries( ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
-  #${OpenCV_LIBRARIES}
 )
 
 install(TARGETS ${PROJECT_NAME}
