@@ -1,32 +1,21 @@
-#ifndef PROXIMITY_POLICY_H
-#define PROXIMITY_POLICY_H
+#ifndef HRI_POLICY_H
+#define HRI_POLICY_H
 
 #include <ros/ros.h>
 #include <string>
-//message_filters maybe useful if syncronization is needed
-/*
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <message_filters/time_sequencer.h>
-*/
-//#include <cv_bridge/cv_bridge.h>
-#include <std_msgs/Float32.h>
 #include <std_msgs/String.h>
-#include <geometry_msgs/AccelStamped.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseArray.h>
-#include <pcl_conversions/pcl_conversions.h>
 
-#include <gr_safety_policies/safe_actions/publisher_safe_action.h>
-#include <gr_safety_policies/safe_actions/dynamic_reconfigure_safe_action.h>
 #include <safety_core/safe_action.h>
 #include <safety_core/safe_policy.h>
 
-#include <boost/thread/recursive_mutex.hpp>
+#include <pluginlib/class_loader.h>
 
-#include <dynamic_reconfigure/server.h>
-#include <gr_safety_policies/ProximityPolicyConfig.h>
+#include <boost/thread/recursive_mutex.hpp>
+#include <boost/algorithm/string.hpp>
+
+
+//#include <dynamic_reconfigure/server.h>
 
 namespace gr_safety_policies
 {
@@ -42,23 +31,21 @@ namespace gr_safety_policies
       bool checkPolicy();
       void suggestAction();
       void commands_CB(const std_msgs::String::ConstPtr& command);
+      void loadActionClasses();
+      void instantiateRequestedAction(std::string desired_action);
 
     private:
-      bool is_command_received;
-      ros::Timer timer_publisher_;
-      ros::Publisher marker_pub_;
-      ros::Subscriber pointcloud_sub_;
-      visualization_msgs::MarkerArray marker_array_;
+      bool is_action_executed_;
+      bool is_stop_requested_;
+      bool is_action_requested_;
 
-      ros::Time last_detection_time_;
-      double region_radius_;
-      double enabling_after_timeout_;
-      int regions_number_;
-      int fault_region_id_;
-      SafeAction* action_executer_;
+      ros::Subscriber command_sub_;
+      std::vector<std::string> action_classes_;
+      boost::shared_ptr<safety_core::SafeAction> current_action_;
       boost::recursive_mutex mutex;
-      dynamic_reconfigure::Server<gr_safety_policies::ProximityPolicyConfig> dyn_server_;
-      dynamic_reconfigure::Server<gr_safety_policies::ProximityPolicyConfig>::CallbackType dyn_server_cb_;
+
+      pluginlib::ClassLoader<safety_core::SafeAction> action_loader_;
+
   };
 
 };

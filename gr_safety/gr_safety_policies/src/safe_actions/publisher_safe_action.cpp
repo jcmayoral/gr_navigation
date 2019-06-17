@@ -13,6 +13,10 @@ PublisherSafeAction::PublisherSafeAction(){
     safety_id_ = 0;
     ros::NodeHandle nh;
     topic_publisher_ = nh.advertise<std_msgs::Bool>("lock_all", 1);
+
+    while(topic_publisher_.getNumSubscribers () == 0 ){
+        ROS_INFO_THROTTLE(1, "Waiting for subscriber in the Publisher Safe Action");
+    }
 };
 
 PublisherSafeAction::~PublisherSafeAction(){
@@ -25,6 +29,7 @@ void PublisherSafeAction::execute(){
     std_msgs::Bool topic;
     topic.data = true;
     topic_publisher_.publish(topic);
+
 };
 
 void PublisherSafeAction::stop(){

@@ -10,7 +10,6 @@ int main(int argc, char** argv){
 
     while(ros::ok()){
         if(policy->checkPolicy()){
-            //ROS_WARN("Proximity monitor activated");
             policy->reportState();
         }
         ros::Duration(0.5).sleep();

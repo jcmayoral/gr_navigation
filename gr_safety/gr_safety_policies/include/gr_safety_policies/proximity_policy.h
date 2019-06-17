@@ -51,7 +51,7 @@ namespace gr_safety_policies
 
     private:
       bool is_obstacle_detected_;
-      ros::Timer timer_publisher_;
+      ros::Timer timer_;
       ros::Publisher marker_pub_;
       ros::Subscriber pointcloud_sub_;
       visualization_msgs::MarkerArray marker_array_;
