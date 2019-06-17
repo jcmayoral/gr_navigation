@@ -7,17 +7,9 @@
 </library>
 
 <library path="lib/libgr_safety_policies">
-  <class name="gr_safety_policies/DepthProximityMonitor" type="gr_safety_policies::DepthProximityPolicy" base_class_type="safety_core::SafePolicy">
+  <class name="gr_safety_policies/HRIPolicy" type="gr_safety_policies::HRIPolicy" base_class_type="safety_core::SafePolicy">
     <description>
-      A simple depth proximity policy.
-    </description>
-  </class>
-</library>
-
-<library path="lib/libgr_safety_policies">
-  <class name="gr_safety_policies/WeatherPolicy" type="gr_safety_policies::WeatherPolicy" base_class_type="safety_core::SafePolicy">
-    <description>
-      A simple weather policy.
+      A HRI policy.
     </description>
   </class>
 </library>

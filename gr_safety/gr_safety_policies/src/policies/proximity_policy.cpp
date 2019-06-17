@@ -62,7 +62,7 @@ namespace gr_safety_policies
                                         fault_region_id_(0), enabling_after_timeout_(1.0)
   {
     ros::NodeHandle nh;
-    timer_publisher_ = nh.createTimer(ros::Duration(1), &ProximityPolicy::timer_cb, this);
+    timer_ = nh.createTimer(ros::Duration(1), &ProximityPolicy::timer_cb, this);
     last_detection_time_ = ros::Time::now();
     policy_.id_ = "PROXIMITY_POLICY";
     policy_.action_ =  -1;
