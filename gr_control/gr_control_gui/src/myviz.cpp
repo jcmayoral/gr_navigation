@@ -162,18 +162,18 @@ void MyViz::publishRegion(){
   p.z = 0.0;
   region.points.push_back(p);
 
-  p.x = terrain_x_ - robot_radius_/2;
+  p.x = terrain_x_;// + robot_radius_/2;
   p.y = - robot_radius_/2;
   p.z = 0.0;
   region.points.push_back(p);
 
-  p.x = terrain_x_ - robot_radius_/2;
-  p.y = terrain_y_ - robot_radius_/2;
+  p.x = terrain_x_;// + robot_radius_/2;
+  p.y = terrain_y_;// + robot_radius_/2;
   p.z = 0.0;
   region.points.push_back(p);
 
   p.x = -robot_radius_/2;
-  p.y = terrain_y_ - robot_radius_/2;
+  p.y = terrain_y_;// + robot_radius_/2;
   p.z = 0.0;
   region.points.push_back(p);
 
