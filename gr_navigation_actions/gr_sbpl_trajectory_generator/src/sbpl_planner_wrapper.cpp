@@ -267,7 +267,8 @@ void GRSBPLPlanner::executePath(){
 
   geometry_msgs::Twist vel;
   while (abs(yaw2-yaw1) > 0.15){//TODO this should be reconfigurable
-    vel.angular.z = 0.1;
+    //TODO min
+    vel.angular.z = (yaw2 - yaw1)/2;
     cmd_vel_pub_.publish(vel);
     ROS_ERROR_STREAM("Correcting "<< yaw2 - yaw1);
     ros::Duration(0.05).sleep();

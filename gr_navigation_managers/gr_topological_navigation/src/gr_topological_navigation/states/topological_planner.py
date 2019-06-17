@@ -152,6 +152,7 @@ class TopologicalPlanner(SimpleActionState):
             return None
 
         next_edge = self.topological_plan.pop(0)
+        print "next edge", next_edge
         #TODO find a better condition
         #for example analyzing path before proceed....
         # possible at move_base_flex
@@ -168,17 +169,18 @@ class TopologicalPlanner(SimpleActionState):
     def get_orientation (self, edge):
         #this is in map c
         p0 = self.nodes_poses[edge]
+        if self.current_node is None:
+            return -5000
         p1 = self.nodes_poses[self.current_node]
         print np.arctan2(p0[0]- p1[0], p0[1] - p1[1]) * 180 / np.pi
         return np.arctan2(p0[0]- p1[0], p0[1] - p1[1]) * 180 / np.pi
 
     def goal_cb(self, userdata, goal):
-
         if userdata.execution_requested:
             userdata.execution_requested_out = False
-            #self.r()
             self.reset()
             self.go_to_source()
+        print "HERE"
 
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "map"
@@ -186,9 +188,6 @@ class TopologicalPlanner(SimpleActionState):
 
         next_transition = self.get_next_transition()
         userdata.next_transition = next_transition
-
-        if self.current_node is None:
-            return None
 
         if next_transition is None: #this could happens
             pose = self.nodes_poses[self.current_node]

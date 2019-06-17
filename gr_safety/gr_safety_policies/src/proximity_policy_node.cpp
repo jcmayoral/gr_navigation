@@ -13,7 +13,7 @@ int main(int argc, char** argv){
             //ROS_WARN("Proximity monitor activated");
             policy->reportState();
         }
-        //ros::Duration(0.5).sleep();
+        ros::Duration(0.5).sleep();
         ros::spinOnce();
     }
     return 1;

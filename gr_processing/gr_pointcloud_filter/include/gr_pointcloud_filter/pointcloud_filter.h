@@ -43,8 +43,8 @@ namespace gr_pointcloud_filter
     class MyNodeletClass : public nodelet::Nodelet
     {
     	private:
-    		ros::Subscriber pointcloud_sub_;
-    		ros::Publisher pointcloud_pub_;
+            ros::Subscriber pointcloud_sub_;
+            ros::Publisher pointcloud_pub_;
             ros::Publisher obstacle_pub_;
             sensor_msgs::PointCloud2 output_pointcloud_;
             pcl::VoxelGrid<pcl::PointXYZ> voxel_filter_;
