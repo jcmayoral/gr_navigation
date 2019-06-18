@@ -11,8 +11,8 @@ using namespace safety_core;
 
 namespace gr_safety_policies
 {
-    HRIPolicy::HRIPolicy(): action_loader_("safety_core", "safety_core::SafeAction"), 
-                            is_action_executed_(false), is_stop_requested_(false), 
+    HRIPolicy::HRIPolicy(): action_loader_("safety_core", "safety_core::SafeAction"),
+                            is_action_executed_(false), is_stop_requested_(false),
                             is_action_requested_(false){
         loadActionClasses();
         policy_.id_ = "HRI_POLICY";
@@ -56,7 +56,10 @@ namespace gr_safety_policies
     }
 
     void HRIPolicy::commands_CB(const std_msgs::String::ConstPtr& command){
- 
+        if (command->data.empty()){
+          ROS_WARN("Empty command string...ignoring");
+          return;
+        }
         for (int i=0; i < action_classes_.size(); i++){
             if (boost::contains(action_classes_[i], command->data.c_str())){
                 instantiateRequestedAction(action_classes_[i]);
