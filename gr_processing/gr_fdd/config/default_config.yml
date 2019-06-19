@@ -1,0 +1,75 @@
+## YAML Template.
+signals: 
+    /odom:
+        samples: 2
+        window_size: 5
+        max_delay: 0.05
+        max_diff: 0.1
+        min_diff: 0.025
+    /cmd_vel:
+        samples: 2
+        window_size: 10
+        max_delay: 0.1
+        max_diff: 0.3
+        min_diff: -0.1
+    /imu/data_raw_transformed:
+        samples: 2
+        window_size: 10
+        max_delay: 0.1
+        max_diff: 0.3
+        min_diff: 0.005
+    /imu/data_raw:
+        samples: 2
+        window_size: 10
+        max_delay: 0.1
+        max_diff: 0.3
+        min_diff: 0.005
+    /wheel_angles:
+        samples: 2
+        window_size: 5
+        max_delay: 0.1
+        max_diff: 0.05
+        min_diff: 0.01
+    /left_speed:
+        samples: 2
+        window_size: 5
+        max_delay: 0.05
+        max_diff: 0.05
+        min_diff: 0.01
+    /right_speed:
+        samples: 2
+        window_size: 5
+        max_delay: 0.1
+        max_diff: 0.05
+        min_diff: 0.01
+faults:
+    # stopped_robot:
+    #    - /cmd_vel
+    odom_publisher_fault:
+        - /odom
+    stuck_left_wheel:
+        - /left_speed
+    stuck_right_wheel:
+        - /right_speed
+
+    navigation_stack_failure:
+        - /odom
+        - /cmd_vel
+    tf:
+        - /imu/data_raw_transformed
+    cartographer_is_delayed:
+        - /imu/data_raw_transformed
+        - /odom
+    imu_manager_is_dead:
+        - /imu/data_raw
+        - /imu/data_raw_transformed
+    wheels:
+        - /wheel_angles
+    navigation_map_server:
+        - /navigation/map
+        
+recovery:
+    imu_manager_is_dead: 
+        strategy: kill_node
+        args: imu_manager
+ 
