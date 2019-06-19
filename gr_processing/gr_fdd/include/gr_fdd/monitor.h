@@ -12,6 +12,7 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <std_msgs/Int8.h>
 #include <std_msgs/Float64.h>
+#include <sensor_msgs/NavSatFix.h>
 #include <yaml-cpp/yaml.h>
 #include <ros/package.h>
 #include <string>
@@ -58,6 +59,8 @@ public:
     void imu_cb(const sensor_msgs::ImuConstPtr msg, int index);
     void joints_cb(const sensor_msgs::JointStateConstPtr msg, int index);
     void float_cb(const std_msgs::Float64ConstPtr msg, int index);
+    void fix_cb(const sensor_msgs::NavSatFixConstPtr msg, int index);
+
     void detect_faults(const ros::TimerEvent&);
     std::string isolate_components(std::list<std::string> error_topics);
     double readStatsCPU();

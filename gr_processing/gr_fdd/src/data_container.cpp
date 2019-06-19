@@ -92,13 +92,14 @@ bool DataContainer::statistics_check(){
             auto value_diff = fabs(last_value - *inner_it);
 
             if (value_diff < min_diff_){
+                ROS_INFO_STREAM_THROTTLE(2, "Differential value " << value_diff);
                 freeze_bool = true;
                 //container_status_ += errors_msgs_.SIGNAL_FREEZE;
                 result = true;
             }
 
             if (value_diff*inner_list.size() > max_diff_){
-                //ROS_WARN_STREAM("Maximum difference between values  "<< max_diff_ << " occurred on " << data_id_);
+                ROS_INFO_STREAM_THROTTLE(2, "Maximum difference between values  "<< max_diff_ << " with value " << value_diff*inner_list.size());
                 result = true;
                 drift_flag = true;
                 //container_status_ += errors_msgs_.SIGNAL_DRIFT;
