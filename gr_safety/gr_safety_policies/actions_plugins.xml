@@ -1,11 +1,11 @@
 <library path="lib/libgr_safe_actions">
-  <class name="Lock Action" type="gr_safety_policies::PublisherSafeAction" base_class_type="safety_core::SafeAction">
+  <class name="stop_action" type="gr_safety_policies::PublisherSafeAction" base_class_type="safety_core::SafeAction">
     <description>
       Publisher Topic Safe Action
     </description>
   </class>
 
-  <class name="Slowdown Action" type="gr_safety_policies::DynamicReconfigureSafeAction" base_class_type="safety_core::SafeAction">
+  <class name="slow_action" type="gr_safety_policies::DynamicReconfigureSafeAction" base_class_type="safety_core::SafeAction">
     <description>
       Dynamic Reconfigure Safe Action
     </description>
