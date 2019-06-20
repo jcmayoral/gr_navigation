@@ -27,41 +27,45 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/video/background_segm.hpp>
 
+#include <darknet_ros_msgs/BoundingBoxes.h>
 
 namespace gr_depth_processing
 {
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ImagesSyncPolicy;
-
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, darknet_ros_msgs::BoundingBoxes> RegisteredSyncPolicy;
 
   class MyNodeletClass : public nodelet::Nodelet
   {
     public:
       virtual void onInit();
-      void images_CB(const sensor_msgs::ImageConstPtr& color_image,
-                     const sensor_msgs::ImageConstPtr& depth_image);
+      void images_CB(const sensor_msgs::ImageConstPtr color_image,
+                     const sensor_msgs::ImageConstPtr depth_image);
 
-      cv::Mat detectPeople(cv::Mat frame_gray);
-      boost::function<void(cv::Mat&)> filterImage; 
+      void register_CB(const sensor_msgs::ImageConstPtr depth_image,
+                     const darknet_ros_msgs::BoundingBoxesConstPtr bounding_boxes);
 
+      boost::function<void(cv::Mat&)> filterImage;
+      boost::function<double(std::vector<cv::Rect>, cv::Mat, sensor_msgs::CameraInfo)> registerImage;
+ 
     protected:
       bool convertROSImage2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& ros_image);
       void publishOutput(cv::Mat frame);
 
     private:
       message_filters::Synchronizer<ImagesSyncPolicy>*images_syncronizer_;
+      message_filters::Synchronizer<RegisteredSyncPolicy>*registered_syncronizer_;
+
+      message_filters::Subscriber<sensor_msgs::Image>* color_image_sub_;
+      message_filters::Subscriber<sensor_msgs::Image>* depth_image_sub_;
+      message_filters::Subscriber<darknet_ros_msgs::BoundingBoxes>* bounding_boxes_sub_;
+
       ros::Publisher obstacle_pub_;
       ros::Publisher depth_image_pub_;
-      ros::Subscriber depth_image_sub_;
       visualization_msgs::MarkerArray marker_array_;
-
-      cv::Ptr<cv::BackgroundSubtractorMOG2> background_substractor_;
 
       //intrinsic params
       sensor_msgs::CameraInfo camera_color_info_;
       sensor_msgs::CameraInfo camera_depth_info_;
-
-      message_filters::Subscriber<sensor_msgs::Image>* sub_1;
-      message_filters::Subscriber<sensor_msgs::Image>* sub_2;
 
       boost::recursive_mutex mutex;
   };

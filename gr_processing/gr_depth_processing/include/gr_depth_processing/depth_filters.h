@@ -2,12 +2,18 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/video/background_segm.hpp>
-
+#include <sensor_msgs/CameraInfo.h>
 
 void cv_filter(cv::Mat& frame){
     try{
         cv::GaussianBlur(frame, frame, cv::Size(5,5), 1, 0, cv::BORDER_DEFAULT);
         cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY );
+
+        //cv::Ptr<cv::BackgroundSubtractorMOG2> background_substractor_;
+        //background_substractor_ = cv::createBackgroundSubtractorMOG2();
+        //background_substractor_->setNMixtures(3);
+        //background_substractor_->setHistory(3);
+        //background_substractor_ =  new cv::BackgroundSubtractorMOG2(1, 16, true); //MOG2 approach
         //background_substractor_->apply(frame, frame);
         //cv::circle(frame, cv::Point(50, 50), 10,cv::Scalar(0xffff));
         int erosion_size = 2.0;
@@ -24,8 +30,6 @@ void cv_filter(cv::Mat& frame){
         return;
       }
 }
-
-
 
 void cv_detectPeople(cv::Mat& frame_gray){
     //cv::equalizeHist( frame_gray, frame_gray );
@@ -55,4 +59,8 @@ void cv_detectPeople(cv::Mat& frame_gray){
     //-- Show what you got
     //cv::imshow( "Capture - Face detection", frame_gray );
     //return frame_gray;
+}
+
+double register_pointclouds(std::vector<cv::Rect> boundRect, cv::Mat depth_image, sensor_msgs::CameraInfo camera_info){
+    return 0.0;
 }

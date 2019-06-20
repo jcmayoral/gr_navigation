@@ -10,6 +10,7 @@ namespace gr_depth_processing
   void MyNodeletClass::onInit(){
 
     filterImage = &cv_filter;
+    registerImage = &register_pointclouds;
 
     ros::NodeHandle nh;
     ROS_INFO("Waiting for rgb camera info");
@@ -23,14 +24,16 @@ namespace gr_depth_processing
 
     obstacle_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
     depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
-    sub_1 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/color/image_raw", 2);
-    sub_2 = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/depth/image_rect_raw", 2);
-    background_substractor_ = cv::createBackgroundSubtractorMOG2();
-    //background_substractor_->setNMixtures(3);
-    //background_substractor_->setHistory(3);
-    //background_substractor_ =  new cv::BackgroundSubtractorMOG2(1, 16, true); //MOG2 approach
-    images_syncronizer_ = new message_filters::Synchronizer<ImagesSyncPolicy>(ImagesSyncPolicy(2), *sub_1,*sub_2);
+
+    color_image_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/color/image_raw", 2);
+    depth_image_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/depth/image_rect_raw", 2);
+    bounding_boxes_sub_ = new message_filters::Subscriber<darknet_ros_msgs::BoundingBoxes>(nh, "/darknet_ros/bounding_boxes", 2);
+
+
+    images_syncronizer_ = new message_filters::Synchronizer<ImagesSyncPolicy>(ImagesSyncPolicy(2), *color_image_sub_,*depth_image_sub_);
     images_syncronizer_->registerCallback(boost::bind(&MyNodeletClass::images_CB,this,_1,_2));
+    registered_syncronizer_ = new message_filters::Synchronizer<RegisteredSyncPolicy>(RegisteredSyncPolicy(2), *depth_image_sub_,*bounding_boxes_sub_);
+    registered_syncronizer_->registerCallback(boost::bind(&MyNodeletClass::register_CB,this,_1,_2));
     ROS_INFO("Depth Processing initialized");
   }
 
@@ -75,7 +78,7 @@ namespace gr_depth_processing
   }
 
 
-  void MyNodeletClass::images_CB(const sensor_msgs::ImageConstPtr& color_image, const sensor_msgs::ImageConstPtr& depth_image){
+  void MyNodeletClass::images_CB(const sensor_msgs::ImageConstPtr color_image, const sensor_msgs::ImageConstPtr depth_image){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     cv::Mat process_frame;
 
@@ -87,6 +90,11 @@ namespace gr_depth_processing
     filterImage(process_frame);
     publishOutput(process_frame);
 
+  }
+
+
+  void MyNodeletClass::register_CB(const sensor_msgs::ImageConstPtr depth_image, const darknet_ros_msgs::BoundingBoxesConstPtr bounding_boxes){
+    ROS_ERROR("Depth");
   }
 
  
