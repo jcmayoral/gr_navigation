@@ -4,6 +4,8 @@
 #include <ros/ros.h>
 #include <nodelet/nodelet.h>
 
+#include <gr_depth_processing/depth_filters.h>
+
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -15,7 +17,7 @@
 #include <sensor_msgs/CameraInfo.h>
 
 #include <boost/thread/recursive_mutex.hpp>
-
+#include <boost/function.hpp>
 //#include <dynamic_reconfigure/server.h>
 
 #include <cv_bridge/cv_bridge.h>
@@ -39,6 +41,7 @@ namespace gr_depth_processing
                      const sensor_msgs::ImageConstPtr& depth_image);
 
       cv::Mat detectPeople(cv::Mat frame_gray);
+      boost::function<void(cv::Mat&)> filterImage; 
 
     protected:
       bool convertROSImage2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& ros_image);
