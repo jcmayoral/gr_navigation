@@ -34,6 +34,13 @@ namespace gr_depth_processing
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ImagesSyncPolicy;
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, darknet_ros_msgs::BoundingBoxes> RegisteredSyncPolicy;
 
+  template<typename T>
+  T getOneMessage(std::string topic_name){
+    boost::shared_ptr<T const> msg_pointer;
+    msg_pointer =  ros::topic::waitForMessage<T>(topic_name);
+    return *msg_pointer;
+  }
+
   class MyNodeletClass : public nodelet::Nodelet
   {
     public:

@@ -13,14 +13,10 @@ namespace gr_depth_processing
     registerImage = &register_pointclouds;
 
     ros::NodeHandle nh;
-    ROS_INFO("Waiting for rgb camera info");
-    boost::shared_ptr<sensor_msgs::CameraInfo const> camera_info;
-    camera_info =  ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/camera/color/camera_info");
-    camera_color_info_ = *camera_info;
-
-    ROS_INFO("Waiting for depth camera info");
-    camera_info =  ros::topic::waitForMessage<sensor_msgs::CameraInfo>("/camera/depth/camera_info");
-    camera_depth_info_ = *camera_info;
+    ROS_INFO("Waiting for rgb and depth camera info");
+    camera_color_info_ = getOneMessage<sensor_msgs::CameraInfo>("/camera/color/camera_info");
+    camera_depth_info_ = getOneMessage<sensor_msgs::CameraInfo>("/camera/depth/camera_info");;
+    ROS_INFO("Camera info received");
 
     obstacle_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
     depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
@@ -30,10 +26,14 @@ namespace gr_depth_processing
     bounding_boxes_sub_ = new message_filters::Subscriber<darknet_ros_msgs::BoundingBoxes>(nh, "/darknet_ros/bounding_boxes", 2);
 
 
-    images_syncronizer_ = new message_filters::Synchronizer<ImagesSyncPolicy>(ImagesSyncPolicy(2), *color_image_sub_,*depth_image_sub_);
-    images_syncronizer_->registerCallback(boost::bind(&MyNodeletClass::images_CB,this,_1,_2));
-    registered_syncronizer_ = new message_filters::Synchronizer<RegisteredSyncPolicy>(RegisteredSyncPolicy(2), *depth_image_sub_,*bounding_boxes_sub_);
-    registered_syncronizer_->registerCallback(boost::bind(&MyNodeletClass::register_CB,this,_1,_2));
+    if(false){
+      images_syncronizer_ = new message_filters::Synchronizer<ImagesSyncPolicy>(ImagesSyncPolicy(2), *color_image_sub_,*depth_image_sub_);
+      images_syncronizer_->registerCallback(boost::bind(&MyNodeletClass::images_CB,this,_1,_2));
+    }
+    else{
+      registered_syncronizer_ = new message_filters::Synchronizer<RegisteredSyncPolicy>(RegisteredSyncPolicy(2), *depth_image_sub_,*bounding_boxes_sub_);
+      registered_syncronizer_->registerCallback(boost::bind(&MyNodeletClass::register_CB,this,_1,_2));
+    }
     ROS_INFO("Depth Processing initialized");
   }
 
