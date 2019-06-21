@@ -52,7 +52,7 @@ namespace gr_depth_processing
     }
   }
 
-  void MyNodeletClass::publishOutput(cv::Mat frame){
+  void MyNodeletClass::publishOutput(cv::Mat frame, bool rotate){
     sensor_msgs::Image out_msg;
     cv_bridge::CvImage img_bridge;
     std_msgs::Header header;
@@ -61,8 +61,9 @@ namespace gr_depth_processing
       //these lines are just for testing rotating image
       cv::Mat rot=cv::getRotationMatrix2D(cv::Point2f(0,0), 3.1416, 1.0);
       //cv::warpAffine(frame,frame, rot, frame.size());
-      cv::rotate(frame,frame,1);
-
+      if (rotate){
+        cv::rotate(frame,frame,1);
+      }
 
       //img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, frame);//COLOR
       img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_32FC1, frame);//GRAY
@@ -108,7 +109,7 @@ namespace gr_depth_processing
       ROS_INFO_STREAM(it->Class);
       double dist = registerImage(*it, process_frame, camera_depth_info_);
     }
-    publishOutput(process_frame);
+    publishOutput(process_frame, false);
   }
 
  

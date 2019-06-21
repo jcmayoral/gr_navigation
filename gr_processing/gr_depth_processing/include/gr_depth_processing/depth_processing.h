@@ -56,7 +56,7 @@ namespace gr_depth_processing
  
     protected:
       bool convertROSImage2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& ros_image);
-      void publishOutput(cv::Mat frame);
+      void publishOutput(cv::Mat frame, bool rotate = true);
 
     private:
       message_filters::Synchronizer<ImagesSyncPolicy>*images_syncronizer_;
