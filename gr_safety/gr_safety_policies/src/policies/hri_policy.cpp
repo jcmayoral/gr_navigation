@@ -13,7 +13,7 @@ namespace gr_safety_policies
 {
     HRIPolicy::HRIPolicy(): action_loader_("safety_core", "safety_core::SafeAction"),
                             is_action_executed_(false), is_stop_requested_(false),
-                            is_action_requested_(false){
+                            is_action_requested_(false), speech_enabler_command_("continue"){
         loadActionClasses();
         policy_.id_ = "HRI_POLICY";
         policy_.action_ =  -1;
@@ -60,8 +60,20 @@ namespace gr_safety_policies
           ROS_WARN("Empty command string...ignoring");
           return;
         }
+
+
+        if (is_action_executed_){
+            if (boost::contains(speech_enabler_command_, command->data.c_str())){
+                is_stop_requested_ =true;
+                ROS_INFO("ENABLE NORMAL PERFORMANCE");
+                return;
+            }
+        }
+
+
         for (int i=0; i < action_classes_.size(); i++){
             if (boost::contains(action_classes_[i], command->data.c_str())){
+            //if (boost::contains("no", command->data.c_str())){
                 instantiateRequestedAction(action_classes_[i]);
                 return;
             }
@@ -70,11 +82,6 @@ namespace gr_safety_policies
 
     void HRIPolicy::instantiateRequestedAction(std::string desired_action){
         try{
-             if (is_action_executed_){
-                 is_stop_requested_ =true;
-                 ROS_INFO("STOP ACTION");
-                 return;
-             }
              if(action_loader_.isClassAvailable(desired_action)){
                  ROS_INFO("Available Action... Loading");
                  current_action_ = action_loader_.createInstance(desired_action.c_str());
