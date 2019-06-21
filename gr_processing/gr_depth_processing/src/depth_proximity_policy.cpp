@@ -43,7 +43,7 @@ namespace gr_depth_processing
       //cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
       //input_frame = cv_bridge::toCvCopy(depth_image, sensor_msgs::image_encodings::TYPE_16UC1)->image;
       //frame = cv_bridge::toCvShare(ros_image, sensor_msgs::image_encodings::TYPE_16UC1)->image; \\this to convert from Depth
-      frame = cv_bridge::toCvShare(ros_image, sensor_msgs::image_encodings::RGB8)->image; //this to convert from color
+      frame = cv_bridge::toCvShare(ros_image, sensor_msgs::image_encodings::TYPE_32FC1)->image; //this to convert from color
       return true;
     }
     catch (cv_bridge::Exception& e){
@@ -65,7 +65,7 @@ namespace gr_depth_processing
 
 
       //img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, frame);//COLOR
-      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO8, frame);//GRAY
+      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_32FC1, frame);//GRAY
 
       //img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_16UC1, frame);//DEPTH
       img_bridge.toImageMsg(out_msg); // from cv_bridge to sensor_msgs::Image
@@ -95,6 +95,20 @@ namespace gr_depth_processing
 
   void MyNodeletClass::register_CB(const sensor_msgs::ImageConstPtr depth_image, const darknet_ros_msgs::BoundingBoxesConstPtr bounding_boxes){
     ROS_ERROR("Depth");
+
+    boost::recursive_mutex::scoped_lock scoped_lock(mutex);
+    cv::Mat process_frame;
+
+    if (!convertROSImage2Mat(process_frame, depth_image)){//DEPTH
+    //if (!convertROSImage2Mat(process_frame, color_image)){//COLOR
+      return;
+    }
+
+    for (auto it = bounding_boxes->bounding_boxes.begin(); it != bounding_boxes->bounding_boxes.end(); ++it){
+      ROS_INFO_STREAM(it->Class);
+      double dist = registerImage(*it, process_frame, camera_depth_info_);
+    }
+    publishOutput(process_frame);
   }
 
  
