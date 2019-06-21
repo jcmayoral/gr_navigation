@@ -64,7 +64,7 @@ void cv_detectPeople(cv::Mat& frame_gray){
     //return frame_gray;
 }
 
-double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat depth_image, sensor_msgs::CameraInfo camera_info){
+double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
     float depth = 0.0;
     int pixel_number = 0;//(bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
     float mean_depth = 0.0;
@@ -75,9 +75,11 @@ double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat 
             //Assume rgb and depth are same size
             //TODO conversion between depth and rgb
             depth= depth_image.at<float>(i+j*depth_image.rows);
+            //depth_image.at<float>(cv::Point(i, j)) = 255;
+            //cv::circle(depth_image,cv::Point(i, j),1,cv::Scalar(255,255,255));
 
             if (!std::isnan(depth) && std::isfinite(depth)){
-                    if (depth > 1.0)
+                    if (depth > 2.0)
                         continue;
                     mean_depth+= depth;
                     pixel_number++; 
@@ -91,6 +93,13 @@ double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat 
 
     std::cout << mean_depth/pixel_number << std::endl;
     std::cout << depth_image.at<float>(mean_index) << std::endl;
+
+    cv::Point textOrg;
+
+    int center_row = bounding_box.xmin + (bounding_box.xmax - bounding_box.xmin)/2;
+    int center_col = bounding_box.ymin + (bounding_box.ymax - bounding_box.ymin)/2;
+    
+    cv::circle(depth_image,cv::Point(center_row, center_col),25,cv::Scalar(255,255,255));
     // Use correct principal point from calibration
     float center_x = camera_info.K[2];
     float center_y = camera_info.K[5];
@@ -98,7 +107,7 @@ double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat 
     float constant_x = 1.0 / camera_info.K[0];
     float constant_y = 1.0 / camera_info.K[4];
 
-    return 0.0;
+    return mean_depth;
 }
 
 /*
