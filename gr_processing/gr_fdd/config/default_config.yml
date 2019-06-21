@@ -12,18 +12,19 @@ signals:
         max_delay: 0.1
         max_diff: 0.3
         min_diff: -0.1
-    /imu/data_raw_transformed:
+    /phone1/android/imu:
         samples: 2
         window_size: 10
-        max_delay: 0.1
-        max_diff: 0.3
-        min_diff: 0.005
-    /imu/data_raw:
-        samples: 2
-        window_size: 10
-        max_delay: 0.1
-        max_diff: 0.3
-        min_diff: 0.005
+        max_delay: 0.2
+        max_diff: 3.0
+        min_diff: 0.0
+    /phone1/android/fix:
+        samples: 3
+        window_size: 2
+        max_delay: 1.0
+        max_diff: 1450.0
+        min_diff: 0.0
+
     /wheel_angles:
         samples: 2
         window_size: 5
@@ -51,18 +52,16 @@ faults:
         - /left_speed
     stuck_right_wheel:
         - /right_speed
-
-    navigation_stack_failure:
-        - /odom
-        - /cmd_vel
-    tf:
-        - /imu/data_raw_transformed
-    cartographer_is_delayed:
-        - /imu/data_raw_transformed
-        - /odom
     imu_manager_is_dead:
         - /imu/data_raw
         - /imu/data_raw_transformed
+    collision:
+        - /phone1/android/imu
+    robot_lost:
+        - /phone1/android/fix
+    android_unplugged:
+        - /phone1/android/imu
+        - /phone1/android/fix
     wheels:
         - /wheel_angles
     navigation_map_server:

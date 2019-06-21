@@ -13,6 +13,7 @@ find_package(catkin REQUIRED
         std_msgs
         cv_bridge
         message_filters
+        darknet_ros_msgs
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -40,6 +41,7 @@ catkin_package(
         std_msgs
         cv_bridge
         message_filters
+        darknet_ros_msgs
 )
 
 file(GLOB SOURCES src/*.cpp)

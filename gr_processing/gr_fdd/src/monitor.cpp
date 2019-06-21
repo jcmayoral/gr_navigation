@@ -21,8 +21,7 @@ void MainMonitor::odom_cb(const nav_msgs::OdometryConstPtr msg, int index){
     data_containers_[index].updateTime();
     data_containers_[index].updateData(msg->twist.twist.linear.x,0);
     data_containers_[index].updateData(msg->twist.twist.angular.z,1);
-}
-    
+}    
 
 void MainMonitor::map_cb(const nav_msgs::OccupancyGridConstPtr msg, int index){
     data_containers_[index].updateTime();
@@ -40,6 +39,13 @@ void MainMonitor::joints_cb(const sensor_msgs::JointStateConstPtr msg, int index
     data_containers_[index].updateTime();
     data_containers_[index].updateData(msg->position[0],0);
     data_containers_[index].updateData(msg->position[2],1);
+}
+
+void MainMonitor::fix_cb(const sensor_msgs::NavSatFixConstPtr msg, int index){
+    data_containers_[index].updateTime();
+    data_containers_[index].updateData(msg->latitude,0);
+    data_containers_[index].updateData(msg->longitude,1);
+    data_containers_[index].updateData(msg->altitude,1);
 }
 
 void MainMonitor::in_cb(const topic_tools::ShapeShifter::ConstPtr& msg, int index, std::string topic_name){
@@ -91,6 +97,13 @@ void MainMonitor::in_cb(const topic_tools::ShapeShifter::ConstPtr& msg, int inde
         main_subscriber_[index].shutdown();
         boost::function<void(const std_msgs::Float64::ConstPtr&) > callback;
         callback = boost::bind( &MainMonitor::float_cb, this, _1, index) ;
+        main_subscriber_[index] = node.subscribe(topic_name, 1, callback);
+    }
+
+    if (datatype.compare("sensor_msgs/NavSatFix") == 0){
+        main_subscriber_[index].shutdown();
+        boost::function<void(const sensor_msgs::NavSatFix::ConstPtr&) > callback;
+        callback = boost::bind( &MainMonitor::fix_cb, this, _1, index) ;
         main_subscriber_[index] = node.subscribe(topic_name, 1, callback);
     }
     ROS_INFO("Monitor started");

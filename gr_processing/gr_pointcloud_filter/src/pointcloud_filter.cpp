@@ -206,7 +206,7 @@ namespace gr_pointcloud_filter{
         return;
 		  }
 
-        if((last_processing_time_-msg->header.stamp).toSec() > 0.05){
+        if (false){//if((last_processing_time_-msg->header.stamp).toSec() > 0.05){
           ROS_ERROR("Too old PointCloud msg skipping");
           return;
       }

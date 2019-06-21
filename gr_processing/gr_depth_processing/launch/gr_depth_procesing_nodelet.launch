@@ -1,6 +1,9 @@
 <launch>
-  <node pkg="nodelet" type="nodelet" name="depth_processing_nodelet"  args="manager" output="screen"/>
-
-  <node pkg="nodelet" type="nodelet" name="MyNodeletClass" args="load gr_depth_processing/MyNodeletClass depth_processing_nodelet" output="screen">
-  </node>
+  <node pkg="nodelet" type="nodelet" name="depth_processing_nodelet"  args="manager" output="screen">
+    <remap from="/camera/color/image_raw" to="/zed/zed_node/rgb/image_rect_color"/>
+    <remap from="/camera/color/camera_info" to="/zed/zed_node/rgb/camera_info"/>
+    <remap from="/camera/depth/image_rect_raw" to="/zed/zed_node/depth/depth_registered"/>
+    <remap from="/camera/depth/camera_info" to="/zed/zed_node/depth/camera_info"/>
+  </node>   
+  <node pkg="nodelet" type="nodelet" name="MyNodeletClass" args="load gr_depth_processing/MyNodeletClass depth_processing_nodelet" output="screen"/>
 </launch>
