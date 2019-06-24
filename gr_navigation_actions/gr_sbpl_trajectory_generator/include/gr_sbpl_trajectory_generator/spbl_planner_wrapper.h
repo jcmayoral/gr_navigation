@@ -35,7 +35,7 @@ namespace gr_sbpl_trajectory_generator{
                           geometry_msgs::PoseStamped goal);
             void point_cb(const geometry_msgs::PointStampedConstPtr msg);
             void executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal);
-            void executePath();
+            bool executePath();
             void odom_cb(const nav_msgs::OdometryConstPtr odom_msg);
             void setStart();
             void stop();
@@ -64,6 +64,7 @@ namespace gr_sbpl_trajectory_generator{
             unsigned char inscribed_inflated_obstacle_;
             double initial_epsilon_;
             double allocated_time_;
+            double position_tolerance_;
             ros::Publisher plan_pub_;
             ros::Subscriber point_sub_;
             ros::Subscriber odom_sub_;
