@@ -42,7 +42,7 @@ void cv_detectPeople(cv::Mat& frame_gray){
     face_cascade.load("/usr/share/opencv/haarcascades/haarcascade_upperbody.xml");
     std::vector<cv::Rect> faces;
     face_cascade.detectMultiScale( frame_gray, faces, 1.1, 4 );
-    
+
     for ( size_t i = 0; i < faces.size(); i++ ){
     cv::Point center( faces[i].x + faces[i].width/2, faces[i].y + faces[i].height/2 );
     cv::ellipse( frame_gray, center, cv::Size( faces[i].width/2, faces[i].height/2 ), 0, 0, 360, cv::Scalar( 0, 0, 0 ), 4 );
@@ -64,42 +64,43 @@ void cv_detectPeople(cv::Mat& frame_gray){
     //return frame_gray;
 }
 
-double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
-    float depth = 0.0;
+double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info, std::string label){
+    uint16_t depth = 0.0;
     int pixel_number = 0;//(bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
-    float mean_depth = 0.0;
+    double mean_depth = 0.0;
     int mean_index = (bounding_box.xmax - bounding_box.xmin)/2 + depth_image.rows* (bounding_box.ymax - bounding_box.ymin)/2;
 
     for (auto i = bounding_box.xmin; i<=bounding_box.xmax; ++i){
         for (auto j = bounding_box.ymin; j<=bounding_box.ymax; ++j){
             //Assume rgb and depth are same size
             //TODO conversion between depth and rgb
-            depth= depth_image.at<float>(i+j*depth_image.rows);
+            depth= depth_image.at<uint16_t>(i+j*depth_image.rows); //realsense
+            //depth= depth_image.at<float>(i+j*depth_image.rows); //ZED
+
             //depth_image.at<float>(cv::Point(i, j)) = 255;
             //cv::circle(depth_image,cv::Point(i, j),1,cv::Scalar(255,255,255));
 
-            if (!std::isnan(depth) && std::isfinite(depth)){
-                    if (depth > 2.0)
-                        continue;
-                    mean_depth+= depth;
-                    pixel_number++; 
+            if (std::isfinite(depth)){
+                mean_depth+= depth;
+                pixel_number++;
             }
-           
+
         }
     }
     if (pixel_number == 0){
         return -1;
     }
 
-    std::cout << mean_depth/pixel_number << std::endl;
-    std::cout << depth_image.at<float>(mean_index) << std::endl;
-
-    cv::Point textOrg;
-
     int center_row = bounding_box.xmin + (bounding_box.xmax - bounding_box.xmin)/2;
     int center_col = bounding_box.ymin + (bounding_box.ymax - bounding_box.ymin)/2;
-    
-    cv::circle(depth_image,cv::Point(center_row, center_col),25,cv::Scalar(255,255,255));
+
+    //cv::circle(depth_image,cv::Point(center_row, center_col),25,cv::Scalar(255,255,255));
+
+
+    // then put the text itself
+    cv::putText(depth_image, label +  std::to_string(mean_depth/pixel_number), cv::Point(center_row, center_col), cv::FONT_HERSHEY_PLAIN,
+                1,   0xffff , 2, 8);
+
     // Use correct principal point from calibration
     float center_x = camera_info.K[2];
     float center_y = camera_info.K[5];
