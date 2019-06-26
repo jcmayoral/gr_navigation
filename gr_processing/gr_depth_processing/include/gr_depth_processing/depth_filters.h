@@ -64,10 +64,10 @@ void cv_detectPeople(cv::Mat& frame_gray){
     //return frame_gray;
 }
 
-double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info, std::string label){
+double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
     uint16_t depth = 0.0;
     int pixel_number = 0;//(bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
-    double mean_depth = 0.0;
+    float mean_depth = 0;
     int mean_index = (bounding_box.xmax - bounding_box.xmin)/2 + depth_image.rows* (bounding_box.ymax - bounding_box.ymin)/2;
 
     for (auto i = bounding_box.xmin; i<=bounding_box.xmax; ++i){
@@ -91,16 +91,7 @@ double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat&
         return -1;
     }
 
-    int center_row = bounding_box.xmin + (bounding_box.xmax - bounding_box.xmin)/2;
-    int center_col = bounding_box.ymin + (bounding_box.ymax - bounding_box.ymin)/2;
-
-    //cv::circle(depth_image,cv::Point(center_row, center_col),25,cv::Scalar(255,255,255));
-
-
-    // then put the text itself
-    cv::putText(depth_image, label +  std::to_string(mean_depth/pixel_number), cv::Point(center_row, center_col), cv::FONT_HERSHEY_PLAIN,
-                1,   0xffff , 2, 8);
-
+    //cv::circle(depth_image,cv::Point(center_row, center_col),25,cv::Scalar(255,255,255))
     // Use correct principal point from calibration
     float center_x = camera_info.K[2];
     float center_y = camera_info.K[5];
@@ -108,7 +99,7 @@ double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat&
     float constant_x = 1.0 / camera_info.K[0];
     float constant_y = 1.0 / camera_info.K[4];
 
-    return mean_depth;
+    return mean_depth/pixel_number;
 }
 
 /*

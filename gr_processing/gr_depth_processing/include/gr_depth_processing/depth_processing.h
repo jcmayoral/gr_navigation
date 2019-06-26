@@ -52,7 +52,7 @@ namespace gr_depth_processing
                      const darknet_ros_msgs::BoundingBoxesConstPtr bounding_boxes);
 
       boost::function<void(cv::Mat&)> filterImage;
-      boost::function<double(darknet_ros_msgs::BoundingBox, cv::Mat&, sensor_msgs::CameraInfo, std::string)> registerImage;
+      boost::function<double(darknet_ros_msgs::BoundingBox, cv::Mat&, sensor_msgs::CameraInfo)> registerImage;
 
     protected:
       bool convertROSImage2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& ros_image);

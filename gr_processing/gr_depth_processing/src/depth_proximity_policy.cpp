@@ -96,6 +96,10 @@ namespace gr_depth_processing
   void MyNodeletClass::register_CB(const sensor_msgs::ImageConstPtr depth_image, const darknet_ros_msgs::BoundingBoxesConstPtr bounding_boxes){
     boost::recursive_mutex::scoped_lock scoped_lock(mutex);
     cv::Mat process_frame;
+    std::vector<std::string> distance_to_objects;
+    std::vector<std::pair<int,int>> objects_center;
+    std::vector<cv::Rect> boundRect;
+
 
     if (!convertROSImage2Mat(process_frame, depth_image)){//DEPTH
     //if (!convertROSImage2Mat(process_frame, color_image)){//COLOR
@@ -103,8 +107,26 @@ namespace gr_depth_processing
     }
 
     for (auto it = bounding_boxes->bounding_boxes.begin(); it != bounding_boxes->bounding_boxes.end(); ++it){
-      double dist = registerImage(*it, process_frame, camera_depth_info_, it->Class);
+      int center_row = it->xmin + (it->xmax - it->xmin)/2;
+      int center_col = it->ymin + (it->ymax - it->ymin)/2;
+      objects_center.push_back(std::make_pair(center_row, center_col));
+      distance_to_objects.push_back(it->Class + std::to_string(registerImage(*it, process_frame, camera_depth_info_)));
+      boundRect.push_back(cv::Rect(it->xmin, it->ymin, it->xmax - it->xmin, it->ymax - it->ymin));
+      //boundRect.push_back(cv::Rect(100,100,50,50));
+
     }
+
+    auto it = distance_to_objects.begin();
+    auto it2 = objects_center.begin();
+    auto it3 = boundRect.begin();
+
+    for (; it!= distance_to_objects.end(); ++it, ++it2, ++it3){
+      cv::putText(process_frame, *it, cv::Point(it2->first, it2->second), cv::FONT_HERSHEY_PLAIN,
+                  1,   0xffff , 2, 8);
+      cv::rectangle(process_frame, *it3, 0xffff);
+
+    }
+
     publishOutput(process_frame, false);
   }
 
