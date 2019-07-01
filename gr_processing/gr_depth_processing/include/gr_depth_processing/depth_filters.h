@@ -99,7 +99,7 @@ double register_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat&
     float constant_x = 1.0 / camera_info.K[0];
     float constant_y = 1.0 / camera_info.K[4];
 
-    return mean_depth/pixel_number;
+    return (mean_depth/pixel_number)*0.001; //ROS_DEPTH_SCALE
 }
 
 /*

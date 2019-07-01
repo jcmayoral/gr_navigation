@@ -100,6 +100,8 @@ namespace gr_depth_processing
     std::vector<std::pair<int,int>> objects_center;
     std::vector<cv::Rect> boundRect;
 
+    const uint16_t * depth_array = reinterpret_cast<const uint16_t *>(&(depth_image->data[0]));
+
 
     if (!convertROSImage2Mat(process_frame, depth_image)){//DEPTH
     //if (!convertROSImage2Mat(process_frame, color_image)){//COLOR
@@ -112,8 +114,6 @@ namespace gr_depth_processing
       objects_center.push_back(std::make_pair(center_row, center_col));
       distance_to_objects.push_back(it->Class + std::to_string(registerImage(*it, process_frame, camera_depth_info_)));
       boundRect.push_back(cv::Rect(it->xmin, it->ymin, it->xmax - it->xmin, it->ymax - it->ymin));
-      //boundRect.push_back(cv::Rect(100,100,50,50));
-
     }
 
     auto it = distance_to_objects.begin();
@@ -121,8 +121,9 @@ namespace gr_depth_processing
     auto it3 = boundRect.begin();
 
     for (; it!= distance_to_objects.end(); ++it, ++it2, ++it3){
-      cv::putText(process_frame, *it, cv::Point(it2->first, it2->second), cv::FONT_HERSHEY_PLAIN,
-                  1,   0xffff , 2, 8);
+      cv::putText(process_frame, *it, cv::Point(it2->first, it2->second), cv::FONT_HERSHEY_PLAIN, 1,   0xffff , 2, 8);
+      cv::putText(process_frame, std::to_string(depth_array[it2->first+ it2->second * process_frame.rows]), cv::Point(it2->first, it2->second+20), cv::FONT_HERSHEY_PLAIN,
+                              1,   0xffff , 2, 8);
       cv::rectangle(process_frame, *it3, 0xffff);
 
     }
