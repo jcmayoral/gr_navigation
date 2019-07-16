@@ -10,7 +10,8 @@ namespace gr_depth_processing
   void MyNodeletClass::onInit(){
 
     filterImage = &cv_filter;
-    registerImage = &register_pointclouds;
+    //registerImage = &register_pointclouds;
+    registerImage = &register_ransac_pointclouds;
 
     ros::NodeHandle nh;
     ROS_INFO("Waiting for rgb and depth camera info");

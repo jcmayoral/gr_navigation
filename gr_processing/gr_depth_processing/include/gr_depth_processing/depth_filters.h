@@ -6,6 +6,7 @@
 #include <sensor_msgs/CameraInfo.h>
 
 #include <math.h>
+#include <random>
 
 void cv_filter(cv::Mat& frame){
     try{
@@ -158,3 +159,68 @@ void convert(
 
 #en
 */
+
+
+
+
+double get_variance(float mean, uint16_t* points, int points_number = 10){
+    double var = 0;
+    
+    for(int n = 0; n< points_number; ++n){
+        var += pow(points[n] - mean,2);
+    }
+    var /= points_number;
+    return sqrt(var);
+}
+
+
+//On development
+double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
+    uint16_t depth = 0.0;
+    int pixel_number = 0;//(bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
+    float mean_depth = 0;
+    int mean_index = (bounding_box.xmax - bounding_box.xmin)/2 + depth_image.rows* (bounding_box.ymax - bounding_box.ymin)/2;
+
+
+    double best_result = 1000000;
+    double current_result = 100;
+    float best_variance = 1000000;
+    int maximum_iterations = 10;
+    int number_inliers = 0.2 * (bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
+    uint16_t depth_array [number_inliers];
+    float treshold = 10.0;
+    int cell_x, cell_y = 0;
+
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 eng(rd()); // seed the generator
+    std::uniform_int_distribution<> x_distr(bounding_box.xmin, bounding_box.xmax); // define the range
+    std::uniform_int_distribution<> y_distr(bounding_box.ymin, bounding_box.ymax); // define the range
+
+
+    for (auto iteration = 0; iteration < maximum_iterations; ++ iteration ){
+        mean_depth = 0.0;
+        for(int n=0; n<number_inliers; ++n){
+            cell_x = x_distr(eng);
+            cell_y = y_distr(eng);
+            depth_array[n] = depth_image.at<uint16_t>(cell_x+cell_y*depth_image.rows); //realsense
+            if (std::isfinite(depth_array[n])){
+                mean_depth+= depth_array[n];
+                pixel_number++;
+            }
+            else{
+                n = n-1;
+            }
+        }
+
+        current_result = (mean_depth/pixel_number)*0.001;
+
+        if(0.1 < get_variance(current_result, depth_array, number_inliers) < best_variance){
+            std::cout << current_result << "result" << std::endl;
+            best_result = current_result;
+            best_variance = get_variance(best_result, depth_array, number_inliers);
+        }
+    }
+
+    return best_result; //ROS_DEPTH_SCALE
+
+}
