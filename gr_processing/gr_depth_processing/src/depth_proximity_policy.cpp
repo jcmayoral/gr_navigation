@@ -123,7 +123,7 @@ namespace gr_depth_processing
 
     for (; it!= distance_to_objects.end(); ++it, ++it2, ++it3){
       cv::putText(process_frame, *it, cv::Point(it2->first, it2->second), cv::FONT_HERSHEY_PLAIN, 1,   0xffff , 2, 8);
-      cv::putText(process_frame, std::to_string(depth_array[it2->first+ it2->second * process_frame.rows]), cv::Point(it2->first, it2->second+20), cv::FONT_HERSHEY_PLAIN,
+      cv::putText(process_frame, std::to_string(0.001*(depth_array[it2->first+ it2->second * process_frame.rows])), cv::Point(it2->first, it2->second+20), cv::FONT_HERSHEY_PLAIN,
                               1,   0xffff , 2, 8);
       cv::rectangle(process_frame, *it3, 0xffff);
 
