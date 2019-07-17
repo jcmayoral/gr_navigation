@@ -78,33 +78,34 @@ namespace gr_pointcloud_filter{
 
       //Start testing
       //TODO remove from here ****
-    	pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
-     	pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+      pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+      pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
 
-    	normal_estimator_.setSearchMethod (tree);
-    	normal_estimator_.setInputCloud (cloud);
-    	normal_estimator_.setKSearch (1);
-    	normal_estimator_.compute (*normals);
+      normal_estimator_.setSearchMethod (tree);
+      normal_estimator_.setInputCloud (cloud);
+      normal_estimator_.setKSearch (1);
+      normal_estimator_.compute (*normals);
 
 
-    	pcl::IndicesPtr indices (new std::vector <int>);
-    	pass_through_filter_.setInputCloud (cloud);
-    	pass_through_filter_.filter (*indices);
-      if (indices->size() <1){
+      pcl::IndicesPtr indices (new std::vector <int>);
+      pass_through_filter_.setInputCloud (cloud);
+      pass_through_filter_.filter (*indices);
+      
+      if (true){ //THIS IS COMMENT BECAUSE TESTING indices->size() <1){
         ROS_WARN("Not enough indices");
         publishPointCloud<pcl::PointCloud<pcl::PointXYZ>>(*cloud);
         return;
       }
 
-    	region_growing_filter_.setSearchMethod (tree);
+      region_growing_filter_.setSearchMethod (tree);
       region_growing_filter_.setInputCloud (cloud);
-    	region_growing_filter_.setIndices (indices);
-    	region_growing_filter_.setInputNormals (normals);
+      region_growing_filter_.setIndices (indices);
+      region_growing_filter_.setInputNormals (normals);
       //reg.setCurvatureThreshold (10.0);
 
 
       std::vector <pcl::PointIndices> clusters;
-    	region_growing_filter_.extract (clusters);
+      region_growing_filter_.extract (clusters);
       ROS_DEBUG_STREAM("Clusters size" << clusters.size());
       if (clusters.size()== 0){
         ROS_WARN("Not clusters found");
@@ -132,7 +133,7 @@ namespace gr_pointcloud_filter{
       }
       obstacle_pub_.publish(clusters_msg);
       pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = region_growing_filter_.getColoredCloud ();
-    	publishPointCloud<pcl::PointCloud <pcl::PointXYZRGB>>(*colored_cloud);
+      publishPointCloud<pcl::PointCloud <pcl::PointXYZRGB>>(*colored_cloud);
 
     }
 
@@ -188,14 +189,14 @@ namespace gr_pointcloud_filter{
       //RegionGrowing
       smoothness_threshold_ = config.smoothness_threshold;
       cluster_neighbours_number_ = config.cluster_neighbours_number;
-      region_growing_filter_.setMinClusterSize (1);
-    	region_growing_filter_.setMaxClusterSize (100);
-    	region_growing_filter_.setNumberOfNeighbours(cluster_neighbours_number_);
-    	region_growing_filter_.setSmoothnessThreshold ( smoothness_threshold_/ 180.0 * M_PI);
+      region_growing_filter_.setMinClusterSize (100);
+      region_growing_filter_.setMaxClusterSize (200);
+      region_growing_filter_.setNumberOfNeighbours(cluster_neighbours_number_);
+      region_growing_filter_.setSmoothnessThreshold ( smoothness_threshold_/ 180.0 * M_PI);
 
       //Passthrough Filter
       pass_through_filter_.setFilterFieldName ("z");
-      pass_through_filter_.setFilterLimits (-0.1,1.0);
+      pass_through_filter_.setFilterLimits (-0.1,2.0);
 
     }
 
