@@ -187,19 +187,18 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
     double current_result = 0;
     float best_variance = 100000;
     float current_std = 1000000;
-    int maximum_iterations = 400;
-    int number_inliers = 100;//0.025 * (bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
+    int maximum_iterations = 10000;
+    int number_changes = 2;
+    int number_inliers = 100;//0.01 * (bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
     uint16_t depth_array [number_inliers];
     std::pair<int,int> best_indices[number_inliers];
     double scores_indices[number_inliers];
 
-    float threshold = 1500.0;
+    float threshold = 500.0;
     int cell_x, cell_y = 0;
 
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 eng(rd()); // seed the generator
-    std::uniform_int_distribution<> x_distr(bounding_box.xmin, bounding_box.xmax); // define the range
-    std::uniform_int_distribution<> y_distr(bounding_box.ymin, bounding_box.ymax); // define the range
 
 
     std::pair<int,int> current_indices[number_inliers];
@@ -207,57 +206,83 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
 
     for (auto iteration = 0; iteration < maximum_iterations; ++ iteration ){
         mean_depth = 0.0;
-        pixel_number = 0;
 
         if (!is_initialize){
-            ROS_INFO("NOT INITIALIZED");
+            int dx = (bounding_box.xmax - bounding_box.xmin)/2 + bounding_box.xmin;
+            int dy = (bounding_box.ymax - bounding_box.ymin)/2 + bounding_box.ymin;
+            //std::uniform_int_distribution<> x_distr(dx -200, dx + 200); // define the range
+            //std::uniform_int_distribution<> y_distr(dy -200, dy + 200); // define the range
+
+            std::uniform_int_distribution<> x_distr( bounding_box.xmin,  bounding_box.xmax); // define the range
+            std::uniform_int_distribution<> y_distr( bounding_box.ymin,  bounding_box.ymax); // define the range
+
             for(int n=0; n<number_inliers; ++n){
                 cell_x = x_distr(eng);
                 cell_y = y_distr(eng);
                 depth_array[n] = depth_image.at<uint16_t>(cell_x+cell_y*depth_image.rows); //realsense
                 if (std::isfinite(depth_array[n])){
-                    mean_depth+= depth_array[n];
-                    pixel_number++;
+                    //mean_depth+= depth_array[n];
                     current_indices[n] = std::make_pair(cell_x,cell_y);
-                    //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
-                }
-                else{
-                    n = n-1;
                 }
             }
             is_initialize = true;
-            ROS_INFO("NOT INITIALIZED");
         }
         else{
-            ROS_ERROR("INITIALIZED");
-            std::cout << "HERE" << std::endl;
             int auxiliar = sizeof(scores_indices) / sizeof(scores_indices[0]); 
-
             int worst_inlier = std::distance(scores_indices, std::max_element(scores_indices, scores_indices+ auxiliar));
-            std::cout << "WORST INDEX"<< worst_inlier << std::endl; 
-            bool new_inlier_accepted = false;
+            int best_inlier = std::distance(scores_indices, std::min_element(scores_indices, scores_indices+ auxiliar));
 
-            while(!new_inlier_accepted){
-                cell_x = x_distr(eng);
-                cell_y = y_distr(eng);
-                depth_array[worst_inlier] = depth_image.at<uint16_t>(cell_x+cell_y*depth_image.rows); //realsense
-                if (std::isfinite(depth_array[worst_inlier])){
-                    //pixel_number++;
-                    for(int n=0; n<number_inliers; ++n){
-                        mean_depth+= depth_array[n];
-                        pixel_number++;
+            for(int w =0 ; w < number_changes ; w++){
+                bool new_inlier_accepted = false;
+
+
+                int best_x = current_indices[best_inlier].first;
+                int best_y = current_indices[best_inlier].second;
+
+                //std::uniform_int_distribution<>local_x_distr(best_x -22,best_x + 22); // define the range
+                //std::uniform_int_distribution<>local_y_distr(best_y -22,best_y + 22); // define the range
+                std::uniform_int_distribution<> local_x_distr( bounding_box.xmin,  bounding_box.xmax); // define the range
+                std::uniform_int_distribution<> local_y_distr( bounding_box.ymin,  bounding_box.ymax); // define the range
+
+                int tries = 0;
+
+                while(!new_inlier_accepted && tries <50 ){
+                    tries++;
+                    //std::cout << "resample " << w << "of " << number_changes << std::endl;
+                    cell_x = local_x_distr(eng);
+                    cell_y = local_y_distr(eng);
+                    //cell_x = current_indices[best_inlier].first +1;
+                    //cell_y = current_indices[best_inlier].second +1;
+                    if (cell_x <= bounding_box.xmin || cell_x >= bounding_box.xmax || cell_x < 0)
+                        continue;
+                    if (cell_y <= bounding_box.ymin || cell_y >= bounding_box.ymax || cell_y < 0)
+                        continue;
+
+                    depth_array[worst_inlier] = depth_image.at<uint16_t>(cell_x+cell_y*depth_image.rows); //realsense
+                    if (std::isfinite(depth_array[worst_inlier])){
+                         if (depth_array[worst_inlier] *0.001 < 3){
+                        //pixel_number++;
+                        /*
+                        for(int n=0; n<number_inliers; ++n){
+                            mean_depth+= depth_array[n];
+                        }
+                        */
+                            if(abs(depth_array[worst_inlier]) > best_variance) {
+                                //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
+                                current_indices[worst_inlier] = std::make_pair(cell_x,cell_y);
+                                new_inlier_accepted = true;
+                            }
+                         }
+                        //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
                     }
-                    //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
-                    current_indices[worst_inlier] = std::make_pair(cell_x,cell_y);
-                    new_inlier_accepted = true;
-                    //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
                 }
+
             }
         }
 
-        current_result = (mean_depth/pixel_number)*0.001;
+        current_result = (std::accumulate(depth_array,depth_array+number_inliers,0)/number_inliers) * 0.001;
         current_std = get_variance(current_result, depth_array, number_inliers, scores_indices);
-        std::cout << "STD DEV " << current_std << " MAX " << best_variance << std::endl;
+        //std::cout << "STD DEV " << current_std << " MAX " << best_variance << std::endl;
 
         /*
         for (int n = 0; n < number_inliers; ++n){
@@ -265,8 +290,7 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
         }
         */
 
-        if(1 < current_std < best_variance){
-            ROS_WARN("HERE");
+        if(current_std < best_variance){
             best_result = current_result;
             best_variance = current_std;
             for (int z = 0; z < number_inliers; ++z){
@@ -276,7 +300,8 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
 
 
         if (best_variance < threshold){
-           // break;
+            ROS_ERROR("Threshold Reached");
+           break;
         }
 
     }
@@ -285,8 +310,15 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
 
     for (int n = 0; n < number_inliers; ++n){
         //std::cout << "best indices "<< best_indices[n].first <<  ","<<best_indices[n].second << std::endl;
+
+        if (best_indices[n].first <= bounding_box.xmin || best_indices[n].first >= bounding_box.xmax || best_indices[n].first < 0)
+                continue;
+        if (best_indices[n].second <= bounding_box.ymin || best_indices[n].second >= bounding_box.ymax || best_indices[n].second < 0)
+                continue;
+
         depth_image.at<uint16_t>(best_indices[n].second,best_indices[n].first) = 0xffff;
     }
+    ROS_ERROR("FINISH");
 
     return best_result; //ROS_DEPTH_SCALE
 

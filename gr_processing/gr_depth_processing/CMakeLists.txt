@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(gr_depth_processing)
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+add_definitions(-std=c++11)
+
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 find_package(catkin REQUIRED
         COMPONENTS
