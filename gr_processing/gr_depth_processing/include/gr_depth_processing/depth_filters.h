@@ -11,7 +11,7 @@
 void cv_filter(cv::Mat& frame){
     try{
         cv::GaussianBlur(frame, frame, cv::Size(5,5), 1, 0, cv::BORDER_DEFAULT);
-        cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY );
+        //cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY );
 
         //cv::Ptr<cv::BackgroundSubtractorMOG2> background_substractor_;
         //background_substractor_ = cv::createBackgroundSubtractorMOG2();
@@ -27,7 +27,8 @@ void cv_filter(cv::Mat& frame){
         cv::erode(frame, frame, element);
         cv::dilate(frame, frame, element);
         //output_frame = detectPeople(input_frame);
-        cv::Canny(frame, frame,120, 200 );
+        cv::Laplacian(frame, frame, CV_16U);
+        //cv::Canny(frame, frame,120, 200 );
 
       }
       catch( cv::Exception& e ){
@@ -169,7 +170,7 @@ double get_variance(float mean, uint16_t* points, int points_number, double* sco
     double scoring;
 
     for(int n = 0; n< points_number; ++n){
-        scoring = pow(points[n] - mean,2);
+        scoring = points[n];//pow(points[n] - mean,2);
         score_array[n] = scoring;
         var += scoring;
     }
@@ -187,14 +188,14 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
     double current_result = 0;
     float best_variance = 100000;
     float current_std = 1000000;
-    int maximum_iterations = 10000;
-    int number_changes = 2;
-    int number_inliers = 100;//0.01 * (bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
+    int maximum_iterations = 1000;
+    int number_changes = 25;
+    int number_inliers = 400;//0.01 * (bounding_box.xmax - bounding_box.xmin) * (bounding_box.ymax - bounding_box.ymin);
     uint16_t depth_array [number_inliers];
     std::pair<int,int> best_indices[number_inliers];
     double scores_indices[number_inliers];
 
-    float threshold = 500.0;
+    float threshold = 40.0;
     int cell_x, cell_y = 0;
 
     std::random_device rd; // obtain a random number from hardware
@@ -232,21 +233,46 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
             int worst_inlier = std::distance(scores_indices, std::max_element(scores_indices, scores_indices+ auxiliar));
             int best_inlier = std::distance(scores_indices, std::min_element(scores_indices, scores_indices+ auxiliar));
 
-            for(int w =0 ; w < number_changes ; w++){
+            int best_x = current_indices[best_inlier].first;
+            int best_y = current_indices[best_inlier].second;
+
+            std::uniform_int_distribution<>local_x_distr(best_x -50,best_x + 50); // define the range
+            std::uniform_int_distribution<>local_y_distr(best_y -50,best_y + 50); // define the range
+
+            for(int n=0; n<number_inliers-number_changes; ++n){
+                cell_x = local_x_distr(eng);
+                cell_y = local_y_distr(eng);
+                depth_array[n] = depth_image.at<uint16_t>(cell_x+cell_y*depth_image.rows); //realsense
+
+                if (cell_x <= bounding_box.xmin || cell_x >= bounding_box.xmax || cell_x < 0){
+                    n = n-1;
+                    continue;
+                }
+                if (cell_y <= bounding_box.ymin || cell_y >= bounding_box.ymax || cell_y < 0){
+                    n = n-1;
+                    continue;
+                }
+                if (std::isfinite(depth_array[n])){
+                    //mean_depth+= depth_array[n];
+                    current_indices[n] = std::make_pair(cell_x,cell_y);
+                }
+            }
+
+            for(int w =number_inliers-number_changes ; w < number_inliers ; w++){
                 bool new_inlier_accepted = false;
 
 
-                int best_x = current_indices[best_inlier].first;
-                int best_y = current_indices[best_inlier].second;
+                int best_x = current_indices[worst_inlier].first;
+                int best_y = current_indices[worst_inlier].second;
 
-                //std::uniform_int_distribution<>local_x_distr(best_x -22,best_x + 22); // define the range
-                //std::uniform_int_distribution<>local_y_distr(best_y -22,best_y + 22); // define the range
-                std::uniform_int_distribution<> local_x_distr( bounding_box.xmin,  bounding_box.xmax); // define the range
-                std::uniform_int_distribution<> local_y_distr( bounding_box.ymin,  bounding_box.ymax); // define the range
+                std::uniform_int_distribution<>local_x_distr(best_x -5,best_x + 5); // define the range
+                std::uniform_int_distribution<>local_y_distr(best_y -5,best_y + 5); // define the range
+                //std::uniform_int_distribution<> local_x_distr( bounding_box.xmin,  bounding_box.xmax); // define the range
+                //std::uniform_int_distribution<> local_y_distr( bounding_box.ymin,  bounding_box.ymax); // define the range
 
                 int tries = 0;
 
-                while(!new_inlier_accepted && tries <50 ){
+                while(!new_inlier_accepted && tries <5 ){
                     tries++;
                     //std::cout << "resample " << w << "of " << number_changes << std::endl;
                     cell_x = local_x_distr(eng);
@@ -258,21 +284,16 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
                     if (cell_y <= bounding_box.ymin || cell_y >= bounding_box.ymax || cell_y < 0)
                         continue;
 
-                    depth_array[worst_inlier] = depth_image.at<uint16_t>(cell_x+cell_y*depth_image.rows); //realsense
-                    if (std::isfinite(depth_array[worst_inlier])){
-                         if (depth_array[worst_inlier] *0.001 < 3){
+                    depth_array[w] = depth_image.at<uint16_t>(cell_x+cell_y*depth_image.rows); //realsense
+                    if (std::isfinite(depth_array[w])){
                         //pixel_number++;
                         /*
                         for(int n=0; n<number_inliers; ++n){
                             mean_depth+= depth_array[n];
                         }
                         */
-                            if(abs(depth_array[worst_inlier]) > best_variance) {
-                                //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
-                                current_indices[worst_inlier] = std::make_pair(cell_x,cell_y);
-                                new_inlier_accepted = true;
-                            }
-                         }
+                        current_indices[worst_inlier] = std::make_pair(cell_x,cell_y);
+                        new_inlier_accepted = true;       
                         //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
                     }
                 }
@@ -322,4 +343,84 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
 
     return best_result; //ROS_DEPTH_SCALE
 
+}
+
+
+
+
+
+
+
+double register_histogram_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
+    try{
+
+        // Setup a rectangle to define your region of interest
+        cv::Rect myROI(bounding_box.xmin,bounding_box.ymin,bounding_box.xmax -bounding_box.xmin , bounding_box.ymax-bounding_box.ymin);
+
+        // Crop the full image to that image contained by the rectangle myROI
+        // Note that this doesn't copy the data
+        cv::Mat croppedImage = depth_image(myROI);
+
+
+
+        //cv::imshow("cropped ", croppedImage);
+         
+        std::vector<cv::Mat> bgr_planes;
+        //cv::split( croppedImage, bgr_planes );
+        int histSize = 65535;
+        float range[] = { 0, 65535 }; //the upper boundary is exclusive
+        const float* histRange = { range };
+        bool uniform = true, accumulate = false;
+        cv::Mat b_hist, g_hist, r_hist;
+        calcHist( &croppedImage, 2, 0, cv::Mat(), b_hist, 1, &histSize, &histRange, uniform, accumulate );
+        //calcHist( &bgr_planes[1], 1, 0, Mat(), g_hist, 1, &histSize, &histRange, uniform, accumulate );
+        //calcHist( &bgr_planes[2], 1, 0, Mat(), r_hist, 1, &histSize, &histRange, uniform, accumulate );
+        int hist_w = 512, hist_h = 400;
+        int bin_w = cvRound( (double) hist_w/histSize );
+        cv::Mat histImage( hist_h, hist_w,  CV_8UC1, cv::Scalar(0,0,0) );
+        //cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat() );
+        //normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+        //normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
+    
+
+        for( int i = 1; i < histSize; i++ )
+        {
+            cv::line( histImage, cv::Point( bin_w*(i-1), hist_h - cvRound(b_hist.at<float>(i-1)) ),
+                cv::Point( bin_w*(i), hist_h - cvRound(b_hist.at<float>(i)) ),
+                cv::Scalar( 0, 255, 0), 2, 8, 0  );
+            //std::cout << cvRound(b_hist.at<float>(i)) << std::endl;
+            /*line( histImage, Point( bin_w*(i-1), hist_h - cvRound(g_hist.at<float>(i-1)) ),
+                Point( bin_w*(i), hist_h - cvRound(g_hist.at<float>(i)) ),
+                Scalar( 0, 255, 0), 2, 8, 0  );
+            line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
+                Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
+                Scalar( 0, 0, 255), 2, 8, 0  );*/
+        }
+        
+        imshow("Source image", histImage );
+        cv::waitKey(2000);
+        
+        //Initialize m
+        double minVal; 
+        double maxVal; 
+        int minindex;
+        int maxindex;
+        //cv::Point minLoc; 
+        //cv::Point maxLoc;
+
+        minMaxIdx( b_hist, &minVal, &maxVal, &minindex, &maxindex );
+
+        std::cout << "min val : " << minVal << " ID " << minindex <<std::endl;
+        float fval = static_cast<float>(b_hist.at<float>(maxindex));
+        std::cout << "max val: " << fval << " ID " << maxindex <<std::endl;
+
+        return bin_w*maxindex;
+
+
+
+
+      }
+      catch( cv::Exception& e ){
+        return 0.0;
+      }
 }

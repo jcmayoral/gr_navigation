@@ -11,7 +11,8 @@ namespace gr_depth_processing
 
     filterImage = &cv_filter;
     //registerImage = &register_pointclouds;
-    registerImage = &register_ransac_pointclouds;
+    //registerImage = &register_ransac_pointclouds;
+    registerImage = register_histogram_pointclouds;
 
     ros::NodeHandle nh;
     ROS_INFO("Waiting for rgb and depth camera info");
@@ -66,9 +67,11 @@ namespace gr_depth_processing
         cv::rotate(frame,frame,1);
       }
 
+      frame.convertTo(frame, CV_16UC1);
+
       //img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, frame);//COLOR
       //img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_32FC1, frame);//zed
-      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::TYPE_16UC1, frame);//realsense
+      img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO16, frame);//realsense
       img_bridge.toImageMsg(out_msg); // from cv_bridge to sensor_msgs::Image
     }
     catch (cv_bridge::Exception& e){
@@ -89,7 +92,7 @@ namespace gr_depth_processing
     }
 
     filterImage(process_frame);
-    publishOutput(process_frame);
+    publishOutput(process_frame,false);
 
   }
 
