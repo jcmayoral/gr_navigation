@@ -12,7 +12,7 @@ namespace gr_depth_processing
     filterImage = &cv_filter;
     //registerImage = &register_pointclouds;
     //registerImage = &register_ransac_pointclouds;
-    registerImage = register_histogram_pointclouds;
+    registerImage = &register_median_pointclouds;
 
     ros::NodeHandle nh;
     ROS_INFO("Waiting for rgb and depth camera info");

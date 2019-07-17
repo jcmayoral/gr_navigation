@@ -345,13 +345,7 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
 
 }
 
-
-
-
-
-
-
-double register_histogram_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
+double register_median_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
     try{
 
         // Setup a rectangle to define your region of interest
@@ -361,6 +355,28 @@ double register_histogram_pointclouds(darknet_ros_msgs::BoundingBox bounding_box
         // Note that this doesn't copy the data
         cv::Mat croppedImage = depth_image(myROI);
 
+        float max_value = 65535;
+        int bin_number = 1000;
+        float delta = max_value/bin_number;
+
+        int hist[bin_number] = {  };
+        int index = 0;
+
+        for(auto i =0; i<croppedImage.cols;++i){
+            for(auto j =0; j<croppedImage.rows;++j){
+                index = croppedImage.at<ushort>(j,i) / delta;
+                hist[index] = hist[index] + 1;
+            }
+            
+        }
+
+        //ignoring 0
+        hist[0] = 0;
+
+        int auxiliar = sizeof(hist) / sizeof(hist[0]); 
+        int median = std::distance(hist, std::max_element(hist, hist+ auxiliar));
+
+        /*
 
 
         //cv::imshow("cropped ", croppedImage);
@@ -394,8 +410,9 @@ double register_histogram_pointclouds(darknet_ros_msgs::BoundingBox bounding_box
                 Scalar( 0, 255, 0), 2, 8, 0  );
             line( histImage, Point( bin_w*(i-1), hist_h - cvRound(r_hist.at<float>(i-1)) ),
                 Point( bin_w*(i), hist_h - cvRound(r_hist.at<float>(i)) ),
-                Scalar( 0, 0, 255), 2, 8, 0  );*/
+                Scalar( 0, 0, 255), 2, 8, 0  );
         }
+
         
         imshow("Source image", histImage );
         cv::waitKey(2000);
@@ -415,7 +432,8 @@ double register_histogram_pointclouds(darknet_ros_msgs::BoundingBox bounding_box
         std::cout << "max val: " << fval << " ID " << maxindex <<std::endl;
 
         return bin_w*maxindex;
-
+        */
+        return double(median * delta) *0.001;
 
 
 
