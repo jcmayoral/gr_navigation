@@ -8,7 +8,7 @@ namespace gr_depth_processing
 {
 
   void MyNodeletClass::onInit(){
-
+    tf2_listener_= new  tf2_ros::TransformListener(tf_buffer_);
     filterImage = &cv_filter;
     //registerImage = &register_pointclouds;
     //registerImage = &register_ransac_pointclouds;
@@ -115,27 +115,34 @@ namespace gr_depth_processing
       return;
     }
 
-   detected_objects_.header= depth_image->header;
    detected_objects_.poses.clear();
-   geometry_msgs::Pose p;
-   p.orientation.w = 1.0;
    double dist;
 
    float center_x = camera_depth_info_.K[2];
    float center_y = camera_depth_info_.K[5];
    float constant_x = 1.0 /  camera_depth_info_.K[0];
    float constant_y = 1.0 /  camera_depth_info_.K[4];
+   geometry_msgs::TransformStamped to_base_link_transform; // My frames are named "base_link" and "leap_motion"
+
 
     for (auto it = bounding_boxes->bounding_boxes.begin(); it != bounding_boxes->bounding_boxes.end(); ++it){
+      geometry_msgs::PoseStamped in, out;
+
       int center_row = it->xmin + (it->xmax - it->xmin)/2;
       int center_col = it->ymin + (it->ymax - it->ymin)/2;
       objects_center.push_back(std::make_pair(center_row, center_col));
       dist = registerImage(*it, process_frame, camera_depth_info_);
 
-      p.position.x = (center_row - center_x) * dist * constant_x;
-      p.position.y = (center_col - center_y) * dist * constant_y;
-      p.position.z = dist;
-      detected_objects_.poses.push_back(p);
+      in.header = depth_image->header;
+      in.pose.orientation.w = 1.0;
+      in.pose.position.x = (center_row - center_x) * dist * constant_x;
+      in.pose.position.y = (center_col - center_y) * dist * constant_y;
+      in.pose.position.z = dist;
+    
+      to_base_link_transform = tf_buffer_.lookupTransform("base_link", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
+      tf2::doTransform(in, out, to_base_link_transform);
+      detected_objects_.header= out.header;
+      detected_objects_.poses.push_back(out.pose);
       distance_to_objects.push_back(it->Class + std::to_string(dist));
       boundRect.push_back(cv::Rect(it->xmin, it->ymin, it->xmax - it->xmin, it->ymax - it->ymin));
     }

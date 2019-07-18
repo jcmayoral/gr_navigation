@@ -13,8 +13,12 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PoseStamped.h>
+
 #include <visualization_msgs/MarkerArray.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/function.hpp>
@@ -74,6 +78,9 @@ namespace gr_depth_processing
       //intrinsic params
       sensor_msgs::CameraInfo camera_color_info_;
       sensor_msgs::CameraInfo camera_depth_info_;
+
+      tf2_ros::Buffer tf_buffer_;
+      tf2_ros::TransformListener* tf2_listener_;
 
       boost::recursive_mutex mutex;
   };

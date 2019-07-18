@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>gr_depth_processing</name>
-  <version>0.3.3</version>
+  <version>0.3.4</version>
   <description>This packages provides depth image procesing definition</description>
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
   <license>MIT</license>
@@ -16,6 +16,8 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>pluginlib</build_depend>
   <build_depend>cv_bridge</build_depend>
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_ros</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>darknet_ros_msgs</build_depend>
 
@@ -28,6 +30,8 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>cv_bridge</run_depend>
+  <run_depend>tf2</run_depend>
+  <run_depend>tf2_ros</run_depend>
   <run_depend>message_filters</run_depend>
   <run_depend>darknet_ros_msgs</run_depend>
 
