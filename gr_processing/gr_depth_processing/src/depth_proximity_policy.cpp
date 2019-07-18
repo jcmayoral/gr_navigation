@@ -142,6 +142,7 @@ namespace gr_depth_processing
       to_base_link_transform = tf_buffer_.lookupTransform("base_link", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
       tf2::doTransform(in, out, to_base_link_transform);
       detected_objects_.header= out.header;
+      detected_objects_.header.stamp = ros::Time::now();
       detected_objects_.poses.push_back(out.pose);
       distance_to_objects.push_back(it->Class + std::to_string(dist));
       boundRect.push_back(cv::Rect(it->xmin, it->ymin, it->xmax - it->xmin, it->ymax - it->ymin));
