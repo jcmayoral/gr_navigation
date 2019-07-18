@@ -69,6 +69,7 @@ namespace gr_depth_processing
       ros::Publisher obstacle_pub_;
       ros::Publisher depth_image_pub_;
       visualization_msgs::MarkerArray marker_array_;
+      geometry_msgs::PoseArray detected_objects_;
 
       //intrinsic params
       sensor_msgs::CameraInfo camera_color_info_;

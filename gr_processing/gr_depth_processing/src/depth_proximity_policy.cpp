@@ -55,6 +55,9 @@ namespace gr_depth_processing
   }
 
   void MyNodeletClass::publishOutput(cv::Mat frame, bool rotate){
+
+    obstacle_pub_.publish(detected_objects_);
+
     sensor_msgs::Image out_msg;
     cv_bridge::CvImage img_bridge;
     std_msgs::Header header;
@@ -112,11 +115,28 @@ namespace gr_depth_processing
       return;
     }
 
+   detected_objects_.header= depth_image->header;
+   detected_objects_.poses.clear();
+   geometry_msgs::Pose p;
+   p.orientation.w = 1.0;
+   double dist;
+
+   float center_x = camera_depth_info_.K[2];
+   float center_y = camera_depth_info_.K[5];
+   float constant_x = 1.0 /  camera_depth_info_.K[0];
+   float constant_y = 1.0 /  camera_depth_info_.K[4];
+
     for (auto it = bounding_boxes->bounding_boxes.begin(); it != bounding_boxes->bounding_boxes.end(); ++it){
       int center_row = it->xmin + (it->xmax - it->xmin)/2;
       int center_col = it->ymin + (it->ymax - it->ymin)/2;
       objects_center.push_back(std::make_pair(center_row, center_col));
-      distance_to_objects.push_back(it->Class + std::to_string(registerImage(*it, process_frame, camera_depth_info_)));
+      dist = registerImage(*it, process_frame, camera_depth_info_);
+
+      p.position.x = (center_row - center_x) * dist * constant_x;
+      p.position.y = (center_col - center_y) * dist * constant_y;
+      p.position.z = dist;
+      detected_objects_.poses.push_back(p);
+      distance_to_objects.push_back(it->Class + std::to_string(dist));
       boundRect.push_back(cv::Rect(it->xmin, it->ymin, it->xmax - it->xmin, it->ymax - it->ymin));
     }
 
@@ -124,12 +144,12 @@ namespace gr_depth_processing
     auto it2 = objects_center.begin();
     auto it3 = boundRect.begin();
 
+
     for (; it!= distance_to_objects.end(); ++it, ++it2, ++it3){
       cv::putText(process_frame, *it, cv::Point(it2->first, it2->second), cv::FONT_HERSHEY_PLAIN, 1,   0xffff , 2, 8);
-      cv::putText(process_frame, std::to_string(0.001*(depth_array[it2->first+ it2->second * process_frame.rows])), cv::Point(it2->first, it2->second+20), cv::FONT_HERSHEY_PLAIN,
-                              1,   0xffff , 2, 8);
+     // cv::putText(process_frame, std::to_string(0.001*(depth_array[it2->first+ it2->second * process_frame.rows])), cv::Point(it2->first, it2->second+20), cv::FONT_HERSHEY_PLAIN,
+       //                       1,   0xffff , 2, 8);
       cv::rectangle(process_frame, *it3, 0xffff);
-
     }
 
     publishOutput(process_frame, false);
