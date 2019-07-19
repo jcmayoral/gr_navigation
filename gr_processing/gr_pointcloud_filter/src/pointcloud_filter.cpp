@@ -7,9 +7,6 @@
 // watch the capitalization carefully
 PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 
-#include <gr_pointcloud_filter/helloWorld.h>
-#include <cuda.h>
-
 namespace gr_pointcloud_filter{
 
      template <class T> void MyNodeletClass::publishPointCloud(T t){
@@ -28,6 +25,7 @@ namespace gr_pointcloud_filter{
 
 
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
+      cudaprocess_manager_.test(msg);
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
 
@@ -141,6 +139,7 @@ namespace gr_pointcloud_filter{
     }
 
     void MyNodeletClass::setFiltersParams(gr_pointcloud_filter::FiltersConfig &config){
+      cudaprocess_manager_.reconfigure(config);
       //boost::recursive_mutex::scoped_lock scoped_lock(mutex); //if params are bad the PC process takes too long and no way to change them
 		  enable_visualization_ = config.visualize_pointcloud;
       //Enable
@@ -226,7 +225,7 @@ namespace gr_pointcloud_filter{
       ros::NodeHandle nh;
       segmentation_filter_ = pcl::SACSegmentation<pcl::PointXYZ> (true);
       conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
-
+      cudaprocess_manager_ = CustomCUDAManager();
     	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
     	dyn_server_.setCallback(dyn_server_cb_);
     	pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
@@ -236,6 +235,5 @@ namespace gr_pointcloud_filter{
       last_processing_time_ = ros::Time::now();
     	NODELET_DEBUG("Initializing nodelet...");
       ROS_INFO("The last line I see");
-    	test();
     }
 }

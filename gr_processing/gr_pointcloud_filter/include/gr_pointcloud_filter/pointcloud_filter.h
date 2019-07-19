@@ -27,6 +27,8 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/region_growing.h>
 
+#include <pcl/cuda/filters/include/pcl/cuda/filters/voxel_grid.h>
+
 //dynamic_reconfigure
 #include <dynamic_reconfigure/server.h>
 #include <gr_pointcloud_filter/FiltersConfig.h>
@@ -74,6 +76,7 @@ namespace gr_pointcloud_filter
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig>::CallbackType dyn_server_cb_;
             bool filters_enablers_[6];
             bool enable_visualization_;
+            CustomCUDAManager cudaprocess_manager_;
 
     	public:
             virtual void onInit();
