@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(gr_depth_processing)
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+add_definitions(-std=c++11)
+
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 find_package(catkin REQUIRED
         COMPONENTS
@@ -14,6 +16,8 @@ find_package(catkin REQUIRED
         cv_bridge
         message_filters
         darknet_ros_msgs
+        tf2
+        tf2_ros
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -42,6 +46,8 @@ catkin_package(
         cv_bridge
         message_filters
         darknet_ros_msgs
+        tf2
+        tf2_ros
 )
 
 file(GLOB SOURCES src/*.cpp)

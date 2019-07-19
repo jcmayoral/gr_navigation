@@ -7,6 +7,9 @@
 // watch the capitalization carefully
 PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 
+#include <gr_pointcloud_filter/helloWorld.h>
+#include <cuda.h>
+
 namespace gr_pointcloud_filter{
 
      template <class T> void MyNodeletClass::publishPointCloud(T t){
@@ -23,7 +26,7 @@ namespace gr_pointcloud_filter{
       last_processing_time_ = ros::Time::now();
      }
 
-      
+
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
@@ -78,42 +81,34 @@ namespace gr_pointcloud_filter{
 
       //Start testing
       //TODO remove from here ****
-     	pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-    	pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
-    	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator;
-    	normal_estimator.setSearchMethod (tree);
-    	normal_estimator.setInputCloud (cloud);
-    	normal_estimator.setKSearch (1);
-    	normal_estimator.compute (*normals);
+      pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+      pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+
+      normal_estimator_.setSearchMethod (tree);
+      normal_estimator_.setInputCloud (cloud);
+      normal_estimator_.setKSearch (1);
+      normal_estimator_.compute (*normals);
 
 
-    	pcl::IndicesPtr indices (new std::vector <int>);
-    	pcl::PassThrough<pcl::PointXYZ> pass;
-    	pass.setInputCloud (cloud);
-    	pass.setFilterFieldName ("z");
-      pass.setFilterLimits (-0.1,1.0);
-    	pass.filter (*indices);
-
+      pcl::IndicesPtr indices (new std::vector <int>);
+      pass_through_filter_.setInputCloud (cloud);
+      pass_through_filter_.filter (*indices);
 
       if (indices->size() <1){
         ROS_WARN("Not enough indices");
         publishPointCloud<pcl::PointCloud<pcl::PointXYZ>>(*cloud);
         return;
       }
-      pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
-    	reg.setMinClusterSize (1);
-    	reg.setMaxClusterSize (100);
-    	reg.setSearchMethod (tree);
-    	reg.setNumberOfNeighbours(cluster_neighbours_number_);
-    	reg.setInputCloud (cloud);
-    	reg.setIndices (indices);
-    	reg.setInputNormals (normals);
-    	reg.setSmoothnessThreshold ( smoothness_threshold_/ 180.0 * M_PI);
-    	//reg.setCurvatureThreshold (10.0);
+
+      region_growing_filter_.setSearchMethod (tree);
+      region_growing_filter_.setInputCloud (cloud);
+      region_growing_filter_.setIndices (indices);
+      region_growing_filter_.setInputNormals (normals);
+      //reg.setCurvatureThreshold (10.0);
 
 
       std::vector <pcl::PointIndices> clusters;
-    	reg.extract (clusters);
+      region_growing_filter_.extract (clusters);
       ROS_DEBUG_STREAM("Clusters size" << clusters.size());
       if (clusters.size()== 0){
         ROS_WARN("Not clusters found");
@@ -140,8 +135,8 @@ namespace gr_pointcloud_filter{
         clusters_msg.poses.push_back(cluster_center);
       }
       obstacle_pub_.publish(clusters_msg);
-      pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = reg.getColoredCloud ();
-    	publishPointCloud<pcl::PointCloud <pcl::PointXYZRGB>>(*colored_cloud);
+      pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = region_growing_filter_.getColoredCloud ();
+      publishPointCloud<pcl::PointCloud <pcl::PointXYZRGB>>(*colored_cloud);
 
     }
 
@@ -197,6 +192,15 @@ namespace gr_pointcloud_filter{
       //RegionGrowing
       smoothness_threshold_ = config.smoothness_threshold;
       cluster_neighbours_number_ = config.cluster_neighbours_number;
+      region_growing_filter_.setMinClusterSize (100);
+      region_growing_filter_.setMaxClusterSize (200);
+      region_growing_filter_.setNumberOfNeighbours(cluster_neighbours_number_);
+      region_growing_filter_.setSmoothnessThreshold ( smoothness_threshold_/ 180.0 * M_PI);
+
+      //Passthrough Filter
+      pass_through_filter_.setFilterFieldName ("z");
+      pass_through_filter_.setFilterLimits (-0.1,2.0);
+
     }
 
     void MyNodeletClass::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
@@ -231,5 +235,7 @@ namespace gr_pointcloud_filter{
       last_ground_height_ = 0;
       last_processing_time_ = ros::Time::now();
     	NODELET_DEBUG("Initializing nodelet...");
+      ROS_INFO("The last line I see");
+    	test();
     }
 }

@@ -13,8 +13,12 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/String.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PoseStamped.h>
+
 #include <visualization_msgs/MarkerArray.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/function.hpp>
@@ -53,7 +57,7 @@ namespace gr_depth_processing
 
       boost::function<void(cv::Mat&)> filterImage;
       boost::function<double(darknet_ros_msgs::BoundingBox, cv::Mat&, sensor_msgs::CameraInfo)> registerImage;
- 
+
     protected:
       bool convertROSImage2Mat(cv::Mat& frame,  const sensor_msgs::ImageConstPtr& ros_image);
       void publishOutput(cv::Mat frame, bool rotate = true);
@@ -69,10 +73,14 @@ namespace gr_depth_processing
       ros::Publisher obstacle_pub_;
       ros::Publisher depth_image_pub_;
       visualization_msgs::MarkerArray marker_array_;
+      geometry_msgs::PoseArray detected_objects_;
 
       //intrinsic params
       sensor_msgs::CameraInfo camera_color_info_;
       sensor_msgs::CameraInfo camera_depth_info_;
+
+      tf2_ros::Buffer tf_buffer_;
+      tf2_ros::TransformListener* tf2_listener_;
 
       boost::recursive_mutex mutex;
   };

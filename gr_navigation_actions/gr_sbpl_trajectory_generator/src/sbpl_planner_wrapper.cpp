@@ -4,7 +4,8 @@ using namespace gr_sbpl_trajectory_generator;
 
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"),
-                                odom_received_(false), tfBuffer(ros::Duration(5)),tf2_listener(tfBuffer){
+                                odom_received_(false), tfBuffer(ros::Duration(5)),position_tolerance_(1.0),
+                                tf2_listener(tfBuffer){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
 
@@ -128,13 +129,17 @@ void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
 
   if (makePlan(start_,goal_)){
     ROS_INFO("WORKING");
-    executePath();
+    if (executePath()){
+      as_->setSucceeded();
+    }
+    else{
+      as_->setAborted();
+    }
   }
   else{
     ROS_ERROR("ERROR");
+    as_->setAborted();
   }
-  as_->setSucceeded();
-
 }
 
 
@@ -207,7 +212,7 @@ double GRSBPLPlanner::getRotationInFrame(geometry_msgs::PoseStamped& pose, std::
 
 
 
-void GRSBPLPlanner::executePath(){
+bool GRSBPLPlanner::executePath(){
   geometry_msgs::TransformStamped base_link_to_map;
 
   tf::Pose pose;
@@ -237,6 +242,12 @@ void GRSBPLPlanner::executePath(){
 
     //Difference between expected and actual position on time t (P Controller)
     cmd_vel.linear.x = plan_[0].pose.position.x- current_pose.pose.position.x;
+
+    if (cmd_vel.linear.x > position_tolerance_){
+      stop();
+      return false;
+    }
+
     cmd_vel.linear.y = (plan_[0].pose.position.y - current_pose.pose.position.y);
     cmd_vel.angular.z = (yaw2 - yaw1);
 
@@ -278,8 +289,8 @@ void GRSBPLPlanner::executePath(){
   }
 
   stop();
-
   ROS_INFO("Motion Completed");
+  return true;
 }
 
 void GRSBPLPlanner::odom_cb(const nav_msgs::OdometryConstPtr odom_msg){

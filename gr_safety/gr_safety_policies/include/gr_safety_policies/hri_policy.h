@@ -38,6 +38,7 @@ namespace gr_safety_policies
       bool is_action_executed_;
       bool is_stop_requested_;
       bool is_action_requested_;
+      std::string speech_enabler_command_;
 
       ros::Subscriber command_sub_;
       std::vector<std::string> action_classes_;

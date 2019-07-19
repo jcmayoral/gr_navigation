@@ -36,6 +36,8 @@
 
 //C++
 #include <string>
+#include <gr_pointcloud_filter/helloWorld.h>
+
 
 namespace gr_pointcloud_filter
 {
@@ -54,6 +56,10 @@ namespace gr_pointcloud_filter
             pcl::RadiusOutlierRemoval<pcl::PointXYZ> radius_outliers_filter_;
             pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_;
             pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
+            pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator_;
+            pcl::PassThrough<pcl::PointXYZ> pass_through_filter_;
+            pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> region_growing_filter_;
+    	
 
             float eps_angle_;
             float min_radius_;
