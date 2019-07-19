@@ -36,6 +36,8 @@
 
 //C++
 #include <string>
+#include <gr_pointcloud_filter/helloWorld.h>
+
 
 namespace gr_pointcloud_filter
 {

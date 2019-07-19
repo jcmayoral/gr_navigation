@@ -7,6 +7,9 @@
 // watch the capitalization carefully
 PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 
+#include <gr_pointcloud_filter/helloWorld.h>
+#include <cuda.h>
+
 namespace gr_pointcloud_filter{
 
      template <class T> void MyNodeletClass::publishPointCloud(T t){
@@ -23,7 +26,7 @@ namespace gr_pointcloud_filter{
       last_processing_time_ = ros::Time::now();
      }
 
-      
+
     void MyNodeletClass::applyFilters(const sensor_msgs::PointCloud2 msg){
     	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     	pcl::fromROSMsg(msg, *cloud);
@@ -90,8 +93,8 @@ namespace gr_pointcloud_filter{
       pcl::IndicesPtr indices (new std::vector <int>);
       pass_through_filter_.setInputCloud (cloud);
       pass_through_filter_.filter (*indices);
-      
-      if (true){ //THIS IS COMMENT BECAUSE TESTING indices->size() <1){
+
+      if (indices->size() <1){
         ROS_WARN("Not enough indices");
         publishPointCloud<pcl::PointCloud<pcl::PointXYZ>>(*cloud);
         return;
@@ -232,5 +235,7 @@ namespace gr_pointcloud_filter{
       last_ground_height_ = 0;
       last_processing_time_ = ros::Time::now();
     	NODELET_DEBUG("Initializing nodelet...");
+      ROS_INFO("The last line I see");
+    	test();
     }
 }
