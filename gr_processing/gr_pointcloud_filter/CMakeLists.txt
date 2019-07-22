@@ -4,13 +4,14 @@ project(gr_pointcloud_filter)
 add_compile_options(-std=c++11)
 
 find_package(CUDA REQUIRED)
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED
     COMPONENTS
     geometry_msgs
     sensor_msgs
     roscpp
-    pcl_ros
+    #pcl_ros
     pcl_conversions
     dynamic_reconfigure
 )
@@ -28,11 +29,6 @@ include_directories(
 )
 
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-#SET(CUDA_NVCC_FLAGS "-arch=sm_20" CACHE STRING "nvcc flags" FORCE)
-SET (CUDA_VERBOSE_BUILD ON CACHE BOOL "nvcc verbose" FORCE)
-#SET(LIB_TYPE STATIC) 
-CUDA_ADD_LIBRARY(TestLib ${LIB_TYPE} src/helloWorld.cu)
 
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}
@@ -40,7 +36,7 @@ catkin_package(
   CATKIN_DEPENDS
     geometry_msgs
     roscpp
-    pcl_ros
+    #pcl_ros
     pcl_conversions
     dynamic_reconfigure
 )
@@ -54,12 +50,10 @@ add_library(${PROJECT_NAME}
 )
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${PROJECT_NAME} gr_poincloud_filter_gencfg TestLib)
 
 target_link_libraries( ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
-  TestLib
 )
 
 install(TARGETS ${PROJECT_NAME}

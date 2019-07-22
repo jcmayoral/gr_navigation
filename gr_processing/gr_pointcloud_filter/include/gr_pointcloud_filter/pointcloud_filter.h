@@ -26,8 +26,9 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/region_growing.h>
+#include <pcl/segmentation/extract_clusters.h>
 
-#include <pcl/cuda/filters/include/pcl/cuda/filters/voxel_grid.h>
+//#include <pcl/cuda/filters/passthrough.h>
 
 //dynamic_reconfigure
 #include <dynamic_reconfigure/server.h>
@@ -38,8 +39,6 @@
 
 //C++
 #include <string>
-#include <gr_pointcloud_filter/helloWorld.h>
-
 
 namespace gr_pointcloud_filter
 {
@@ -60,15 +59,9 @@ namespace gr_pointcloud_filter
             pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
             pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator_;
             pcl::PassThrough<pcl::PointXYZ> pass_through_filter_;
-            pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> region_growing_filter_;
-    	
+            pcl::EuclideanClusterExtraction<pcl::PointXYZ> euclidean_cluster_;
 
-            float eps_angle_;
-            float min_radius_;
-            int min_neighbours_;
-            float last_ground_height_;
-            float smoothness_threshold_;
-            int cluster_neighbours_number_;
+            //pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> region_growing_filter_;;
             ros::Time last_processing_time_;
 
             //Dynamic Reconfigure
@@ -76,7 +69,6 @@ namespace gr_pointcloud_filter
             dynamic_reconfigure::Server<gr_pointcloud_filter::FiltersConfig>::CallbackType dyn_server_cb_;
             bool filters_enablers_[6];
             bool enable_visualization_;
-            CustomCUDAManager cudaprocess_manager_;
 
     	public:
             virtual void onInit();

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>gr_pointcloud_filter</name>
-  <version>0.4.0</version>
+  <version>0.4.1</version>
   <description>
     A set of filters applied to the velodyne_pointcloud
   </description>
@@ -13,7 +13,6 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>roscpp</build_depend>
-  <build_depend>pcl_ros</build_depend>
   <build_depend>pcl_conversions</build_depend>
 
   <build_depend>cmake_modules</build_depend>
@@ -22,7 +21,6 @@
   <run_depend>roscpp</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
-  <run_depend>pcl_ros</run_depend>
   <run_depend>pcl_conversions</run_depend>
   <run_depend>cmake_modules</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
