@@ -7,7 +7,9 @@ find_package(catkin REQUIRED
         COMPONENTS
 )
 
-find_package(PCL)
+find_package(PCL 1.9 REQUIRED)
+message(STATUS ${CUDA_INCLUDE_DIRS})
+message(STATUS ${CUDA_TOOLKIT_INCLUDE})
 find_package(CUDA)
 
 find_package(Boost REQUIRED COMPONENTS
@@ -15,6 +17,7 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 
+add_definitions(${PCL_DEFINITIONS})
 
 
 catkin_package(
@@ -23,14 +26,24 @@ catkin_package(
         roscpp
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include
+  ${PCL_INCLUDE_DIRS} 
+  ${CUDA_INCLUDE_DIRS}
+
+)
 
 #add_library(gr_map_utils src/tf_frame_publisher.cpp)
 
-#add_executable(multi_map_server src/multi_map_server_node.cpp)
+add_executable(kinetic_ransac src/kinect_ransac.cpp)
 #target_link_libraries(multi_map_server
 #    ${catkin_LIBRARIES}
 #)
+
+ target_link_libraries(kinetic_ransac
+   ${catkin_LIBRARIES}
+   ${PCL_LIBRARIES}
+   ${Boost_LIBRARIES} Threads::Threads
+ )
 
 
 #add_dependencies(topological_map_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
