@@ -40,6 +40,8 @@
 #include <thrust/remove.h>
 #include <vector_types.h>
 
+using namespace pcl::cuda;
+using namespace std;
 namespace pcl_cuda_filters
 {
 
@@ -47,7 +49,7 @@ namespace pcl_cuda_filters
   struct isFiniteAOS
   {
     __inline__ __device__ bool
-    operator () (const PointXYZRGB &pt)
+    operator () (const pcl::PointXYZRGB &pt)
     //operator () (const float3 &pt)
     {
       return (isfinite (pt.x) && isfinite (pt.y) && isfinite (pt.z));
@@ -88,8 +90,8 @@ namespace pcl_cuda_filters
       using Filter<CloudT>::filter_name_;
 
       using PointCloud = typename PCLCUDABase<CloudT>::PointCloud;
-      using PointCloudPtr = typename PointCloud::Ptr;
-      using PointCloudConstPtr = typename PointCloud::ConstPtr;
+      //using PointCloudPtr = typename PointCloud::Ptr;
+      //using PointCloudConstPtr = typename PointCloud::ConstPtr;
 
       /** \brief Empty constructor. */
       PassThrough ()
@@ -128,9 +130,9 @@ namespace pcl_cuda_filters
       applyFilter (PointCloud &output)
       {
         // Allocate enough space
-        output.points.resize (input_->points.size ());
+        output.points.resize (input_.points.size ());
         // Copy data
-        Device<PointXYZRGB>::type::iterator nr_points = thrust::copy_if (input_->points.begin (), input_->points.end (), output.points.begin (), isFiniteAOS ());
+        Device<PointXYZRGB>::type::iterator nr_points = thrust::copy_if (input_.points.begin (), input_.points.end (), output.points.begin (), isFiniteAOS ());
         //Device<float3>::type::iterator nr_points = thrust::copy_if (input_->points.begin (), input_->points.end (), output.points.begin (), isFiniteAOS ());
         output.points.resize (nr_points - output.points.begin ());
 
@@ -167,11 +169,11 @@ namespace pcl_cuda_filters
         if (!zip_)
         {
           // Allocate enough space
-          output.resize (input_->size ());
+          output.resize (input_.size ());
           // Copy data
-          Device<float>::type::iterator nr_points = thrust::copy_if (input_->points_x.begin (), input_->points_x.end (), output.points_x.begin (), isFiniteSOA ());
-          nr_points = thrust::copy_if (input_->points_y.begin (), input_->points_y.end (), output.points_y.begin (), isFiniteSOA ());
-          nr_points = thrust::copy_if (input_->points_z.begin (), input_->points_z.end (), output.points_z.begin (), isFiniteSOA ());
+          Device<float>::type::iterator nr_points = thrust::copy_if (input_.points_x.begin (), input_.points_x.end (), output.points_x.begin (), isFiniteSOA ());
+          nr_points = thrust::copy_if (input_.points_y.begin (), input_.points_y.end (), output.points_y.begin (), isFiniteSOA ());
+          nr_points = thrust::copy_if (input_.points_z.begin (), input_.points_z.end (), output.points_z.begin (), isFiniteSOA ());
           output.resize (nr_points - output.points_z.begin ());
 
           //std::cerr << "[applyFilterSOA]: ";
@@ -180,15 +182,15 @@ namespace pcl_cuda_filters
 
         else
         {
-          output = *input_;
+          output = input_;
           PointCloud::zip_iterator result = thrust::remove_if (output.zip_begin (), output.zip_end (), isFiniteZIPSOA ());
           PointCloud::iterator_tuple result_tuple = result.get_iterator_tuple ();
           PointCloud::float_iterator xiter = thrust::get<0> (result_tuple),
                                      yiter = thrust::get<1> (result_tuple),
                                      ziter = thrust::get<2> (result_tuple);
 
-          unsigned badpoints = distance (xiter, output.points_x.end ());
-          unsigned goodpoints = distance (output.points_x.begin (), xiter);
+          unsigned badpoints = std::distance (xiter, output.points_x.end ());
+          unsigned goodpoints = std::distance (output.points_x.begin (), xiter);
 
           output.resize (goodpoints);
 

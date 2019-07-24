@@ -64,12 +64,12 @@ namespace pcl_cuda_filters
       using PCLCUDABase<CloudT>::input_;
 
       using PointCloud = typename PCLCUDABase<CloudT>::PointCloud;
-      using PointCloudPtr = typename PointCloud::Ptr;
-      using PointCloudConstPtr = typename PointCloud::ConstPtr;
+      //using PointCloudPtr = typename PointCloud::Ptr;
+      //using PointCloudConstPtr = typename PointCloud::ConstPtr;
 
       /** \brief Empty constructor. */
-      Filter () : filter_field_name_ (""), 
-                  filter_limit_min_ (-FLT_MAX), filter_limit_max_ (FLT_MAX), 
+      Filter () : filter_field_name_ (""),
+                  filter_limit_min_ (-FLT_MAX), filter_limit_max_ (FLT_MAX),
                   filter_limit_negative_ (false)
       {};
 
@@ -78,15 +78,15 @@ namespace pcl_cuda_filters
         * this interval will be discarded.
         * \param field_name the name of the field that contains values used for filtering
         */
-      inline void 
+      inline void
       setFilterFieldName (const std::string &field_name) { filter_field_name_ = field_name; }
 
       /** \brief Get the name of the field used for filtering. */
-      inline std::string const 
+      inline std::string const
       getFilterFieldName () { return (filter_field_name_); }
 
       /** \brief Set the field filter limits. All points having field values
-        * outside this interval will be discarded.  
+        * outside this interval will be discarded.
         * \param limit_min the minimum allowed field value
         * \param limit_max the maximum allowed field value
         */
@@ -97,8 +97,8 @@ namespace pcl_cuda_filters
         filter_limit_max_ = limit_max;
       }
 
-      /** \brief Get the field filter limits (min/max) set by the user. 
-        * The default values are -FLT_MAX, FLT_MAX. 
+      /** \brief Get the field filter limits (min/max) set by the user.
+        * The default values are -FLT_MAX, FLT_MAX.
         * \param limit_min the minimum limit
         * \param limit_max the maximum limit
         */
@@ -113,19 +113,19 @@ namespace pcl_cuda_filters
         * specified by setFilterLimits (min, max).  Default: false.
         * \param limit_negative return data inside the interval (false) or outside (true)
         */
-      inline void 
-      setFilterLimitsNegative (const bool limit_negative) 
-      { 
-        filter_limit_negative_ = limit_negative; 
+      inline void
+      setFilterLimitsNegative (const bool limit_negative)
+      {
+        filter_limit_negative_ = limit_negative;
       }
 
       /** \brief Get whether the data outside the interval (min/max) is to be
-        * returned (true) or inside (false). 
+        * returned (true) or inside (false).
         * \param limit_negative the limit_negative flag
         */
-      inline void 
+      inline void
       getFilterLimitsNegative (bool &limit_negative) { limit_negative = filter_limit_negative_; }
-      inline bool 
+      inline bool
       getFilterLimitsNegative () { return (filter_limit_negative_); }
 
       /** \brief Calls the filtering method and returns the filtered dataset on the device
@@ -163,15 +163,15 @@ namespace pcl_cuda_filters
       /** \brief Set to true if we want to return the data outside (\a filter_limit_min_;\a filter_limit_max_). Default: false. */
       bool filter_limit_negative_;
 
-      /** \brief Abstract filter method. 
-        * 
+      /** \brief Abstract filter method.
+        *
         * The implementation needs to set output.{points, width, height, is_dense}.
         */
-      virtual void 
+      virtual void
       applyFilter (PointCloud &output) = 0;
 
       /** \brief Get a string representation of the name of this class. */
-      inline const std::string& 
+      inline const std::string&
       getClassName () const { return (filter_name_); }
   };
 }
