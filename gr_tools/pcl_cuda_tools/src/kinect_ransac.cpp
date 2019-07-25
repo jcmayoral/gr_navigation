@@ -43,7 +43,7 @@ main (int argc, char **argv)
   bool use_device = false;
   if (argc >= 2)
     use_device = true;
-  SimpleKinectTool<pcl::cuda::Device> v;
+  SimpleKinectTool<pcl::cuda::Host> v;
   //v.run (use_device);
   ros::spin();
   return 0;
