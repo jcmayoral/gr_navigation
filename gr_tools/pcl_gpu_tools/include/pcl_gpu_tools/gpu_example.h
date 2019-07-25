@@ -42,11 +42,17 @@ private:
   std::mutex mutex_;
   bool go_on;
   ros::Subscriber pc_sub_;
+  pcl::gpu::Octree::PointCloud cloud_device;
+  pcl::gpu::EuclideanClusterExtraction gec;
 
+  
 public:
     GPUExample ()  {
         ros::NodeHandle nh;
         pc_sub_ = nh.subscribe("/velodyne_points", 10, &GPUExample::pointcloud_cb, this);
+        gec.setClusterTolerance (0.02); // 2cm
+        gec.setMinClusterSize (100);
+        gec.setMaxClusterSize (25000);
     }
 
     void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
@@ -61,7 +67,7 @@ public:
     //template <template <typename> class Storage> void
     int run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered){
           ROS_INFO("WORKING");
-            pcl::PCDWriter writer;
+          //pcl::PCDWriter writer;
 
 /////////////////////////////////////////////
 /// CPU VERSION
@@ -109,18 +115,14 @@ public:
 
   clock_t tStart = clock();
 
-  pcl::gpu::Octree::PointCloud cloud_device;
+
   cloud_device.upload(cloud_filtered->points);
-  
+
   pcl::gpu::Octree::Ptr octree_device (new pcl::gpu::Octree);
   octree_device->setCloud(cloud_device);
   octree_device->build();
 
   std::vector<pcl::PointIndices> cluster_indices_gpu;
-  pcl::gpu::EuclideanClusterExtraction gec;
-  gec.setClusterTolerance (0.02); // 2cm
-  gec.setMinClusterSize (100);
-  gec.setMaxClusterSize (25000);
   gec.setSearchMethod (octree_device);
   gec.setHostCloud( cloud_filtered);
   gec.extract (cluster_indices_gpu);
