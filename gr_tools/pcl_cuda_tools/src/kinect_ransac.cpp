@@ -34,7 +34,7 @@
  * $Id$
  *
  */
-//#include <pcl_cuda_tools/kinetic_ransac.h>
+#include <pcl_cuda_tools/kinetic_ransac.h>
 
 int
 main (int argc, char **argv)

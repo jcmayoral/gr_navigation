@@ -27,6 +27,8 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 
 using namespace pcl::cuda;

@@ -12,16 +12,23 @@ find_package(catkin REQUIRED
 )
 
 find_package(PCL 1.9 REQUIRED)
-find_package(CUDA 10.0 REQUIRED)
 message(STATUS ${CUDA_INCLUDE_DIRS})
 message(STATUS ${CUDA_TOOLKIT_INCLUDE})
 
 
 
-SET(CUDA_NVCC_FLAGS "-arch=sm_26" CACHE STRING "nvcc flags" FORCE)
+SET(CUDA_NVCC_FLAGS "-arch=sm_61" CACHE STRING "nvcc flags" FORCE)
 SET (CUDA_VERBOSE_BUILD ON CACHE BOOL "nvcc verbose" FORCE)
-SET(LIB_TYPE STATIC)
-CUDA_ADD_LIBRARY(TestLib ${LIB_TYPE} src/kinetic_ransac.cu)
+set(CUDA_INCLUDE_DIRS /usr/local/cuda-10.1/include/ ${CUDA_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+SET(CUDA_LIBRARIES ${CUDA_LIBRARIES} "/usr/local/cuda-10.1/lib64/libcudart.so" "/usr/local/cuda-10.1/lib64/libcublas.so")
+
+#SET(LIB_TYPE STATIC)
+#CUDA_ADD_LIBRARY(TestLib ${LIB_TYPE} src/kinetic_ransac.cu)
+#cuda_add_executable(
+#  TestLib
+#  src/kinetic_ransac.cu
+#)
+
 
 
 find_package(Boost REQUIRED COMPONENTS
@@ -46,17 +53,19 @@ include_directories(include
 )
 
 #add_library(gr_map_utils src/tf_frame_publisher.cpp)
+#cuda_add_library(TestLib src/kinetic_ransac.cu)
+#set_property(TARGET TestLib PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+
 
 add_executable(kinetic_ransac src/kinect_ransac.cpp)
-target_link_libraries(kinetic_ransac
-    ${catkin_LIBRARIES}
-)
 
  target_link_libraries(kinetic_ransac
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
-   ${Boost_LIBRARIES} Threads::Threads
-   TestLib
+   ${Boost_LIBRARIES}
+   #Threads::Threads
+   #TestLib
  )
 
 

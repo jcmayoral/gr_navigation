@@ -1,9 +1,9 @@
 #include <pcl/cuda/time_cpu.h>
 #include <pcl/cuda/time_gpu.h>
-//#include <pcl/cuda/io/cloud_to_pcl.h>
-//#include <pcl/cuda/io/extract_indices.h>
-//#include <pcl/cuda/io/disparity_to_cloud.h>
-///#include <pcl/cuda/io/host_device.h>
+#include <pcl/cuda/io/cloud_to_pcl.h>
+#include <pcl/cuda/io/extract_indices.h>
+#include <pcl/cuda/io/disparity_to_cloud.h>
+#include <pcl/cuda/io/host_device.h>
 //#include <pcl/cuda/sample_consensus/sac_model_plane.h>
 #include <pcl/cuda/sample_consensus/sac_model_1point_plane.h>
 #include <pcl/cuda/sample_consensus/ransac.h>
@@ -65,7 +65,7 @@ public:
 
                                                                            //f = std::bind (&SimpleKinectTool::run_filter<pcl::cuda::Device>, this, _1);
     //f = [this](const pcl::PointCloud<pcl::PointXYZRGB::ConstPtr&> cloud){ run_filter<pcl::PointXYZRGB::ConstPtr&>(cloud)};
-    //run_filter(*output);
+    auto result = run_filter(output);
     //run_filter(*output);
     }
 
@@ -92,13 +92,13 @@ public:
     data_host.height = cloud->height;
     data_host.is_dense = cloud->is_dense;
 
-    typename pcl::cuda::PointCloudAOS<pcl::cuda::Device>::Ptr data;// = pcl::cuda::toStorage<pcl::cuda::Host, pcl::cuda::Device> (data_host);
+    typename pcl::cuda::PointCloudAOS<pcl::cuda::Device>::Ptr data = pcl::cuda::toStorage<pcl::cuda::Host, pcl::cuda::Device> (data_host);
 
 
     //pcl::PointCloud<pcl::PointXYZRGB>::Ptr output (new pcl::PointCloud<pcl::PointXYZRGB>);
     //pcl::cuda::toPCL (data_host, *output);
 
-    //typename SampleConsensusModelPlane<Storage>::Ptr sac_model (new SampleConsensusModelPlane<Storage> (data_host));
+    //typename pcl::cuda::SampleConsensusModelPlane<pcl::cuda::Device>::Ptr sac_model (new SampleConsensusModelPlane<pcl::cuda::Device> (data_host));
     //RandomSampleConsensus<Storage> sac (sac_model);
     //sac.setMaxIterations (10000);
     //sac.setDistanceThreshold (0.05);
@@ -122,9 +122,9 @@ public:
         }
     }
     */
+    SampleConsensusModel1PointPlane<pcl::cuda::Device>::Ptr sac_model (new SampleConsensusModel1PointPlane<pcl::cuda::Device> (data));
 
-
-      typename SampleConsensusModel1PointPlane<pcl::cuda::Device>::Ptr sac_model (new SampleConsensusModel1PointPlane<pcl::cuda::Device> (data));
+      /*
       RandomSampleConsensus<pcl::cuda::Device> sac (sac_model);
       sac.setMaxIterations (10000);
       sac.setDistanceThreshold (0.05);
@@ -146,6 +146,7 @@ public:
       //    colorIndices<Storage> (data, inliers_stencil, color);
         }
       }
+      */
 
     go_on = false;
     //std::cerr << "got here" << std::endl;
