@@ -34,15 +34,17 @@
  * $Id$
  *
  */
-#include <pcl_cuda_tools/kinetic_ransac.h>
+//#include <pcl_cuda_tools/kinetic_ransac.h>
 
-int 
+int
 main (int argc, char **argv)
 {
+  ros::init(argc, argv, "pcl_cuda_ransac");
   bool use_device = false;
   if (argc >= 2)
     use_device = true;
-  SimpleKinectTool v;
-  v.run (use_device);
+  SimpleKinectTool<pcl::cuda::Device> v;
+  //v.run (use_device);
+  ros::spin();
   return 0;
 }
