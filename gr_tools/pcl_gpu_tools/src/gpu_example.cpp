@@ -7,9 +7,9 @@ GPUExample::GPUExample ()  {
    	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
     cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
 
-    gec.setClusterTolerance (0.5);
-    gec.setMinClusterSize (10);
-    gec.setMaxClusterSize (40);
+    gec.setClusterTolerance (0.7);
+    gec.setMinClusterSize (1);
+    //gec.setMaxClusterSize (0);
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //Sphere
