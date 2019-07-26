@@ -7,16 +7,18 @@ GPUExample::GPUExample ()  {
    	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
     cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
 
-    gec.setClusterTolerance (0.7);
+    gec.setClusterTolerance (0.2);
     gec.setMinClusterSize (1);
     //gec.setMaxClusterSize (0);
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //Sphere
-    float limit = 20.0;
-
+    double limit = 20.0;
+    pass_through_filter_.setFilterFieldName ("z");
+    pass_through_filter_.setFilterLimits (0.0,2.0);
     //pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_ (new pcl::ConditionAnd<pcl::PointXYZ> ());
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, 0.0)));
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GE, -limit)));
+    //range_condAND->      addComparison (     FieldComparisonConstPtr (new pcl::FieldComparison<PointT> ("x", pcl::ComparisonOps::GE, newOriginX)));
     //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -limit)));
     //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, limit)));
     //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::GT, -limit)));
@@ -30,14 +32,18 @@ GPUExample::GPUExample ()  {
     segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
     Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
     segmentation_filter_.setAxis(axis);
-    segmentation_filter_.setEpsAngle(30.0* (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
+    segmentation_filter_.setEpsAngle(20.0* (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
     //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     segmentation_filter_.setMaxIterations(200);
-    segmentation_filter_.setDistanceThreshold(0.4);
+    segmentation_filter_.setDistanceThreshold(0.6);
     segmentation_filter_.setOptimizeCoefficients(true);
 
     extraction_filter_.setNegative(true);
+
+
+    outliers_filter_.setMeanK(10);
+    outliers_filter_.setStddevMulThresh(0.5);
 
 
 };
@@ -69,7 +75,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 
     //condition_removal_.setInputCloud (cloud_filtered);
     //condition_removal_.filter (*cloud_filtered);
-
+   
     int original_size = (int) cloud_filtered->points.size ();
     pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
@@ -93,7 +99,18 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     extraction_filter_.setIndices(filter_inliers);
     extraction_filter_.filter(*cloud_filtered);
 
-    ROS_WARN("INFO: starting with the GPU version");
+    //removing points out of borders (potential false positives)
+    pcl::IndicesPtr indices (new std::vector <int>);
+    pass_through_filter_.setInputCloud (cloud_filtered);
+    pass_through_filter_.filter (*indices);
+
+
+    //removing outliers
+    auto original_ponts_number = cloud_filtered->points.size();
+    outliers_filter_.setInputCloud(cloud_filtered);
+    outliers_filter_.filter(*cloud_filtered);
+
+    ROS_WARN_STREAM("INFO: starting with the GPU version: PC outliers original size " << original_ponts_number << "actual "<< cloud_filtered->points.size());
 
     clock_t tStart = clock();
 

@@ -9,6 +9,8 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <pcl/filters/statistical_outlier_removal.h>
+
 
 // The GPU specific stuff here
 #include <pcl/gpu/octree/octree.hpp>
@@ -25,7 +27,7 @@
 
 
 //#include <pcl/ModelCoefficients.h>
-//`#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/extract_indices.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/conditional_removal.h>
 
@@ -34,6 +36,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <geometry_msgs/PoseArray.h>
+#include <pcl/filters/passthrough.h>
 
 
 
@@ -61,7 +64,10 @@ private:
   pcl::ExtractIndices<pcl::PointXYZ> extraction_filter_;
   pcl::SACSegmentation<pcl::PointXYZ> segmentation_filter_;
   //pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_;
+  pcl::PassThrough<pcl::PointXYZ> pass_through_filter_;
   pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
+  pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
+
 
 
 

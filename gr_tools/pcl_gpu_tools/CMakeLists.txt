@@ -48,9 +48,12 @@ catkin_package(
     roscpp
     pcl_conversions
     geometry_msgs
+  DEPENDS
+    PCL
 )
 
 
+add_definitions(${PCL_DEFINITIONS})
 
 add_library(${PROJECT_NAME}
             src/gpu_example.cpp
@@ -62,10 +65,19 @@ add_library(${PROJECT_NAME}
 #cuda_add_library(TestLib src/kinetic_ransac.cu)
 #set_property(TARGET TestLib PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-add_definitions(${PCL_DEFINITIONS})
 
 
 add_executable(${PROJECT_NAME}_node src/gpu_example_node.cpp)
+
+target_link_libraries(${PROJECT_NAME}
+   ${catkin_LIBRARIES}
+   ${PCL_LIBRARIES}
+   ${PROJECT_NAME}
+   #${Boost_LIBRARIES}
+   #Threads::Threads
+   #TestLib
+ )
+
 
  target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
