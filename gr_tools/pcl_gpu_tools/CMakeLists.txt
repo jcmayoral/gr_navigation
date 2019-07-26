@@ -9,12 +9,10 @@ find_package(catkin REQUIRED
         COMPONENTS
         roscpp
         pcl_conversions
+        geometry_msgs
 )
 
 find_package(PCL 1.9 REQUIRED)
-message(STATUS ${CUDA_INCLUDE_DIRS})
-message(STATUS ${CUDA_TOOLKIT_INCLUDE})
-
 
 
 #SET(CUDA_NVCC_FLAGS "-arch=sm_61" CACHE STRING "nvcc flags" FORCE)
@@ -35,39 +33,50 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
-
-add_definitions(${PCL_DEFINITIONS})
-
-
-catkin_package(
-    LIBRARIES ${PROJECT_NAME}
-    CATKIN_DEPENDS
-        roscpp
-        pcl_conversions
-)
-
 include_directories(include
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
-  ${CUDA_INCLUDE_DIRS}
+  #${CUDA_INCLUDE_DIRS}
 )
+
+
+
+catkin_package(
+  INCLUDE_DIRS include/${PROJECT_NAME}
+  LIBRARIES ${PROJECT_NAME}
+  CATKIN_DEPENDS
+    roscpp
+    pcl_conversions
+    geometry_msgs
+)
+
+
+
+add_library(${PROJECT_NAME}
+            src/gpu_example.cpp
+
+)
+
 
 #add_library(gr_map_utils src/tf_frame_publisher.cpp)
 #cuda_add_library(TestLib src/kinetic_ransac.cu)
 #set_property(TARGET TestLib PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
+add_definitions(${PCL_DEFINITIONS})
 
 
-add_executable(gpu_example_node src/gpu_example.cpp)
+add_executable(${PROJECT_NAME}_node src/gpu_example_node.cpp)
 
- target_link_libraries(gpu_example_node
+ target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
-   ${Boost_LIBRARIES}
+   ${PROJECT_NAME}
+   #${Boost_LIBRARIES}
    #Threads::Threads
    #TestLib
  )
 
+add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 
 #add_dependencies(topological_map_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
 

@@ -1,50 +1,151 @@
-/*
- * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2010, Willow Garage, Inc.
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of Willow Garage, Inc. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id$
- *
- */
 #include <pcl_gpu_tools/gpu_example.h>
 
-int
-main (int argc, char **argv)
-{
-  ros::init(argc, argv, "pcl_gpu_example");
-  bool use_device = false;
-  if (argc >= 2)
-    use_device = true;
-  GPUExample v;
-  //v.run (use_device);
-  ros::spin();
-  return 0;
+GPUExample::GPUExample ()  {
+    ros::NodeHandle nh;
+    pc_sub_ = nh.subscribe("/velodyne_points", 10, &GPUExample::pointcloud_cb, this);
+
+   	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
+    cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
+
+    gec.setClusterTolerance (0.5);
+    gec.setMinClusterSize (10);
+    gec.setMaxClusterSize (40);
+
+    //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
+    //Sphere
+    float limit = 20.0;
+
+    //pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_ (new pcl::ConditionAnd<pcl::PointXYZ> ());
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, 0.0)));
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -limit)));
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, limit)));
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::GT, -limit)));
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::LT, limit)));
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -limit)));
+    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
+    //condition_removal_.setCondition (conditional_filter_);
+    //condition_removal_.setKeepOrganized(false);
+
+
+    segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
+    Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
+    segmentation_filter_.setAxis(axis);
+    segmentation_filter_.setEpsAngle(30.0* (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
+    //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
+    segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
+    segmentation_filter_.setMaxIterations(200);
+    segmentation_filter_.setDistanceThreshold(0.4);
+    segmentation_filter_.setOptimizeCoefficients(true);
+
+    extraction_filter_.setNegative(true);
+
+
+};
+
+template <class T> void GPUExample::publishPointCloud(T t){
+    sensor_msgs::PointCloud2 output_pointcloud_;
+    pcl::toROSMsg(t, output_pointcloud_);
+    output_pointcloud_.header.frame_id = "velodyne";
+    output_pointcloud_.header.stamp = ros::Time::now();
+    // Publish the data
+    pc_pub_.publish(output_pointcloud_);
 }
+
+
+void GPUExample::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
+    //run_filter(*msg);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr output (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::fromROSMsg(*msg, *output);
+    ROS_INFO("PointCloud conversion succeded");
+    auto result = run_filter(output);
+};
+
+//template <template <typename> class Storage> void
+int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered){
+    boost::mutex::scoped_lock lock(mutex_);
+
+    ROS_INFO("WORKING");
+    //pcl::PCDWriter writer;
+
+    //condition_removal_.setInputCloud (cloud_filtered);
+    //condition_removal_.filter (*cloud_filtered);
+
+    int original_size = (int) cloud_filtered->points.size ();
+    pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
+    pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
+
+    segmentation_filter_.setInputCloud(cloud_filtered);
+    segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
+
+    if (filter_inliers->indices.size () != 0){
+        ROS_INFO_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
+        //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
+    }
+
+    else{
+        ROS_INFO("ERROR");
+        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
+        return false;
+    }
+
+    //extracting inliers (removing ground)
+    extraction_filter_.setInputCloud(cloud_filtered);
+    extraction_filter_.setIndices(filter_inliers);
+    extraction_filter_.filter(*cloud_filtered);
+
+    ROS_WARN("INFO: starting with the GPU version");
+
+    clock_t tStart = clock();
+
+    cloud_device.upload(cloud_filtered->points);
+    pcl::gpu::Octree::Ptr octree_device (new pcl::gpu::Octree);
+    octree_device->setCloud(cloud_device);
+    octree_device->build();
+
+    std::vector<pcl::PointIndices> cluster_indices_gpu;
+    gec.setSearchMethod (octree_device);
+    gec.setHostCloud( cloud_filtered);
+    gec.extract (cluster_indices_gpu);
+    //  octree_device.clear();
+
+    ROS_INFO_STREAM ("GPU Time taken: %.2fs\n" << (double)(clock() - tStart)/CLOCKS_PER_SEC);
+    //std::cout << "INFO: stopped with the GPU version" << std::endl;
+
+    int j = 0;
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_gpu.begin (); it != cluster_indices_gpu.end (); ++it){
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_gpu (new pcl::PointCloud<pcl::PointXYZ>);
+        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
+        cloud_cluster_gpu->points.push_back (cloud_filtered->points[*pit]); //*
+        cloud_cluster_gpu->width = cloud_cluster_gpu->points.size ();
+        cloud_cluster_gpu->height = 1;
+        cloud_cluster_gpu->is_dense = true;
+
+        //std::cout << "PointCloud representing the Cluster: " << cloud_cluster_gpu->points.size () << " data points." << std::endl;
+        //std::stringstream ss;
+        //ss << "gpu_cloud_cluster_" << j << ".pcd";
+        //writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster_gpu, false); //*
+        //j++;
+    }
+
+    geometry_msgs::PoseArray clusters_msg;
+    clusters_msg.header.frame_id = "velodyne";
+    clusters_msg.header.stamp = ros::Time::now();
+
+    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_gpu.begin (); it != cluster_indices_gpu.end (); ++it){
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+        geometry_msgs::Pose cluster_center;
+        cluster_center.orientation.w = 1.0;
+        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
+            cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
+            cluster_center.position.x += cloud_filtered->points[*pit].x/it->indices.size();
+            cluster_center.position.y += cloud_filtered->points[*pit].y/it->indices.size();
+            cluster_center.position.z += cloud_filtered->points[*pit].z/it->indices.size();
+        }
+        clusters_msg.poses.push_back(cluster_center);
+    }
+
+    cluster_pub_.publish(clusters_msg);
+    publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
+
+    return 1;
+};
