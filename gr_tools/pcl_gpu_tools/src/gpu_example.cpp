@@ -7,26 +7,26 @@ GPUExample::GPUExample ()  {
    	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
     cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
 
-    gec.setClusterTolerance (0.2);
+    gec.setClusterTolerance (1.0);
     gec.setMinClusterSize (1);
     //gec.setMaxClusterSize (0);
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //Sphere
-    double limit = 20.0;
+    double limit = 15.0;
     pass_through_filter_.setFilterFieldName ("z");
     pass_through_filter_.setFilterLimits (0.0,2.0);
-    //pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_ (new pcl::ConditionAnd<pcl::PointXYZ> ());
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GE, -limit)));
+    pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
+    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.75)));
     //range_condAND->      addComparison (     FieldComparisonConstPtr (new pcl::FieldComparison<PointT> ("x", pcl::ComparisonOps::GE, newOriginX)));
     //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -limit)));
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, limit)));
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::GT, -limit)));
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::LT, limit)));
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -limit)));
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
-    //condition_removal_.setCondition (conditional_filter_);
-    //condition_removal_.setKeepOrganized(false);
+    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 2.0)));
+    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::GT, -limit)));
+    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::LT, limit)));
+    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -limit)));
+    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
+    condition_removal_.setCondition (conditional_filter);
+    condition_removal_.setKeepOrganized(false);
 
 
     segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
@@ -42,8 +42,8 @@ GPUExample::GPUExample ()  {
     extraction_filter_.setNegative(true);
 
 
-    outliers_filter_.setMeanK(10);
-    outliers_filter_.setStddevMulThresh(0.5);
+    outliers_filter_.setMeanK(70);
+    outliers_filter_.setStddevMulThresh(1.0);
 
 
 };
@@ -73,36 +73,43 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     ROS_INFO("WORKING");
     //pcl::PCDWriter writer;
 
-    //condition_removal_.setInputCloud (cloud_filtered);
-    //condition_removal_.filter (*cloud_filtered);
+    condition_removal_.setInputCloud (cloud_filtered);
+    condition_removal_.filter (*cloud_filtered);
    
     int original_size = (int) cloud_filtered->points.size ();
     pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
 
-    segmentation_filter_.setInputCloud(cloud_filtered);
-    segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
+    auto init_size = cloud_filtered->points.size();
+    int number_of_surfaces = 0;
+    
+    while (cloud_filtered->points.size()> init_size*0.3){
+        segmentation_filter_.setInputCloud(cloud_filtered);
+        segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
+        
+        if (filter_inliers->indices.size () != 0){
+            ROS_INFO_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
+            //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
+            }
+        else{
+            ROS_INFO("ERROR");
+            publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
+            break;//return false;
+        }
 
-    if (filter_inliers->indices.size () != 0){
-        ROS_INFO_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
-        //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
+        //extracting inliers (removing ground)
+        extraction_filter_.setInputCloud(cloud_filtered);
+        extraction_filter_.setIndices(filter_inliers);
+        extraction_filter_.filter(*cloud_filtered);
+        number_of_surfaces++;
     }
+    ROS_INFO_STREAM("Removed surfaces  "<< number_of_surfaces);
 
-    else{
-        ROS_INFO("ERROR");
-        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
-        return false;
-    }
-
-    //extracting inliers (removing ground)
-    extraction_filter_.setInputCloud(cloud_filtered);
-    extraction_filter_.setIndices(filter_inliers);
-    extraction_filter_.filter(*cloud_filtered);
 
     //removing points out of borders (potential false positives)
-    pcl::IndicesPtr indices (new std::vector <int>);
-    pass_through_filter_.setInputCloud (cloud_filtered);
-    pass_through_filter_.filter (*indices);
+    //pcl::IndicesPtr indices (new std::vector <int>);
+    //pass_through_filter_.setInputCloud (cloud_filtered);
+    //pass_through_filter_.filter (*indices);
 
 
     //removing outliers

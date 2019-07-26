@@ -10,6 +10,7 @@ find_package(catkin REQUIRED
         roscpp
         pcl_conversions
         geometry_msgs
+        pcl_ros
 )
 
 find_package(PCL 1.9 REQUIRED)
@@ -47,6 +48,7 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     pcl_conversions
+    pcl_ros
     geometry_msgs
   DEPENDS
     PCL
