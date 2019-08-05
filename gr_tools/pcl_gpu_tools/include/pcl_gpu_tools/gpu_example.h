@@ -78,5 +78,6 @@ public:
     int run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered);
     template <class T> void publishPointCloud(T);
     void timer_cb(const ros::TimerEvent&);
+    void cluster();
 
 };

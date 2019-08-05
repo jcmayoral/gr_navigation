@@ -11,7 +11,7 @@ GPUExample::GPUExample ()  {
     //Sphere
     double limit = 15.0;
     pass_through_filter_.setFilterFieldName ("z");
-    pass_through_filter_.setFilterLimits (0.0,2.0);
+    pass_through_filter_.setFilterLimits (0.20,2.0);
     pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
     conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.75)));
     //range_condAND->      addComparison (     FieldComparisonConstPtr (new pcl::FieldComparison<PointT> ("x", pcl::ComparisonOps::GE, newOriginX)));
@@ -28,19 +28,19 @@ GPUExample::GPUExample ()  {
     segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
     Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
     segmentation_filter_.setAxis(axis);
-    segmentation_filter_.setEpsAngle(20.0* (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
+    segmentation_filter_.setEpsAngle(30.0* (M_PI/180.0f) ); // plane can be within n degrees of X-Z plane
     //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     segmentation_filter_.setMaxIterations(200);
-    segmentation_filter_.setDistanceThreshold(0.6);
+    segmentation_filter_.setDistanceThreshold(0.65);
     segmentation_filter_.setOptimizeCoefficients(true);
 
     extraction_filter_.setNegative(true);
 
 
-    outliers_filter_.setMeanK(70);
-    outliers_filter_.setStddevMulThresh(1.0);
-    timer_ = nh.createTimer(ros::Duration(1), &GPUExample::timer_cb, this);
+    outliers_filter_.setMeanK(20);
+    outliers_filter_.setStddevMulThresh(2.0);
+    timer_ = nh.createTimer(ros::Duration(0.2), &GPUExample::timer_cb, this);
 
     pc_sub_ = nh.subscribe("/velodyne_points", 1, &GPUExample::pointcloud_cb, this);
 
@@ -52,7 +52,8 @@ GPUExample::GPUExample ()  {
 
 void GPUExample::timer_cb(const ros::TimerEvent&){
     boost::mutex::scoped_lock lock(mutex_);
-    ROS_ERROR("TIMER");
+    ROS_ERROR("TIMER CB");
+    cluster();
     main_cloud_.points.clear();
 }
 
@@ -92,7 +93,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     auto init_size = cloud_filtered->points.size();
     int number_of_surfaces = 0;
     
-    while (cloud_filtered->points.size()> init_size*0.3){
+    while (cloud_filtered->points.size()> init_size*0.2){
         segmentation_filter_.setInputCloud(cloud_filtered);
         segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
         
@@ -129,6 +130,10 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     ROS_WARN_STREAM("INFO: starting with the GPU version: PC outliers original size " << original_ponts_number << "actual "<< cloud_filtered->points.size());
 
     main_cloud_ += *cloud_filtered;
+    return 1;
+}
+
+void GPUExample::cluster(){
     clock_t tStart = clock();
 
     cloud_device.upload(main_cloud_.points);
@@ -143,8 +148,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     gec.setHostCloud(concatenated_pc);
     gec.extract (cluster_indices_gpu);
     //  octree_device.clear();
-    ROS_WARN_STREAM("PC SIZE " << main_cloud_.points.size());
-    ROS_INFO_STREAM ("GPU Time taken: %.2fs\n" << (double)(clock() - tStart)/CLOCKS_PER_SEC);
+    ROS_INFO_STREAM ("GPU Time taken: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
     //std::cout << "INFO: stopped with the GPU version" << std::endl;
 
     int j = 0;
@@ -172,7 +176,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
         geometry_msgs::Pose cluster_center;
         cluster_center.orientation.w = 1.0;
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
-            cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
+            cloud_cluster->points.push_back (main_cloud_.points[*pit]);
             cluster_center.position.x += main_cloud_.points[*pit].x/it->indices.size();
             cluster_center.position.y += main_cloud_.points[*pit].y/it->indices.size();
             cluster_center.position.z += main_cloud_.points[*pit].z/it->indices.size();
@@ -181,7 +185,5 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     }
 
     cluster_pub_.publish(clusters_msg);
-    publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
-
-    return 1;
+    publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(main_cloud_);
 };
