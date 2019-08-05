@@ -67,8 +67,8 @@ private:
   pcl::PassThrough<pcl::PointXYZ> pass_through_filter_;
   pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
   pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
-
-
+  pcl::PointCloud<pcl::PointXYZ> main_cloud_;
+  ros::Timer timer_;
 
 
 public:
@@ -77,5 +77,6 @@ public:
     void pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg);
     int run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered);
     template <class T> void publishPointCloud(T);
+    void timer_cb(const ros::TimerEvent&);
 
 };

@@ -2,10 +2,6 @@
 
 GPUExample::GPUExample ()  {
     ros::NodeHandle nh;
-    pc_sub_ = nh.subscribe("/velodyne_points", 10, &GPUExample::pointcloud_cb, this);
-
-   	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
-    cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
 
     gec.setClusterTolerance (1.0);
     gec.setMinClusterSize (1);
@@ -44,9 +40,22 @@ GPUExample::GPUExample ()  {
 
     outliers_filter_.setMeanK(70);
     outliers_filter_.setStddevMulThresh(1.0);
+    timer_ = nh.createTimer(ros::Duration(1), &GPUExample::timer_cb, this);
+
+    pc_sub_ = nh.subscribe("/velodyne_points", 10, &GPUExample::pointcloud_cb, this);
+
+   	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
+    cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
 
 
 };
+
+void GPUExample::timer_cb(const ros::TimerEvent&){
+    boost::mutex::scoped_lock lock(mutex_);
+    ROS_ERROR("TIMER");
+    main_cloud_.points.clear();
+}
+
 
 template <class T> void GPUExample::publishPointCloud(T t){
     sensor_msgs::PointCloud2 output_pointcloud_;
@@ -119,19 +128,22 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 
     ROS_WARN_STREAM("INFO: starting with the GPU version: PC outliers original size " << original_ponts_number << "actual "<< cloud_filtered->points.size());
 
+    main_cloud_ += *cloud_filtered;
     clock_t tStart = clock();
 
-    cloud_device.upload(cloud_filtered->points);
+    cloud_device.upload(main_cloud_.points);
     pcl::gpu::Octree::Ptr octree_device (new pcl::gpu::Octree);
     octree_device->setCloud(cloud_device);
     octree_device->build();
-
+   
     std::vector<pcl::PointIndices> cluster_indices_gpu;
     gec.setSearchMethod (octree_device);
-    gec.setHostCloud( cloud_filtered);
+
+    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
+    gec.setHostCloud(concatenated_pc);
     gec.extract (cluster_indices_gpu);
     //  octree_device.clear();
-
+    ROS_WARN_STREAM("PC SIZE " << main_cloud_.points.size());
     ROS_INFO_STREAM ("GPU Time taken: %.2fs\n" << (double)(clock() - tStart)/CLOCKS_PER_SEC);
     //std::cout << "INFO: stopped with the GPU version" << std::endl;
 
