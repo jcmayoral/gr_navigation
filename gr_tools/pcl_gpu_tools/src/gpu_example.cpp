@@ -42,7 +42,7 @@ GPUExample::GPUExample ()  {
     outliers_filter_.setStddevMulThresh(1.0);
     timer_ = nh.createTimer(ros::Duration(1), &GPUExample::timer_cb, this);
 
-    pc_sub_ = nh.subscribe("/velodyne_points", 10, &GPUExample::pointcloud_cb, this);
+    pc_sub_ = nh.subscribe("/velodyne_points", 1, &GPUExample::pointcloud_cb, this);
 
    	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
     cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
@@ -151,7 +151,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_gpu.begin (); it != cluster_indices_gpu.end (); ++it){
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_gpu (new pcl::PointCloud<pcl::PointXYZ>);
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
-        cloud_cluster_gpu->points.push_back (cloud_filtered->points[*pit]); //*
+            cloud_cluster_gpu->points.push_back (main_cloud_.points[*pit]); //*
         cloud_cluster_gpu->width = cloud_cluster_gpu->points.size ();
         cloud_cluster_gpu->height = 1;
         cloud_cluster_gpu->is_dense = true;
@@ -173,9 +173,9 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
         cluster_center.orientation.w = 1.0;
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
             cloud_cluster->points.push_back (cloud_filtered->points[*pit]);
-            cluster_center.position.x += cloud_filtered->points[*pit].x/it->indices.size();
-            cluster_center.position.y += cloud_filtered->points[*pit].y/it->indices.size();
-            cluster_center.position.z += cloud_filtered->points[*pit].z/it->indices.size();
+            cluster_center.position.x += main_cloud_.points[*pit].x/it->indices.size();
+            cluster_center.position.y += main_cloud_.points[*pit].y/it->indices.size();
+            cluster_center.position.z += main_cloud_.points[*pit].z/it->indices.size();
         }
         clusters_msg.poses.push_back(cluster_center);
     }
