@@ -6,7 +6,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1)  {
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //Sphere
-    double limit = 30.0;
+    double limit = 20.0;
     pass_through_filter_.setFilterFieldName ("z");
     pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
     //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.8)));
@@ -18,7 +18,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1)  {
     conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -limit)));
     conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
     condition_removal_.setCondition (conditional_filter);
-    condition_removal_.setKeepOrganized(false);
+    condition_removal_.setKeepOrganized(true);
 
     segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
     Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
@@ -26,7 +26,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1)  {
     //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     
-    timer_ = nh.createTimer(ros::Duration(0.2), &GPUExample::timer_cb, this);
+    timer_ = nh.createTimer(ros::Duration(0.25), &GPUExample::timer_cb, this);
 	dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
 
@@ -211,15 +211,17 @@ void GPUExample::cluster(){
             cluster_center.position.x += main_cloud_.points[*pit].x/it->indices.size();
             cluster_center.position.y += main_cloud_.points[*pit].y/it->indices.size();
             cluster_center.position.z += main_cloud_.points[*pit].z/it->indices.size();
-            x_vector.push_back(cluster_center.position.x);
-            y_vector.push_back(cluster_center.position.y);
-            z_vector.push_back(cluster_center.position.z);
+            x_vector.push_back(main_cloud_.points[*pit].x);
+            y_vector.push_back(main_cloud_.points[*pit].y);
+            z_vector.push_back(main_cloud_.points[*pit].z);
         }
 
-        cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
+        //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
+        cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector) * calculateStd<double>(z_vector);
         z_std = calculateStd<double>(z_vector);
         std::cout << "STD " << cluster_std  << " and "<< z_std <<  std::endl;
-        if (cluster_std< dynamic_std_ && z_std  < dynamic_std_z_)      
+        if (cluster_std< dynamic_std_ && z_std  > dynamic_std_z_)
+        //if (z_std  > dynamic_std_z_)      
         clusters_msg.poses.push_back(cluster_center);
     }
 
