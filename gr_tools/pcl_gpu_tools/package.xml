@@ -1,6 +1,6 @@
 <package>
     <name>pcl_gpu_tools</name>
-    <version>0.0.9</version>
+    <version>0.0.10</version>
     <description>
       ROS Wrapper of pcl gpu examples
     </description>
@@ -14,10 +14,13 @@
     <build_depend>pcl_conversions</build_depend>
     <build_depend>pcl_ros</build_depend>
     <build_depend>geometry_msgs</build_depend>
+    <build_depend>dynamic_reconfigure</build_depend>
 
     <run_depend>roscpp</run_depend>
     <run_depend>pcl_conversions</run_depend>
     <run_depend>pcl_ros</run_depend>
     <run_depend>geometry_msgs</run_depend>
+    <run_depend>dynamic_reconfigure</run_depend>
+
 
 </package>

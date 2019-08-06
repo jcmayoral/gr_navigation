@@ -37,7 +37,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <geometry_msgs/PoseArray.h>
 #include <pcl/filters/passthrough.h>
-
+#include <pcl_gpu_tools/GPUFilterConfig.h>
+#include <dynamic_reconfigure/server.h>
 
 
 #include <boost/thread/mutex.hpp>
@@ -55,7 +56,6 @@ private:
   //pcl::cuda::DisparityToCloud d2c;
   //pcl::visualization::CloudViewer viewer;
   boost::mutex mutex_;
-  bool go_on;
   ros::Subscriber pc_sub_;
   ros::Publisher pc_pub_;
   ros::Publisher cluster_pub_;
@@ -70,6 +70,9 @@ private:
   pcl::PointCloud<pcl::PointXYZ> main_cloud_;
   ros::Timer timer_;
 
+  //Dynamic Reconfigure
+  dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;
+  dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig>::CallbackType dyn_server_cb_;
 
 public:
     GPUExample ();
@@ -79,5 +82,5 @@ public:
     template <class T> void publishPointCloud(T);
     void timer_cb(const ros::TimerEvent&);
     void cluster();
-
+    void dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level);
 };

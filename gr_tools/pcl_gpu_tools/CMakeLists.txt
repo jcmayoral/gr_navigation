@@ -11,6 +11,7 @@ find_package(catkin REQUIRED
         pcl_conversions
         geometry_msgs
         pcl_ros
+        dynamic_reconfigure
 )
 
 find_package(PCL 1.9 REQUIRED)
@@ -34,13 +35,15 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+generate_dynamic_reconfigure_options(
+  cfg/GPUFilter.cfg
+)
+
 include_directories(include
   ${catkin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   #${CUDA_INCLUDE_DIRS}
 )
-
-
 
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}
@@ -50,6 +53,7 @@ catkin_package(
     pcl_conversions
     pcl_ros
     geometry_msgs
+    dynamic_reconfigure
   DEPENDS
     PCL
 )
@@ -66,7 +70,6 @@ add_library(${PROJECT_NAME}
 #add_library(gr_map_utils src/tf_frame_publisher.cpp)
 #cuda_add_library(TestLib src/kinetic_ransac.cu)
 #set_property(TARGET TestLib PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
 
 
 add_executable(${PROJECT_NAME}_node src/gpu_example_node.cpp)
@@ -102,4 +105,9 @@ add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 
 install(DIRECTORY include/${PROJECT_NAME}
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  PATTERN ".svn" EXCLUDE)
+  PATTERN ".svn" EXCLUDE
+)
+
+install(DIRECTORY cfg
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/cfg
+)
