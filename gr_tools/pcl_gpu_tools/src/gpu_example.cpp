@@ -26,7 +26,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1)  {
     //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     
-    timer_ = nh.createTimer(ros::Duration(0.25), &GPUExample::timer_cb, this);
+    timer_ = nh.createTimer(ros::Duration(0.2), &GPUExample::timer_cb, this);
 	dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
 
