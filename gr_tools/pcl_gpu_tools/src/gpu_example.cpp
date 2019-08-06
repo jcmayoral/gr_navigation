@@ -38,14 +38,15 @@ GPUExample::GPUExample ()  {
 };
 
 void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level){
+    ROS_ERROR("RECONFIGURING");
     pass_through_filter_.setFilterLimits (config.min_passthrough_z, config.max_passthrough_z);
     segmentation_filter_.setEpsAngle(config.eps_angle* (M_PI/180.0f) ); // plane can be within n degrees of X-Z plane
     segmentation_filter_.setMaxIterations(config.max_iterations);
     segmentation_filter_.setDistanceThreshold(config.distance_threshold);
     segmentation_filter_.setOptimizeCoefficients(config.optimize_coefficients);
     extraction_filter_.setNegative(config.set_negative);
-    outliers_filter_.setMeanK(config.cluster_meank);
-    outliers_filter_.setStddevMulThresh(config.cluster_std);
+    outliers_filter_.setMeanK(config.outlier_meank);
+    outliers_filter_.setStddevMulThresh(config.outlier_std);
     gec.setClusterTolerance (config.cluster_tolerance);
     gec.setMinClusterSize (config.min_cluster_size);
 };
@@ -116,13 +117,13 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
         ROS_INFO_STREAM(filter_inliers->indices.size () );
     }
     while (filter_inliers->indices.size () != 0 && cloud_filtered->points.size()> init_size*0.3);
-    ROS_INFO_STREAM("Removed surfaces  "<< number_of_surfaces);
 
-
+    ROS_INFO_STREAM("befORE  "<< cloud_filtered->points.size());
     //removing points out of borders (potential false positives)
-    //pcl::IndicesPtr indices (new std::vector <int>);
-    //pass_through_filter_.setInputCloud (cloud_filtered);
-    //pass_through_filter_.filter (*indices);
+    pcl::IndicesPtr indices (new std::vector <int>);
+    pass_through_filter_.setInputCloud (cloud_filtered);
+    pass_through_filter_.filter (*cloud_filtered);
+    ROS_INFO_STREAM("AFTER "<< cloud_filtered->points.size());
 
 
     //removing outliers
