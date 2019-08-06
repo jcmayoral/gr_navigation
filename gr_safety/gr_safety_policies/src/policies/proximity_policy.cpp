@@ -31,7 +31,7 @@ namespace gr_safety_policies
       if (getRing(poses->poses[i].position.x, poses->poses[i].position.y) == 1){
         fault_region_id_ = 1;
         warning_zone = true;
-        //last_detection_time_ = ros::Time::now();
+        last_detection_time_ = ros::Time::now();
 
         is_obstacle_detected_ = true;
       }
@@ -59,7 +59,7 @@ namespace gr_safety_policies
 
   ProximityPolicy::ProximityPolicy(): is_obstacle_detected_(false), region_radius_(2.5),
                                         regions_number_(3), action_executer_(NULL),
-                                        fault_region_id_(0), enabling_after_timeout_(1.0)
+                                        fault_region_id_(0), enabling_after_timeout_(5.0)
   {
     ros::NodeHandle nh;
     timer_ = nh.createTimer(ros::Duration(1), &ProximityPolicy::timer_cb, this);

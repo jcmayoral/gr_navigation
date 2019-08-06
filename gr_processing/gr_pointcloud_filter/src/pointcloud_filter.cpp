@@ -7,9 +7,6 @@
 // watch the capitalization carefully
 PLUGINLIB_EXPORT_CLASS(gr_pointcloud_filter::MyNodeletClass, nodelet::Nodelet)
 
-#include <gr_pointcloud_filter/helloWorld.h>
-#include <cuda.h>
-
 namespace gr_pointcloud_filter{
 
      template <class T> void MyNodeletClass::publishPointCloud(T t){
@@ -58,18 +55,21 @@ namespace gr_pointcloud_filter{
 
     	//segmentation of a plane
       if (filters_enablers_[4]){
+        //TEST
+        int original_size = (int) cloud->points.size ();
         pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
-        segmentation_filter_.setInputCloud(cloud);
-        segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
-        if (filter_inliers->indices.size () != 0){
-		    	ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
-          last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
-          //extracting inliers (removing ground)
-          extraction_filter_.setInputCloud(cloud);
-          extraction_filter_.setIndices(filter_inliers);
-          extraction_filter_.filter(*cloud);
-			  }
+
+       segmentation_filter_.setInputCloud(cloud);
+       segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
+       if (filter_inliers->indices.size () != 0){
+          ROS_INFO_STREAM_THROTTLE(1,"Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
+          //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
+       }
+       //extracting inliers (removing ground)
+       extraction_filter_.setInputCloud(cloud);
+       extraction_filter_.setIndices(filter_inliers);
+       extraction_filter_.filter(*cloud);
       }
 
       if(filters_enablers_[5]){
@@ -81,14 +81,16 @@ namespace gr_pointcloud_filter{
 
       //Start testing
       //TODO remove from here ****
-      pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
+    
+      //pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
       pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
 
+      /*
       normal_estimator_.setSearchMethod (tree);
       normal_estimator_.setInputCloud (cloud);
       normal_estimator_.setKSearch (1);
       normal_estimator_.compute (*normals);
-
+      */
 
       pcl::IndicesPtr indices (new std::vector <int>);
       pass_through_filter_.setInputCloud (cloud);
@@ -100,15 +102,15 @@ namespace gr_pointcloud_filter{
         return;
       }
 
-      region_growing_filter_.setSearchMethod (tree);
-      region_growing_filter_.setInputCloud (cloud);
-      region_growing_filter_.setIndices (indices);
-      region_growing_filter_.setInputNormals (normals);
+      euclidean_cluster_.setSearchMethod (tree);
+      euclidean_cluster_.setInputCloud (cloud);
+      //region_growing_filter_.setIndices (indices);
+      //region_growing_filter_.setInputNormals (normals);
       //reg.setCurvatureThreshold (10.0);
 
 
       std::vector <pcl::PointIndices> clusters;
-      region_growing_filter_.extract (clusters);
+      euclidean_cluster_.extract (clusters);
       ROS_DEBUG_STREAM("Clusters size" << clusters.size());
       if (clusters.size()== 0){
         ROS_WARN("Not clusters found");
@@ -131,12 +133,11 @@ namespace gr_pointcloud_filter{
           cluster_center.position.y += cloud->points[*pit].y/it->indices.size();
           cluster_center.position.z += cloud->points[*pit].z/it->indices.size();
         }
-        std::cout << std::endl;
         clusters_msg.poses.push_back(cluster_center);
       }
       obstacle_pub_.publish(clusters_msg);
-      pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = region_growing_filter_.getColoredCloud ();
-      publishPointCloud<pcl::PointCloud <pcl::PointXYZRGB>>(*colored_cloud);
+      //pcl::PointCloud <pcl::PointXYZRGB>::Ptr colored_cloud = region_growing_filter_.getColoredCloud ();
+      publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud);
 
     }
 
@@ -168,10 +169,9 @@ namespace gr_pointcloud_filter{
       //segmentating
       //segmentation_filter_.setModelType(pcl::SACMODEL_PLANE);
       segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
-      eps_angle_ = config.eps_angle;
       Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
       segmentation_filter_.setAxis(axis);
-      segmentation_filter_.setEpsAngle(eps_angle_ * (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
+      segmentation_filter_.setEpsAngle(config.eps_angle * (M_PI/180.0f) ); // plane can be within 30 degrees of X-Z plane
       //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
       segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
       segmentation_filter_.setMaxIterations(config.max_iterations);
@@ -184,22 +184,15 @@ namespace gr_pointcloud_filter{
       outliers_filter_.setMeanK(config.mean_k);
       outliers_filter_.setStddevMulThresh(config.std_threshold);
       //radius_outliers
-      min_radius_ = config.min_radius_removal;
-      min_neighbours_ = config.min_neighbours;
-      radius_outliers_filter_.setRadiusSearch(min_radius_);
-      radius_outliers_filter_.setMinNeighborsInRadius(min_neighbours_);
+      radius_outliers_filter_.setRadiusSearch(config.min_radius_removal);
+      radius_outliers_filter_.setMinNeighborsInRadius(config.min_neighbours);
 
       //RegionGrowing
-      smoothness_threshold_ = config.smoothness_threshold;
-      cluster_neighbours_number_ = config.cluster_neighbours_number;
-      region_growing_filter_.setMinClusterSize (100);
-      region_growing_filter_.setMaxClusterSize (200);
-      region_growing_filter_.setNumberOfNeighbours(cluster_neighbours_number_);
-      region_growing_filter_.setSmoothnessThreshold ( smoothness_threshold_/ 180.0 * M_PI);
+      euclidean_cluster_.setMinClusterSize (config.min_cluster_neighbours);
+      euclidean_cluster_.setMaxClusterSize (config.max_cluster_neighbours);
+      //euclidean_cluster_.setNumberOfNeighbours(cluster_neighbours_number_);
+      euclidean_cluster_.setClusterTolerance (config.cluster_tolerance);
 
-      //Passthrough Filter
-      pass_through_filter_.setFilterFieldName ("z");
-      pass_through_filter_.setFilterLimits (-0.1,2.0);
 
     }
 
@@ -226,16 +219,17 @@ namespace gr_pointcloud_filter{
       ros::NodeHandle nh;
       segmentation_filter_ = pcl::SACSegmentation<pcl::PointXYZ> (true);
       conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
-
     	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
     	dyn_server_.setCallback(dyn_server_cb_);
     	pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
     	pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
       obstacle_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
-      last_ground_height_ = 0;
+      //last_ground_height_ = 0;
       last_processing_time_ = ros::Time::now();
     	NODELET_DEBUG("Initializing nodelet...");
-      ROS_INFO("The last line I see");
-    	test();
+
+      //Passthrough Filter
+      pass_through_filter_.setFilterFieldName ("z");
+      pass_through_filter_.setFilterLimits (-2.0,2.0);
     }
 }
