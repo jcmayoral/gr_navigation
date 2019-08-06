@@ -3,15 +3,14 @@ project(gr_pointcloud_filter)
 
 add_compile_options(-std=c++11)
 
-find_package(CUDA REQUIRED)
-find_package(PCL REQUIRED)
+#find_package(CUDA REQUIRED)
 
 find_package(catkin REQUIRED
     COMPONENTS
     geometry_msgs
     sensor_msgs
     roscpp
-    #pcl_ros
+    pcl_ros
     pcl_conversions
     dynamic_reconfigure
 )
@@ -25,7 +24,6 @@ generate_dynamic_reconfigure_options(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
 )
 
 
@@ -36,7 +34,7 @@ catkin_package(
   CATKIN_DEPENDS
     geometry_msgs
     roscpp
-    #pcl_ros
+    pcl_ros
     pcl_conversions
     dynamic_reconfigure
 )
@@ -49,11 +47,12 @@ add_library(${PROJECT_NAME}
 
 )
 
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS}
+                 ${PROJECT_NAME}_gencfg
+)
 
 target_link_libraries( ${PROJECT_NAME}
   ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
 )
 
 install(TARGETS ${PROJECT_NAME}
