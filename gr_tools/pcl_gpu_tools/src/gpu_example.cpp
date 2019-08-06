@@ -6,7 +6,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1)  {
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //Sphere
-    double limit = 20.0;
+    double limit = 30.0;
     pass_through_filter_.setFilterFieldName ("z");
     pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
     //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.8)));
@@ -137,8 +137,8 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 }
 
 void GPUExample::cluster(){
-    clock_t tStart = clock();
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
+    clock_t tStart = clock();
 
     //START TEMPORAL
     /*
@@ -219,7 +219,7 @@ void GPUExample::cluster(){
         //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
         cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector) * calculateStd<double>(z_vector);
         z_std = calculateStd<double>(z_vector);
-        std::cout << "STD " << cluster_std  << " and "<< z_std <<  std::endl;
+        //std::cout << "STD " << cluster_std  << " and "<< z_std <<  std::endl;
         if (cluster_std< dynamic_std_ && z_std  > dynamic_std_z_)
         //if (z_std  > dynamic_std_z_)      
         clusters_msg.poses.push_back(cluster_center);
