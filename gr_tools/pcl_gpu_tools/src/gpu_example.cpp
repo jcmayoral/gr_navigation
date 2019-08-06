@@ -6,7 +6,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1)  {
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //Sphere
-    double limit = 20.0;
+    double limit = 30.0;
     pass_through_filter_.setFilterFieldName ("z");
     pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
     //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.8)));
@@ -193,12 +193,15 @@ void GPUExample::cluster(){
 
     std::vector<double> x_vector;
     std::vector<double> y_vector;
-    double cluster_std;
+    std::vector<double> z_vector;
+
+    double cluster_std, z_std;
 
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_gpu.begin (); it != cluster_indices_gpu.end (); ++it){
         //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
         x_vector.clear();
         y_vector.clear();
+        z_vector.clear();
         geometry_msgs::Pose cluster_center;
         cluster_center.orientation.w = 1.0;
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
@@ -208,12 +211,13 @@ void GPUExample::cluster(){
             cluster_center.position.z += main_cloud_.points[*pit].z/it->indices.size();
             x_vector.push_back(cluster_center.position.x);
             y_vector.push_back(cluster_center.position.y);
-
+            z_vector.push_back(cluster_center.position.z);
         }
 
-        cluster_std = calculateStd<double>(x_vector)* calculateStd<double>(y_vector);
-        std::cout << "STD " << cluster_std  << std::endl;
-        if (cluster_std< dynamic_std_)      
+        cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
+        z_std = calculateStd<double>(z_vector);
+        std::cout << "STD " << cluster_std  << " and "<< z_std <<  std::endl;
+        if (cluster_std< dynamic_std_ && z_std  < dynamic_std_)      
         clusters_msg.poses.push_back(cluster_center);
     }
 
