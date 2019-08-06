@@ -73,6 +73,7 @@ private:
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig>::CallbackType dyn_server_cb_;
   double dynamic_std_;
+  double dynamic_std_z_;
 
 public:
     GPUExample ();

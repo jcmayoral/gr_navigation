@@ -50,6 +50,8 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     gec.setClusterTolerance (config.cluster_tolerance);
     gec.setMinClusterSize (config.min_cluster_size);
     dynamic_std_ = config.dynamic_classifier;
+    dynamic_std_z_ = config.dynamic_classifier_z;
+
 };
 
 void GPUExample::timer_cb(const ros::TimerEvent&){
@@ -217,7 +219,7 @@ void GPUExample::cluster(){
         cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
         z_std = calculateStd<double>(z_vector);
         std::cout << "STD " << cluster_std  << " and "<< z_std <<  std::endl;
-        if (cluster_std< dynamic_std_ && z_std  < dynamic_std_)      
+        if (cluster_std< dynamic_std_ && z_std  < dynamic_std_z_)      
         clusters_msg.poses.push_back(cluster_center);
     }
 
