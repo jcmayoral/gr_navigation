@@ -1,6 +1,6 @@
 #include <pcl_gpu_tools/gpu_example.h>
 
-GPUExample::GPUExample ()  {
+GPUExample::GPUExample (): dynamic_std_(0.1)  {
     ros::NodeHandle nh;
     //gec.setMaxClusterSize (0);
 
@@ -49,6 +49,7 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     outliers_filter_.setStddevMulThresh(config.outlier_std);
     gec.setClusterTolerance (config.cluster_tolerance);
     gec.setMinClusterSize (config.min_cluster_size);
+    dynamic_std_ = config.dynamic_classifier;
 };
 
 void GPUExample::timer_cb(const ros::TimerEvent&){
@@ -118,13 +119,9 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     }
     while (filter_inliers->indices.size () != 0 && cloud_filtered->points.size()> init_size*0.3);
 
-    ROS_INFO_STREAM("befORE  "<< cloud_filtered->points.size());
     //removing points out of borders (potential false positives)
-    pcl::IndicesPtr indices (new std::vector <int>);
     pass_through_filter_.setInputCloud (cloud_filtered);
     pass_through_filter_.filter (*cloud_filtered);
-    ROS_INFO_STREAM("AFTER "<< cloud_filtered->points.size());
-
 
     //removing outliers
     auto original_ponts_number = cloud_filtered->points.size();
@@ -194,16 +191,29 @@ void GPUExample::cluster(){
     clusters_msg.header.frame_id = "velodyne";
     clusters_msg.header.stamp = ros::Time::now();
 
+    std::vector<double> x_vector;
+    std::vector<double> y_vector;
+    double cluster_std;
+
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_gpu.begin (); it != cluster_indices_gpu.end (); ++it){
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+        //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
+        x_vector.clear();
+        y_vector.clear();
         geometry_msgs::Pose cluster_center;
         cluster_center.orientation.w = 1.0;
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
-            cloud_cluster->points.push_back (main_cloud_.points[*pit]);
+            //cloud_cluster->points.push_back (main_cloud_.points[*pit]);
             cluster_center.position.x += main_cloud_.points[*pit].x/it->indices.size();
             cluster_center.position.y += main_cloud_.points[*pit].y/it->indices.size();
             cluster_center.position.z += main_cloud_.points[*pit].z/it->indices.size();
+            x_vector.push_back(cluster_center.position.x);
+            y_vector.push_back(cluster_center.position.y);
+
         }
+
+        cluster_std = calculateStd<double>(x_vector)* calculateStd<double>(y_vector);
+        std::cout << "STD " << cluster_std  << std::endl;
+        if (cluster_std< dynamic_std_)      
         clusters_msg.poses.push_back(cluster_center);
     }
 
