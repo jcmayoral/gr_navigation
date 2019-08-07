@@ -111,7 +111,7 @@ void MainMonitor::in_cb(const topic_tools::ShapeShifter::ConstPtr& msg, int inde
     //ROS_INFO_STREAM(main_subscriber_.size());
 }
 
-MainMonitor::MainMonitor(std::string config_file): cpu_monitor_() {
+MainMonitor::MainMonitor(std::string config_file): cpu_monitor_(), fault_detected_(false) {
     ROS_INFO("Constructor Monitor");
     bool statistics_flags = true;
     config_file_ = config_file;
@@ -144,6 +144,7 @@ MainMonitor::MainMonitor(std::string config_file): cpu_monitor_() {
     timer_ = nh.createTimer(ros::Duration(0.3), &MainMonitor::detect_faults,this);
     monitor_status_pub_ = nh.advertise<std_msgs::Int8>("monitor_status", 10);
     monitor_diagnostic_pub_ = nh.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics_agg", 10);
+    strategy_pub_ = nh.advertise<std_msgs::String>("/commands", 10);
 
     ros::spin();
 }
@@ -184,6 +185,9 @@ std::string MainMonitor::isolate_components(std::list<std::string> error_topics)
             ROS_WARN_STREAM ("Suggested action: " << recovery_executor_->getRecoveryStrategy(fault_id));
             ROS_ERROR_STREAM("Error Message " << fault_id);
             error_description += fault_id + "::::";
+            std_msgs::String strategy_msg;
+            strategy_msg.data = recovery_executor_->getRecoveryStrategy(fault_id);
+            strategy_pub_.publish(strategy_msg);
 
         }
    }
@@ -245,19 +249,27 @@ void MainMonitor::detect_faults(const ros::TimerEvent&){
     key_value.value = std::to_string(cpu_monitor_.getUsage());
     diagnostic_status.values.push_back(key_value);
 
-    bool error_detected = false;
+    //bool error_detected = false;
  
-    if (detected_errors.size()>0){
+    if (detected_errors.size()>0 && !fault_detected_){
            diagnostic_status.message = isolate_components(detected_errors);
-           error_detected = true;
+           fault_detected_ = true;
     }
-
-        
+    else{
+        if(detected_errors.size() == 0 && fault_detected_){
+            ROS_ERROR("Resuming normal behavior");
+            std_msgs::String strategy_msg;
+            strategy_msg.data = "continue";
+            strategy_pub_.publish(strategy_msg);
+            fault_detected_ = false;
+        }
+    }
+       
     diagnostic_msg.status.push_back(diagnostic_status);
     monitor_status_pub_.publish(status);
     monitor_diagnostic_pub_.publish(diagnostic_msg);
   
-    if (error_detected)
+    if (fault_detected_)
         usleep(500); //just for visualization purposes
 }
 

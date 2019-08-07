@@ -69,6 +69,8 @@ faults:
         
 recovery:
     imu_manager_is_dead: 
-        strategy: kill_node
+        strategy: stop_action
         args: imu_manager
- 
+    collision: 
+        strategy: stop_action
+        args: imu_manager

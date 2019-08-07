@@ -39,7 +39,7 @@ namespace gr_pointcloud_filter{
         // build the filter
         radius_outliers_filter_.setInputCloud(cloud);
         // apply filter
-        radius_outliers_filter_.filter(*cloud);
+        //radius_outliers_filter_.filter(*cloud);
       }
 
       //conditional_filter
@@ -189,7 +189,7 @@ namespace gr_pointcloud_filter{
 
       //RegionGrowing
       euclidean_cluster_.setMinClusterSize (config.min_cluster_neighbours);
-      euclidean_cluster_.setMaxClusterSize (config.max_cluster_neighbours);
+      //euclidean_cluster_.setMaxClusterSize (config.max_cluster_neighbours);
       //euclidean_cluster_.setNumberOfNeighbours(cluster_neighbours_number_);
       euclidean_cluster_.setClusterTolerance (config.cluster_tolerance);
 
@@ -219,17 +219,20 @@ namespace gr_pointcloud_filter{
       ros::NodeHandle nh;
       segmentation_filter_ = pcl::SACSegmentation<pcl::PointXYZ> (true);
       conditional_filter_ = pcl::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
-    	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
-    	dyn_server_.setCallback(dyn_server_cb_);
-    	pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
-    	pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
-      obstacle_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
+    
       //last_ground_height_ = 0;
       last_processing_time_ = ros::Time::now();
-    	NODELET_DEBUG("Initializing nodelet...");
+    	//NODELET_DEBUG("Initializing nodelet...");
 
       //Passthrough Filter
       pass_through_filter_.setFilterFieldName ("z");
-      pass_through_filter_.setFilterLimits (-2.0,2.0);
+      pass_through_filter_.setFilterLimits (-1.5,5.0);
+
+    	dyn_server_cb_ = boost::bind(&MyNodeletClass::dyn_reconfigureCB, this, _1, _2);
+    	dyn_server_.setCallback(dyn_server_cb_);
+
+      pointcloud_sub_ = nh.subscribe("/velodyne_points", 10, &MyNodeletClass::pointcloud_cb, this);
+    	pointcloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
+      obstacle_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
     }
 }

@@ -19,12 +19,10 @@
 #include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
 
 
-#include <boost/shared_ptr.hpp>
 
 #include <functional>
 #include <iostream>
 #include <mutex>
-
 
 //#include <pcl/ModelCoefficients.h>
 #include <pcl/filters/extract_indices.h>
@@ -40,9 +38,10 @@
 #include <pcl_gpu_tools/GPUFilterConfig.h>
 #include <dynamic_reconfigure/server.h>
 
-
+#include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include <pcl_gpu_tools/math_functions.hpp>
 
 
 //using namespace pcl::cuda;
@@ -73,6 +72,8 @@ private:
   //Dynamic Reconfigure
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig>::CallbackType dyn_server_cb_;
+  double dynamic_std_;
+  double dynamic_std_z_;
 
 public:
     GPUExample ();
