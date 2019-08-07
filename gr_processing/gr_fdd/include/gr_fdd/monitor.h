@@ -12,6 +12,7 @@
 #include <diagnostic_msgs/DiagnosticArray.h>
 #include <std_msgs/Int8.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <yaml-cpp/yaml.h>
 #include <ros/package.h>
@@ -74,7 +75,9 @@ private:
     CPUMonitor cpu_monitor_;
     ros::Publisher monitor_status_pub_;
     ros::Publisher monitor_diagnostic_pub_;
+    ros::Publisher strategy_pub_;
     gr_fdd::RecoveryExecutor* recovery_executor_;
+    bool fault_detected_;
 };
 
 #endif /* MAINMONITOR_H */
