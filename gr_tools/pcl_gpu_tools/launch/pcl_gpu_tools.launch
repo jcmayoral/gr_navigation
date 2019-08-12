@@ -1,0 +1,9 @@
+<launch>
+  <arg name="roi" default="30.0" />
+  <arg name="time_window" default="0.2" />
+
+  <node pkg="pcl_gpu_tools" type="pcl_gpu_tools_node" name="pcl_gpu_tools" output="screen">
+    <param name="roi" value="$(arg roi)" />
+    <param name="time_window" value="$(arg time_window)" />
+  </node>
+</launch>
