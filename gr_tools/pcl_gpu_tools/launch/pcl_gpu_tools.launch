@@ -6,4 +6,6 @@
     <param name="roi" value="$(arg roi)" />
     <param name="time_window" value="$(arg time_window)" />
   </node>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="tf_broadcaster_base_lidar" args="0 0 0 0 0 0  base_link velodyne" />
 </launch>

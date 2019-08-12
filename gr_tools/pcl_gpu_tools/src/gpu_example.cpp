@@ -62,7 +62,7 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
 };
 
 void GPUExample::timer_cb(const ros::TimerEvent&){
-    boost::mutex::scoped_lock lock(mutex_);
+    //boost::mutex::scoped_lock lock(mutex_);
     //ROS_ERROR("TIMER CB");
     cluster();
     main_cloud_.points.clear();
@@ -144,7 +144,11 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 }
 
 void GPUExample::cluster(){
+    boost::mutex::scoped_lock lock(mutex_);
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
+    if (concatenated_pc->points.size() == 0){
+        return;
+    }
     clock_t tStart = clock();
 
     //START TEMPORAL
