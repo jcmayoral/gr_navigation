@@ -83,6 +83,7 @@ namespace gr_depth_processing
       tf2_ros::TransformListener* tf2_listener_;
 
       boost::recursive_mutex mutex;
+      double max_range_;
   };
 
 };
