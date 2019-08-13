@@ -148,9 +148,8 @@ namespace gr_depth_processing
 
       to_base_link_transform = tf_buffer_.lookupTransform("base_link", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
       tf2::doTransform(in, out, to_base_link_transform);
-      out.pose.orientation.x, out.pose.orientation.y, out.pose.orientation.z = 1.0;
-
-      out.pose.orientation.w = 1.0;
+      //out.pose.orientation.x, out.pose.orientation.y, out.pose.orientation.z = 1.0;
+      //out.pose.orientation.w = 1.0;
       detected_objects_.header= out.header;
       detected_objects_.header.stamp = ros::Time::now();
       detected_objects_.poses.push_back(out.pose);
