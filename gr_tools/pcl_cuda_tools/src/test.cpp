@@ -2,7 +2,6 @@
 
 int main (int argc, char **argv)
 {
-  std::cout << "Main";
   DepthRegistration depth_registrator_;
   depth_registrator_.run();
 
