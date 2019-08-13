@@ -318,7 +318,7 @@ namespace gr_map_utils{
         metadata_pub_.publish(meta_data_message);
 
         //TODO CHECK feasibility condition if already exists do nothing
-        //gr_tf_publisher_->publishTfTransform();
+        gr_tf_publisher_->publishTfTransform();
     }
 
     void Topological2MetricMap::timer_cb(const ros::TimerEvent& event){
