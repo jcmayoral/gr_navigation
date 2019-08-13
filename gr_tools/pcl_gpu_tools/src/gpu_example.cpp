@@ -1,12 +1,18 @@
 #include <pcl_gpu_tools/gpu_example.h>
 
-GPUExample::GPUExample (): dynamic_std_(0.1)  {
-    ros::NodeHandle nh;
+GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
+    ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
-    //Sphere
-    double limit = 30.0;
+    //cilinder ROI
+    double limit = 50.0;
+    double time_window = 0.2;
+    nh.getParam("roi", limit);
+    nh.getParam("time_window", time_window);
+    ROS_INFO_STREAM("ROI Radius [m] "<< limit );
+    ROS_INFO_STREAM("Time Window [s] "<< time_window );
+
     pass_through_filter_.setFilterFieldName ("z");
     pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
     //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.8)));
@@ -26,7 +32,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1)  {
     //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
     
-    timer_ = nh.createTimer(ros::Duration(0.2), &GPUExample::timer_cb, this);
+    timer_ = nh.createTimer(ros::Duration(time_window), &GPUExample::timer_cb, this);
 	dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
 
@@ -51,11 +57,12 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     gec.setMinClusterSize (config.min_cluster_size);
     dynamic_std_ = config.dynamic_classifier;
     dynamic_std_z_ = config.dynamic_classifier_z;
+    output_publish_ = config.publish_output;
 
 };
 
 void GPUExample::timer_cb(const ros::TimerEvent&){
-    boost::mutex::scoped_lock lock(mutex_);
+    //boost::mutex::scoped_lock lock(mutex_);
     //ROS_ERROR("TIMER CB");
     cluster();
     main_cloud_.points.clear();
@@ -117,7 +124,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
             //break;//return false;
         //}
 
-        ROS_INFO_STREAM(filter_inliers->indices.size () );
+        //ROS_INFO_STREAM(filter_inliers->indices.size () );
     }
     while (filter_inliers->indices.size () != 0 && cloud_filtered->points.size()> init_size*0.3);
 
@@ -137,7 +144,11 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 }
 
 void GPUExample::cluster(){
+    boost::mutex::scoped_lock lock(mutex_);
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
+    if (concatenated_pc->points.size() == 0){
+        return;
+    }
     clock_t tStart = clock();
 
     //START TEMPORAL
@@ -169,8 +180,7 @@ void GPUExample::cluster(){
 
     gec.setHostCloud(concatenated_pc);
     gec.extract (cluster_indices_gpu);
-    //  octree_device.clear();
-    ROS_INFO_STREAM ("GPU Time taken: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
+    //octree_device->clear();
     //std::cout << "INFO: stopped with the GPU version" << std::endl;
 
     int j = 0;
@@ -217,14 +227,20 @@ void GPUExample::cluster(){
         }
 
         //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
-        cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector) * calculateStd<double>(z_vector);
+        cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);// * calculateStd<double>(z_vector);
         z_std = calculateStd<double>(z_vector);
         //std::cout << "STD " << cluster_std  << " and "<< z_std <<  std::endl;
-        if (cluster_std< dynamic_std_ && z_std  > dynamic_std_z_)
-        //if (z_std  > dynamic_std_z_)      
-        clusters_msg.poses.push_back(cluster_center);
+        if (cluster_std< dynamic_std_ && z_std  < dynamic_std_z_){
+        //if (z_std  > dynamic_std_z_)
+            clusters_msg.poses.push_back(cluster_center);
+        }
     }
 
     cluster_pub_.publish(clusters_msg);
-    publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(main_cloud_);
+
+    if (output_publish_){
+        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(main_cloud_);
+    }
+    ROS_INFO_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
+
 };

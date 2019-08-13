@@ -1,0 +1,11 @@
+<launch>
+  <arg name="roi" default="20.0" />
+  <arg name="time_window" default="0.2" />
+
+  <node pkg="pcl_gpu_tools" type="pcl_gpu_tools_node" name="pcl_gpu_tools" output="screen">
+    <param name="roi" value="$(arg roi)" />
+    <param name="time_window" value="$(arg time_window)" />
+  </node>
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="tf_broadcaster_base_lidar" args="0 0 0 0 0 0  base_link velodyne" />
+</launch>

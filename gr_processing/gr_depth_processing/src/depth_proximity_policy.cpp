@@ -15,6 +15,7 @@ namespace gr_depth_processing
     registerImage = &register_median_pointclouds;
 
     ros::NodeHandle nh;
+    max_range_ = 8.0;
     ROS_INFO("Waiting for rgb and depth camera info");
     camera_color_info_ = getOneMessage<sensor_msgs::CameraInfo>("/camera/color/camera_info");
     camera_depth_info_ = getOneMessage<sensor_msgs::CameraInfo>("/camera/depth/camera_info");;
@@ -139,8 +140,16 @@ namespace gr_depth_processing
       in.pose.position.y = (center_col - center_y) * dist * constant_y;
       in.pose.position.z = dist;
     
+
+      if (dist > max_range_){
+        ROS_WARN("Object out of range");
+        continue;
+      }
+
       to_base_link_transform = tf_buffer_.lookupTransform("base_link", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
       tf2::doTransform(in, out, to_base_link_transform);
+      //out.pose.orientation.x, out.pose.orientation.y, out.pose.orientation.z = 1.0;
+      //out.pose.orientation.w = 1.0;
       detected_objects_.header= out.header;
       detected_objects_.header.stamp = ros::Time::now();
       detected_objects_.poses.push_back(out.pose);
