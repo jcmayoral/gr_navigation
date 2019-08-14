@@ -50,6 +50,6 @@ install(TARGETS pcl_cuda_tools
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
 
-install(DIRECTORY include
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
   DESTINATION include
   PATTERN ".svn" EXCLUDE)
