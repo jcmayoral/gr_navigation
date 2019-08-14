@@ -28,7 +28,7 @@ file(GLOB CPP_FILES src/*.cpp)
 #list( APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_61; -std=c++11")
 
 cuda_add_library(
-  my_cuda  STATIC ${CUDA_FILES}
+  pcl_cuda_tools STATIC ${CUDA_FILES}
 )
 
 add_executable(cuda_executable
@@ -40,15 +40,16 @@ add_executable(cuda_executable
 target_link_libraries(cuda_executable ${CUDA_LIBRARIES})
 
 
-target_link_libraries(cuda_executable my_cuda
+target_link_libraries(cuda_executable pcl_cuda_tools
 )
 
 
-#install(TARGETS TestLib_executable
-#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-#install(DIRECTORY include/${PROJECT_NAME}
-#  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#  PATTERN ".svn" EXCLUDE)
+install(TARGETS pcl_cuda_tools
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+
+install(DIRECTORY include
+  DESTINATION include
+  PATTERN ".svn" EXCLUDE)
