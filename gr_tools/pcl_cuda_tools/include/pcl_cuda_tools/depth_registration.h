@@ -8,19 +8,20 @@
 class DepthRegistration{
   public:
     DepthRegistration(cv::Mat image);
+
     ~DepthRegistration();
 
-    int getN(){
-      return N;
-    };
+    cv::Mat getFrame(){
+      return frame_;
+    }
 
-    double run();
+    double getN(){
+      return frame_.cols * frame_.rows;
+    }
 
-    unsigned char *x;
-    int *hist;
-    float delta;
+    double  run();
 
   private:
-    int N;
+    cv::Mat frame_;
 
 };

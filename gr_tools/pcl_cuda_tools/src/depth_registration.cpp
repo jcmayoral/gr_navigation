@@ -3,53 +3,46 @@
 #include <pcl_cuda_tools/depth_registration.h>
 #include <pcl_cuda_tools/cuda_functions.cuh>
 
-DepthRegistration::DepthRegistration(cv::Mat image){
+DepthRegistration::DepthRegistration(cv::Mat image): frame_(image){
   std::cout << "Constructor cuda object"<<std::endl;
-  N  = image.cols * image.rows;
-
-  // Allocate Unified Memory – accessible from CPU or GPU
-  x = (unsigned char*)malloc(getN()*sizeof(unsigned char));
-
-  int bin_number = 1000;
-  float max_value = 65535;
-
-  // initialize x array on the host
-  cv::MatIterator_<uchar> it;
-  it = image.begin<uchar>();
-
-  for (int i = 0; i < N; i++) {
-    //uchar to int
-    x[i] = static_cast<unsigned char>(*it);
-    it = it+1;
-  }
-
-  hist = (int*)malloc(bin_number*sizeof(int));
-
-  for (int h=0; h < bin_number; h++){
-    hist[h] = 0;
-  }
-
-  delta = max_value/bin_number;
-  std::cout << "End Constructor cuda object"<<std::endl;
-
 };
 
 double DepthRegistration::run(){
-  // Run kernel on 1M elements on the GPU
-  // First param blocks
-  // Second param number of threads
-  do_cuda_stuff(getN(),x, hist, delta);
-  //ignoring 0
-  hist[0] = 0;
-  int auxiliar = sizeof(hist) / sizeof(hist[0]);
-  int median = std::distance(hist, std::max_element(hist, hist+ auxiliar));
-  stop_cuda_stuff(x,hist, delta, N);
+  int  x[frame_.rows*frame_.cols];
 
-  return double(median * delta) *0.001;
+  int width = frame_.cols;
+  int height = frame_.rows;
+  int _stride = frame_.step;//in case cols != strides
+  std::cout << "w "<< width << std::endl;
+  std::cout << "w "<< height << std::endl;
+  std::cout << "w "<< _stride << std::endl;
+
+  for(int i = 0; i < height; i++){
+      for(int j = 0; j < width; j++){
+          x[ j * i + i] = static_cast<int>(frame_.at<unsigned char>(i,j));
+      }
+  }
+
+  /*
+
+  for(int i = 0; i < height; i+=200){
+      for(int j = 0; j < width; j+=200){
+          std::cout << static_cast<unsigned>(frame_.at<unsigned char>(i,j)) <<std::endl;
+      }
+  }
+  for (int r = 0; r < frame_rows; r++) {
+    for (int c = 0; r < frame_rows; c++) {
+      x[i] = static_cast<unsigned char>(M.at<unsigned char>(r,c));
+  }
+  */
+
+  int n = frame_.rows * frame_.cols;
+  double result = do_cuda_stuff(x, n);
+  std::cout << "RUN results"<< result << std::endl;
+  return result;
 
 }
 
 DepthRegistration::~DepthRegistration(){
-  delete[] x;
-  delete[] hist;
+
 }
