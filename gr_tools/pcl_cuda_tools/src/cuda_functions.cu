@@ -31,9 +31,13 @@ extern "C"
     }
 
     double do_cuda_stuff(int o_x[], int n){
+      if (sizeof((o_x)) / sizeof((o_x)[0]) < 1){
+        return -1;
+      }
       int bin_number = 1000;
       // initialize x array on the host
       int * new_hist;
+      int * result_hist;
       int * x;
 
       float max_value = 65535;
@@ -44,13 +48,15 @@ extern "C"
       cudaMallocManaged(&x, n*sizeof(int));
       cudaMallocManaged(&new_hist, bin_number*sizeof(int));
 
+      cudaMemcpy(x, o_x, n*sizeof(int), cudaMemcpyHostToDevice);
+      /*
       printf(" \n");
       for (int h=0; h < bin_number; h++){
         x[h] = o_x[h];
         //printf("%d: %d ", h, x[h]);
-      }
+      }*/
 
-      int threads = 256;
+      int threads = 32;
       auto numBlocks = n/threads;
       // First param blocks
       // Second param number of threads
@@ -59,6 +65,9 @@ extern "C"
       //numBlocks = (n + blockSize - 1) / blockSize;
       do_cuda_stuff_kernel<<<numBlocks,threads>>>(n,x, new_hist);
       cudaDeviceSynchronize(); // to print results
+
+      result_hist = reinterpret_cast<int*>(malloc(bin_number*sizeof(int)));
+      cudaMemcpy(result_hist, new_hist, bin_number*sizeof(int),  cudaMemcpyDeviceToHost);
 
       //printf(" \n");
       //for (int h=0; h < bin_number; h++){

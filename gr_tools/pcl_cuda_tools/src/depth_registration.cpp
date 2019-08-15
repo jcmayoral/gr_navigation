@@ -8,7 +8,7 @@ DepthRegistration::DepthRegistration(cv::Mat image): frame_(image){
 };
 
 double DepthRegistration::run(){
-   std::lock_guard<std::mutex> lock(mtx);
+  std::lock_guard<std::mutex> lock(mtx);
   int  x[frame_.rows*frame_.cols];
 
   int width = frame_.cols;
