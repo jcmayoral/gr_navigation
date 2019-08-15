@@ -38,7 +38,8 @@ extern "C"
 
       float max_value = 65535;
       float delta = max_value/bin_number;
-      x = o_x;
+
+      //x = o_x;
       // Allocate Unified Memory – accessible from CPU or GPU
       cudaMallocManaged(&x, n*sizeof(int));
       cudaMallocManaged(&new_hist, bin_number*sizeof(int));
@@ -49,7 +50,7 @@ extern "C"
         //printf("%d: %d ", h, x[h]);
       }
 
-      int threads = 128;
+      int threads = 256;
       auto numBlocks = n/threads;
       // First param blocks
       // Second param number of threads

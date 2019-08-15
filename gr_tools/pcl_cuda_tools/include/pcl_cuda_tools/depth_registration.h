@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <mutex>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -23,5 +24,6 @@ class DepthRegistration{
 
   private:
     cv::Mat frame_;
+    std::mutex mtx;
 
 };
