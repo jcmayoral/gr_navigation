@@ -41,7 +41,7 @@ cuda_add_library(
   pcl_cuda_tools  ${CUDA_FILES}
 )
 
-add_executable(cuda_executable
+add_executable(cuda_executable_example
               src/test.cpp
               src/depth_registration.cpp
               #${CUDA_FILES}
@@ -53,18 +53,14 @@ target_link_libraries(pcl_cuda_tools
     ${OpenCV_LIBRARIES}
 )
 
-target_link_libraries(cuda_executable
+target_link_libraries(cuda_executable_example
     ${CUDA_LIBRARIES}
     ${OpenCV_LIBRARIES}
+    pcl_cuda_tools
 )
 
 
-target_link_libraries(cuda_executable pcl_cuda_tools
-)
-
-
-
-install(TARGETS pcl_cuda_tools
+install(TARGETS pcl_cuda_tools cuda_executable_example
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
