@@ -8,7 +8,7 @@ DepthRegistration::DepthRegistration(cv::Mat image){
   N  = image.cols * image.rows;
 
   // Allocate Unified Memory – accessible from CPU or GPU
-  x = (int*)malloc(getN()*sizeof(int));
+  x = (unsigned char*)malloc(getN()*sizeof(unsigned char));
 
   int bin_number = 1000;
   float max_value = 65535;
@@ -19,7 +19,7 @@ DepthRegistration::DepthRegistration(cv::Mat image){
 
   for (int i = 0; i < N; i++) {
     //uchar to int
-    x[i] = static_cast<int>(*it);
+    x[i] = static_cast<unsigned char>(*it);
     it = it+1;
   }
 

@@ -3,7 +3,7 @@
 
 extern "C"
 {
-    void do_cuda_stuff(int n, int *x, int *hist, float delta);
+    void do_cuda_stuff(int n, unsigned char *x, int *hist, float delta);
 }
 
 #endif

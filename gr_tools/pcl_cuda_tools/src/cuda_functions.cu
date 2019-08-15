@@ -4,7 +4,7 @@
 extern "C"
 {
     __global__
-    void do_cuda_stuff_kernel(int n, int *x, int *hist, float delta){
+    void do_cuda_stuff_kernel(int n, unsigned char *x, int *hist, float delta){
       int idx = blockIdx.x * blockDim.x + threadIdx.x;
       printf("Hello from thread %d!\n", idx);
 
@@ -20,15 +20,15 @@ extern "C"
 
     }
 
-    void stop(int *x, int *hist){
+    void stop(unsigned char *x, int *hist){
       cudaFree(x);
       cudaFree(hist);
     }
 
-    void do_cuda_stuff(int n, int *x, int *hist, float delta){
+    void do_cuda_stuff(int n, unsigned char *x, int *hist, float delta){
       // Allocate Unified Memory – accessible from CPU or GPU
       cudaMallocManaged(&x, n*sizeof(int));
-      cudaMallocManaged(&hist, 1000*sizeof(int));
+      cudaMallocManaged(&hist, 1000*sizeof(unsigned char));
       //  blocks, threads each
       do_cuda_stuff_kernel<<<128, 128>>>(n,x, hist, delta);
       cudaDeviceSynchronize(); // to print results

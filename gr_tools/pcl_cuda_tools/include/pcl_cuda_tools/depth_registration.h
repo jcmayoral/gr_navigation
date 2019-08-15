@@ -16,7 +16,7 @@ class DepthRegistration{
 
     double run();
 
-    int *x;
+    unsigned char *x;
     int *hist;
     float delta;
 
