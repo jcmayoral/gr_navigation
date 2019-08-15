@@ -1,24 +1,25 @@
 #include <iostream>
 #include <math.h>
 
-// Kernel function to add the elements of two arrays
-// Kernel function to add the elements of two arrays
-// Kernel function to add the elements of two arrays
-// Kernel function to add the elements of two arrays
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 
 class DepthRegistration{
   public:
-    DepthRegistration();
+    DepthRegistration(cv::Mat image);
     ~DepthRegistration();
 
     int getN(){
       return N;
     };
 
-    void run();
+    double run();
 
-    float *x;
-    float *y;
+    int *x;
+    int *hist;
+    float delta;
+
   private:
     int N;
 

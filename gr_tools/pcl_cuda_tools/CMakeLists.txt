@@ -7,6 +7,8 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 
 
 find_package(CUDA REQUIRED)
+
+
 #set(CUDA_SEPARABLE_COMPILATION ON)
 
 #set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_20,code=sm_20;--std=c++11)
@@ -18,7 +20,15 @@ find_package(CUDA REQUIRED)
 #SET(CUDA_LIBRARIES ${CUDA_LIBRARIES} "/usr/local/cuda-10.1/lib64/libcudart.so" "/usr/local/cuda-10.1/lib64/libcublas.so")
 
 #SET(LIB_TYPE STATIC)
-include_directories(include ${CUDA_INCLUDE_DIRS})
+
+find_package(OpenCV 3 REQUIRED)
+
+
+include_directories(
+  include
+  ${CUDA_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+)
 
 
 file(GLOB CUDA_FILES src/*.cu)
@@ -28,7 +38,7 @@ file(GLOB CPP_FILES src/*.cpp)
 #list( APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_61; -std=c++11")
 
 cuda_add_library(
-  pcl_cuda_tools STATIC ${CUDA_FILES}
+  pcl_cuda_tools  ${CUDA_FILES}
 )
 
 add_executable(cuda_executable
@@ -37,7 +47,16 @@ add_executable(cuda_executable
               #${CUDA_FILES}
 )
 
-target_link_libraries(cuda_executable ${CUDA_LIBRARIES})
+
+target_link_libraries(pcl_cuda_tools
+    ${CUDA_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+)
+
+target_link_libraries(cuda_executable
+    ${CUDA_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+)
 
 
 target_link_libraries(cuda_executable pcl_cuda_tools
