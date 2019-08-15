@@ -39,11 +39,11 @@ double DepthRegistration::run(){
   // First param blocks
   // Second param number of threads
   do_cuda_stuff(getN(),x, hist, delta);
-
   //ignoring 0
   hist[0] = 0;
   int auxiliar = sizeof(hist) / sizeof(hist[0]);
   int median = std::distance(hist, std::max_element(hist, hist+ auxiliar));
+  stop_cuda_stuff(x,hist, delta, N);
 
   return double(median * delta) *0.001;
 

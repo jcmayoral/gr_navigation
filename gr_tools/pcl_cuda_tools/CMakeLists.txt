@@ -38,7 +38,7 @@ file(GLOB CPP_FILES src/*.cpp)
 #list( APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_61; -std=c++11")
 
 cuda_add_library(
-  pcl_cuda_tools  ${CUDA_FILES}
+  pcl_cuda_tools  SHARED ${CUDA_FILES} ${CPP_FILES}
 )
 
 add_executable(cuda_executable_example
