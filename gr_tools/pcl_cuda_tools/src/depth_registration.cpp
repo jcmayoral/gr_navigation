@@ -13,9 +13,6 @@ double DepthRegistration::run(){
   int width = frame_.cols;
   int height = frame_.rows;
   int _stride = frame_.step;//in case cols != strides
-  std::cout << "w "<< width << std::endl;
-  std::cout << "w "<< height << std::endl;
-  std::cout << "w "<< _stride << std::endl;
 
   for(int i = 0; i < height; i++){
       for(int j = 0; j < width; j++){

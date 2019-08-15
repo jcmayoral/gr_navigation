@@ -9,7 +9,6 @@ extern "C"
       //int index = blockIdx.x * blockDim.x + threadIdx.x;
       //int stride = blockDim.x * gridDim.x;
 
-
       int bin_number = 1000;
       float max_value = 65535;
       float delta = max_value/bin_number;
@@ -47,13 +46,10 @@ extern "C"
       printf(" \n");
       for (int h=0; h < bin_number; h++){
         x[h] = o_x[h];
-        printf("%d: %d ", h, x[h]);
+        //printf("%d: %d ", h, x[h]);
       }
 
-
-
-
-      int threads = 256;
+      int threads = 128;
       auto numBlocks = n/threads;
       // First param blocks
       // Second param number of threads
@@ -63,10 +59,10 @@ extern "C"
       do_cuda_stuff_kernel<<<numBlocks,threads>>>(n,x, new_hist);
       cudaDeviceSynchronize(); // to print results
 
-      printf(" \n");
-      for (int h=0; h < bin_number; h++){
-        printf("%d: %d ", h, new_hist[h]);
-      }
+      //printf(" \n");
+      //for (int h=0; h < bin_number; h++){
+      //  printf("%d: %d ", h, new_hist[h]);
+      //}
 
 
       new_hist[0] = 0;
