@@ -16,7 +16,7 @@ extern "C"
       //int stride = blockDim.x * gridDim.x;
       //printf("%d %d \n", gridDim.x, blockDim.x  );
       int index = getGlobalIdx_1D_1D();
-      t[threadIdx.x] += x[index];
+      t[x[index]] += 1;
     }
 
     void stop_cuda_stuff(int *x, int *t){
@@ -26,11 +26,10 @@ extern "C"
 
     int do_cuda_stuff(int* o_x, int size){
       // initialize x array on the host
-      int * x, *y1, *t, *tr = {0};
+      int * x, *t, *tr;
 
       // Allocate Unified Memory – accessible from CPU or GPU
       cudaMallocManaged(&x, size*sizeof(int));
-      cudaMallocManaged(&y1, size*sizeof(int));
       cudaMemcpy(x, o_x, size*sizeof(int), cudaMemcpyHostToDevice);
 
       int nthreads = 512;
@@ -38,15 +37,16 @@ extern "C"
       int nblocks =  ceil(size / nthreads);//size/ nthreads -1;
       //printf("blocks....%d %d\n", nblocks, nblocks*nthreads);
       cudaMallocManaged(&t, nthreads*sizeof(int));
+      t = static_cast<int*>(malloc(sizeof(int) * nthreads));
       tr = static_cast<int*>(malloc(sizeof(int) * nthreads));
 
+      memset(t, 0x00, nthreads);
       dim3 blocks(nblocks);
       // First param blocks
       // Second param number of threads
       //  blocks, threads each
       do_cuda_stuff_kernel<<<blocks,threads>>>(x,t);
       cudaDeviceSynchronize(); // to print results
-      cudaMemcpy(y1, x, sizeof(x), cudaMemcpyDeviceToHost);
       cudaMemcpy(tr, t, sizeof(x), cudaMemcpyDeviceToHost);
       stop_cuda_stuff(x, t);
 
