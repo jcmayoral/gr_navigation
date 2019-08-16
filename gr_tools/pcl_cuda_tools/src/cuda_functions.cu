@@ -3,69 +3,66 @@
 
 extern "C"
 {
+    __device__
+    int getGlobalIdx_1D_1D(){
+      return blockIdx.x *blockDim.x + threadIdx.x;
+    }
+
     __global__
-    void do_cuda_stuff_kernel(int n, int *x, int *hist){
+    void do_cuda_stuff_kernel(int *x, int* t){
+      //__shared__ int s[256];
       //int idx = blockIdx.x * blockDim.x + threadIdx.x;
       //int index = blockIdx.x * blockDim.x + threadIdx.x;
       //int stride = blockDim.x * gridDim.x;
-
-      int index = blockIdx.x * blockDim.x + threadIdx.x;
-      int hist_index = static_cast<int>(x[index]);
-      hist[hist_index] = hist[hist_index] + 1;
-
+      //printf("%d %d \n", gridDim.x, blockDim.x  );
+      int index = getGlobalIdx_1D_1D();
+      t[threadIdx.x] += x[index];
     }
 
-    void stop_cuda_stuff(int *x,  int *hist){
+    void stop_cuda_stuff(int *x, int *t){
       cudaFree(x);
-      cudaFree(hist);
+      cudaFree(t);
     }
 
-    double do_cuda_stuff(int o_x[], int n){
-      int bin_number = 255;
+    int do_cuda_stuff(int* o_x, int size){
       // initialize x array on the host
-      int * hist;
-      int * result_hist;
-      int * x;
+      int * x, *y1, *t, *tr = {0};
 
-      int h[bin_number] = {0};
-
-      float delta = 0.1;
-
-      hist = reinterpret_cast<int*>(malloc(bin_number*sizeof(int)));
-      //x = o_x;
       // Allocate Unified Memory – accessible from CPU or GPU
-      cudaMallocManaged(&x, n*sizeof(int));
-      cudaMallocManaged(&hist, bin_number*sizeof(int));
-      cudaMemcpy(x, o_x, n*sizeof(int), cudaMemcpyHostToDevice);
-      cudaMemcpy(hist, h, bin_number*sizeof(int), cudaMemcpyHostToDevice);
+      cudaMallocManaged(&x, size*sizeof(int));
+      cudaMallocManaged(&y1, size*sizeof(int));
+      cudaMemcpy(x, o_x, size*sizeof(int), cudaMemcpyHostToDevice);
 
-      int threads = 128;
-      int numBlocks = n/threads;
+      int nthreads = 512;
+      dim3 threads (nthreads);
+      int nblocks =  ceil(size / nthreads);//size/ nthreads -1;
+      //printf("blocks....%d %d\n", nblocks, nblocks*nthreads);
+      cudaMallocManaged(&t, nthreads*sizeof(int));
+      tr = static_cast<int*>(malloc(sizeof(int) * nthreads));
+
+      dim3 blocks(nblocks);
       // First param blocks
       // Second param number of threads
       //  blocks, threads each
-      //int blockSize = 256;
-      //numBlocks = (n + blockSize - 1) / blockSize;
-      do_cuda_stuff_kernel<<<numBlocks,threads>>>(n,x, hist);
+      do_cuda_stuff_kernel<<<blocks,threads>>>(x,t);
       cudaDeviceSynchronize(); // to print results
+      cudaMemcpy(y1, x, sizeof(x), cudaMemcpyDeviceToHost);
+      cudaMemcpy(tr, t, sizeof(x), cudaMemcpyDeviceToHost);
+      stop_cuda_stuff(x, t);
 
-      result_hist = reinterpret_cast<int*>(malloc(bin_number*sizeof(int)));
-      cudaMemcpy(result_hist, hist, bin_number*sizeof(int),  cudaMemcpyDeviceToHost);
 
-      stop_cuda_stuff(x,hist);
-
-      result_hist[0] = 0;
-      result_hist[999] = 0;
-
+      int max_value = -1;
       int max_index = -1;
+      tr[0] = -2;
 
-      for (int w = 0; w < bin_number; w++){
-        if (result_hist[w] > max_index){
-          max_index = w;
+      for (int i =0; i< nthreads; i++){
+        if (tr[i] > max_value){
+          max_value = tr[i];
+          max_index = i;
         }
       }
-      printf("Max Index %d", max_index);
+      printf("result....%d %d\n", max_value, max_index);
 
-      return double(max_index * delta) *0.001;
+      return max_index;
     }
 }

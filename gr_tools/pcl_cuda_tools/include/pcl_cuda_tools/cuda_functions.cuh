@@ -3,8 +3,8 @@
 
 extern "C"
 {
-  double do_cuda_stuff(int o_x[], int n);
-  void stop_cuda_stuff(int *x, int *hist);
+  int do_cuda_stuff(int *o_x, int size);
+  void stop_cuda_stuff(int *x, int *t);
 }
 
 #endif

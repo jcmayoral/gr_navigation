@@ -23,9 +23,6 @@ int main (int argc, char **argv)
 
   DepthRegistration depth_registrator_(sample_img);
   auto result = depth_registrator_.run();
-
-  float maxError = 0.0f;
-
   /*
   for (int i = 0; i < depth_registrator_.getN(); i++)
   // Check for errors (all values should be 3.0f)

@@ -33,11 +33,16 @@ double DepthRegistration::run(){
       x[i] = static_cast<unsigned char>(M.at<unsigned char>(r,c));
   }
   */
+  float max_value = 65535;
+  int bin_number = 512;
+  float delta = max_value/bin_number;
 
   int n = frame_.rows * frame_.cols;
-  double result = do_cuda_stuff(x, n);
-  std::cout << "RUN results"<< result << std::endl;
-  return result;
+  std::cout << "size" << sizeof(x)/sizeof(*x) << n << std::endl;
+
+  auto result = do_cuda_stuff(x, n);
+  std::cout << "RUN results"<< result * delta * 0.001 << std::endl;
+  return result * 0.001;
 
 }
 
