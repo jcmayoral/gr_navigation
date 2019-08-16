@@ -71,7 +71,7 @@ namespace pcl
         using GPUTreePtr = pcl::gpu::Octree::Ptr;
 
         using CloudDevice = pcl::gpu::Octree::PointCloud;
-
+        void do_stuff ();
         void
         applyFilter (const boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  &host_cloud_,
                                   const pcl::gpu::Octree::Ptr                               &tree,
