@@ -12,8 +12,8 @@ namespace gr_depth_processing
     filterImage = &cv_filter;
     //registerImage = &register_pointclouds;
     //registerImage = &register_ransac_pointclouds;
-    //registerImage = &register_median_pointclouds;
-    registerImage = &cuda_register_median_pointclouds;
+    registerImage = &register_median_pointclouds;
+    //registerImage = &cuda_register_median_pointclouds;
 
     ros::NodeHandle nh;
     max_range_ = 8.0;
