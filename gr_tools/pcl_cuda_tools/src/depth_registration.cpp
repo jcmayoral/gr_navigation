@@ -42,7 +42,7 @@ double DepthRegistration::run(){
 
   auto result = do_cuda_stuff(x, n);
   std::cout << "RUN results"<< result * delta * 0.001 << std::endl;
-  return result * 0.001;
+  return result * delta * 0.001;
 
 }
 
