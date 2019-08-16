@@ -1,55 +1,51 @@
 cmake_minimum_required(VERSION 2.8.3)
 
-add_definitions(-Wno-deprecated-declarations)
-add_definitions(-Wno-dev)
+#add_definitions(-Wno-deprecated-declarations)
+#add_definitions(-Wno-dev)
 
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++17")
 
 
 find_package(CUDA REQUIRED)
-
-
-#set(CUDA_SEPARABLE_COMPILATION ON)
-
-#set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_20,code=sm_20;--std=c++11)
-
-#SET(CUDA_NVCC_FLAGS "-arch=sm_61" CACHE STRING "nvcc flags" FORCE)
-#set(CUDA_HOST_COMPILER clang++) # shouldn't fail anymore
-#SET (CUDA_VERBOSE_BUILD ON CACHE BOOL "nvcc verbose" FORCE)
-#set(CUDA_INCLUDE_DIRS /usr/local/cuda-10.1/include/ ${CUDA_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
-#SET(CUDA_LIBRARIES ${CUDA_LIBRARIES} "/usr/local/cuda-10.1/lib64/libcudart.so" "/usr/local/cuda-10.1/lib64/libcublas.so")
-
-#SET(LIB_TYPE STATIC)
-
+find_package(PCL 1.9 REQUIRED)
 find_package(OpenCV 3 REQUIRED)
+SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
 
 
 include_directories(
   include
   ${CUDA_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
+set_directory_properties( PROPERTIES COMPILE_DEFINITIONS "" )
+
 
 file(GLOB CUDA_FILES src/*.cu)
+file(GLOB DEPTH_CPP_FILES src/depth*.cpp)
+file(GLOB FILTER_CPP_FILES src/filter*.cpp)
 file(GLOB CPP_FILES src/*.cpp)
 
 
-#list( APPEND CUDA_NVCC_FLAGS "-gencode arch=compute_61; -std=c++11")
-
 cuda_add_library(
-  pcl_cuda_tools  SHARED ${CUDA_FILES} ${CPP_FILES}
+  pcl_cuda_tools  SHARED ${CUDA_FILES} ${DEPTH_CPP_FILES}
 )
 
 add_executable(cuda_executable_example
-              src/test.cpp
               src/depth_registration.cpp
-              #${CUDA_FILES}
+              src/depth_test_filter.cpp
+)
+
+
+add_executable(cuda_filter_example
+              src/filter_test.cpp
 )
 
 
 target_link_libraries(pcl_cuda_tools
     ${CUDA_LIBRARIES}
+    ${PCL_LIBRARIES}
     ${OpenCV_LIBRARIES}
 )
 
@@ -59,11 +55,16 @@ target_link_libraries(cuda_executable_example
     pcl_cuda_tools
 )
 
+target_link_libraries(cuda_filter_example
+    ${CUDA_LIBRARIES}
+    ${PCL_LIBRARIES}
+)
 
-install(TARGETS pcl_cuda_tools cuda_executable_example
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+
+#install(TARGETS pcl_cuda_tools cuda_executable_example cuda_filter_example
+#        RUNTIME DESTINATION bin
+#        LIBRARY DESTINATION lib
+#        ARCHIVE DESTINATION lib)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
   DESTINATION include
