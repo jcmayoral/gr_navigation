@@ -33,13 +33,12 @@ cuda_add_library(
 )
 
 add_executable(cuda_executable_example
-              src/depth_registration.cpp
-              src/depth_test_filter.cpp
+                ${DEPTH_CPP_FILES}
 )
 
 
 add_executable(cuda_filter_example
-              src/filter_test.cpp
+              ${FILTER_CPP_FILES}
 )
 
 

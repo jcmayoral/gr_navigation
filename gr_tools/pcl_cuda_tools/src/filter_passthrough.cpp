@@ -36,18 +36,17 @@
  * @author: Koen Buys
  */
 
-#ifndef PCL_GPU_SEGMENTATION_IMPL_EXTRACT_CLUSTERS_H_
-#define PCL_GPU_SEGMENTATION_IMPL_EXTRACT_CLUSTERS_H_
+#include <pcl_cuda_tools/filters/filter_passthrough.h>
 
-#include <pcl/gpu/segmentation/gpu_extract_clusters.h>
+using namespace pcl::gpu;
+using namespace pcl;
 
-void
-pcl::gpu::extractEuclideanClusters (const boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  &host_cloud_,
-                                    const pcl::gpu::Octree::Ptr                               &tree,
-                                    float                                                     tolerance,
-                                    std::vector<PointIndices>                                 &clusters,
-                                    unsigned int                                              min_pts_per_cluster,
-                                    unsigned int                                              max_pts_per_cluster)
+void FilterPassThrough::applyFilter (const boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  &host_cloud_,
+                  const pcl::gpu::Octree::Ptr                               &tree,
+                  float                                                     tolerance,
+                  std::vector<PointIndices>                                 &clusters,
+                  unsigned int                                              min_pts_per_cluster,
+                  unsigned int                                              max_pts_per_cluster)
 {
 
   // Create a bool vector of processed point indices, and initialize it to false
@@ -176,8 +175,7 @@ pcl::gpu::extractEuclideanClusters (const boost::shared_ptr<pcl::PointCloud<pcl:
   }
 }
 
-void
-pcl::gpu::EuclideanClusterExtraction::extract (std::vector<pcl::PointIndices> &clusters)
+void FilterPassThrough::extract (std::vector<pcl::PointIndices> &clusters)
 {
 /*
   // Initialize the GPU search tree
@@ -200,10 +198,8 @@ pcl::gpu::EuclideanClusterExtraction::extract (std::vector<pcl::PointIndices> &c
   }
 */
   // Extract the actual clusters
-  extractEuclideanClusters (host_cloud_, tree_, cluster_tolerance_, clusters, min_pts_per_cluster_, max_pts_per_cluster_);
+  applyFilter (host_cloud_, tree_, cluster_tolerance_, clusters, min_pts_per_cluster_, max_pts_per_cluster_);
   //std::cout << "INFO: end of extractEuclideanClusters " << std::endl;
   // Sort the clusters based on their size (largest one first)
   //std::sort (clusters.rbegin (), clusters.rend (), comparePointClusters);
 }
-
-#endif //PCL_GPU_SEGMENTATION_IMPL_EXTRACT_CLUSTERS_H_

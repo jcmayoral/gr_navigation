@@ -50,19 +50,13 @@ namespace pcl
 {
   namespace gpu
   {
-    void
-    extractEuclideanClusters (const boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  &host_cloud_,
-                              const pcl::gpu::Octree::Ptr                               &tree,
-                              float                                                     tolerance,
-                              std::vector<PointIndices>                                 &clusters,
-                              unsigned int                                              min_pts_per_cluster, 
-                              unsigned int                                max_pts_per_cluster);
+
 
    /** \brief @b EuclideanClusterExtraction represents a segmentation class for cluster extraction in an Euclidean sense, depending on pcl::gpu::octree
     * \author Koen Buys, Radu Bogdan Rusu
     * \ingroup segmentation
     */
-    class EuclideanClusterExtraction
+    class FilterPassThrough
     {
       public:
         using PointType = pcl::PointXYZ;
@@ -78,9 +72,17 @@ namespace pcl
 
         using CloudDevice = pcl::gpu::Octree::PointCloud;
 
+        void
+        applyFilter (const boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ> >  &host_cloud_,
+                                  const pcl::gpu::Octree::Ptr                               &tree,
+                                  float                                                     tolerance,
+                                  std::vector<PointIndices>                                 &clusters,
+                                  unsigned int                                              min_pts_per_cluster,
+                                  unsigned int                                max_pts_per_cluster);
+
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /** \brief Empty constructor. */
-        EuclideanClusterExtraction () : min_pts_per_cluster_ (1), max_pts_per_cluster_ (std::numeric_limits<int>::max ())
+        FilterPassThrough () : min_pts_per_cluster_ (1), max_pts_per_cluster_ (std::numeric_limits<int>::max ())
         {};
 
         /** \brief the destructor */
@@ -94,7 +96,7 @@ namespace pcl
           */
         inline void setSearchMethod (GPUTreePtr &tree) { tree_ = tree; }
 
-        /** \brief Get a pointer to the search method used. 
+        /** \brief Get a pointer to the search method used.
           *  @todo fix this for a generic search tree
           */
         inline GPUTreePtr getSearchMethod () { return (tree_); }
@@ -154,10 +156,10 @@ namespace pcl
         /** \brief Class getName method. */
         virtual std::string getClassName () const { return ("gpu::EuclideanClusterExtraction"); }
     };
-    /** \brief Sort clusters method (for std::sort). 
+    /** \brief Sort clusters method (for std::sort).
       * \ingroup segmentation
       */
-    inline bool 
+    inline bool
       comparePointClusters (const pcl::PointIndices &a, const pcl::PointIndices &b)
     {
       return (a.indices.size () < b.indices.size ());
