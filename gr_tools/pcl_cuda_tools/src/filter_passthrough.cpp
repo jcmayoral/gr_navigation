@@ -46,10 +46,13 @@ using namespace pcl;
 void FilterPassThrough::do_stuff (){
   float * x, *y, *z;
   int number_points = host_cloud_->points.size();
+  std::cout <<"points number"  << number_points << std::endl;
   x = static_cast<float*>(malloc(sizeof(float) * number_points));
   y = static_cast<float*>(malloc(sizeof(float) * number_points));
   z = static_cast<float*>(malloc(sizeof(float) * number_points));
-
+  for (auto i=0; i< 1024; i++){
+    x[i] = host_cloud_->points[i].x;
+  }
 
   auto result = apply_cuda_filter(x,y,z, 1.0);
 }
