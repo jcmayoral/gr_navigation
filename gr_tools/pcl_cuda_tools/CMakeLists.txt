@@ -21,7 +21,6 @@ include_directories(
 
 set_directory_properties( PROPERTIES COMPILE_DEFINITIONS "" )
 
-
 file(GLOB CUDA_FILES src/*.cu)
 file(GLOB DEPTH_CPP_FILES src/depth*.cpp)
 file(GLOB FILTER_CPP_FILES src/filter*.cpp)
@@ -57,6 +56,7 @@ target_link_libraries(cuda_executable_example
 target_link_libraries(cuda_filter_example
     ${CUDA_LIBRARIES}
     ${PCL_LIBRARIES}
+    pcl_cuda_tools
 )
 
 

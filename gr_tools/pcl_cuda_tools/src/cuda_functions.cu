@@ -1,13 +1,11 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 
-extern "C"
-{
+extern "C"{
     __device__
-    int getGlobalIdx_1D_1D(){
+    int get_globalIdx_1D_1D(){
       return blockIdx.x *blockDim.x + threadIdx.x;
     }
-
     __global__
     void do_cuda_stuff_kernel(int *x, int* t){
       //__shared__ int s[256];
@@ -15,7 +13,7 @@ extern "C"
       //int index = blockIdx.x * blockDim.x + threadIdx.x;
       //int stride = blockDim.x * gridDim.x;
       //printf("%d %d \n", gridDim.x, blockDim.x  );
-      int index = getGlobalIdx_1D_1D();
+      int index = get_globalIdx_1D_1D();
       t[x[index]] += 1;
     }
 
