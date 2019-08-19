@@ -19,7 +19,6 @@
 #include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
 
 
-
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -34,6 +33,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <geometry_msgs/PoseArray.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl_gpu_tools/GPUFilterConfig.h>
 #include <dynamic_reconfigure/server.h>
@@ -58,6 +58,7 @@ private:
   ros::Subscriber pc_sub_;
   ros::Publisher pc_pub_;
   ros::Publisher cluster_pub_;
+  ros::Publisher bb_pub_;
   pcl::gpu::Octree::PointCloud cloud_device;
   pcl::gpu::EuclideanClusterExtraction gec;
   pcl::ExtractIndices<pcl::PointXYZ> extraction_filter_;
@@ -84,5 +85,6 @@ public:
     template <class T> void publishPointCloud(T);
     void timer_cb(const ros::TimerEvent&);
     void cluster();
+    void publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array);
     void dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level);
 };

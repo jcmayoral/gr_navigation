@@ -10,6 +10,7 @@ find_package(catkin REQUIRED
         roscpp
         pcl_conversions
         geometry_msgs
+        jsk_recognition_msgs
         pcl_ros
         dynamic_reconfigure
 )
@@ -53,6 +54,7 @@ catkin_package(
     pcl_conversions
     pcl_ros
     geometry_msgs
+    jsk_recognition_msgs
     dynamic_reconfigure
   DEPENDS
     PCL

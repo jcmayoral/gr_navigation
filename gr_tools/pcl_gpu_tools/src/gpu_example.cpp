@@ -39,7 +39,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
     pc_sub_ = nh.subscribe("/velodyne_points", 1, &GPUExample::pointcloud_cb, this);
    	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
     cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
-
+    bb_pub_ = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("/detection/bounding_boxes", 1);
 
 };
 
@@ -143,6 +143,28 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     return 1;
 }
 
+void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array){
+  const std::vector<geometry_msgs::Pose>& ps = cluster_array.poses;
+  jsk_recognition_msgs::BoundingBoxArray bb;
+  bb.header.stamp = ros::Time::now();
+  bb.header.frame_id = cluster_array.header.frame_id;
+
+  jsk_recognition_msgs::BoundingBox cluster_bb;
+  cluster_bb.header.stamp = ros::Time::now();
+  cluster_bb.header.frame_id = cluster_array.header.frame_id;
+
+  for (auto i=0; i < ps.size(); i++){
+    cluster_bb.pose.position.x = ps[i].position.x;
+    cluster_bb.pose.position.y = ps[i].position.y;
+    cluster_bb.pose.position.z = ps[i].position.z;
+    cluster_bb.dimensions.x = 1;
+    cluster_bb.dimensions.y = 1;
+    cluster_bb.dimensions.z = 1;
+    bb.boxes.push_back(cluster_bb);
+  }
+  bb_pub_.publish(bb);
+}
+
 void GPUExample::cluster(){
     boost::mutex::scoped_lock lock(mutex_);
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
@@ -238,6 +260,7 @@ void GPUExample::cluster(){
     }
 
     cluster_pub_.publish(clusters_msg);
+    publishBoundingBoxes(clusters_msg);
 
     if (output_publish_){
         publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(main_cloud_);
