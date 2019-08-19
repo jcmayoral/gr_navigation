@@ -227,10 +227,11 @@ void GPUExample::cluster(){
         }
 
         //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
-        cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);// * calculateStd<double>(z_vector);
-        z_std = calculateStd<double>(z_vector);
-        //std::cout << "STD " << cluster_std  << " and "<< z_std <<  std::endl;
-        if (cluster_std< dynamic_std_ && dynamic_std_z_/2 < z_std  < dynamic_std_z_){
+        cluster_std = calculateVariance<double>(x_vector)*calculateVariance<double>(y_vector);// * calculateStd<double>(z_vector);
+        z_std = calculateVariance<double>(z_vector);
+        //if (cluster_std> dynamic_std_ && dynamic_std_z_/2 < z_std  < dynamic_std_z_){
+          if (cluster_std< dynamic_std_ && z_std  > dynamic_std_z_){
+            std::cout << "VAR " << cluster_std  << " and "<< z_std <<  std::endl;
         //if (z_std  > dynamic_std_z_)
             clusters_msg.poses.push_back(cluster_center);
         }
