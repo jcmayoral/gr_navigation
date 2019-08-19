@@ -6,7 +6,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //cilinder ROI
-    double limit = 50.0;
+    double limit = 15.0;
     double time_window = 0.2;
     nh.getParam("roi", limit);
     nh.getParam("time_window", time_window);
@@ -31,7 +31,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
     segmentation_filter_.setAxis(axis);
     //segmentation_filter_.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
-    
+
     timer_ = nh.createTimer(ros::Duration(time_window), &GPUExample::timer_cb, this);
 	dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
@@ -96,7 +96,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 
     condition_removal_.setInputCloud (cloud_filtered);
     condition_removal_.filter (*cloud_filtered);
-   
+
     int original_size = (int) cloud_filtered->points.size ();
     pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
@@ -108,7 +108,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     do{
         segmentation_filter_.setInputCloud(cloud_filtered);
         segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
-        
+
         if (filter_inliers->indices.size () != 0){
             //ROS_INFO_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
             //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
@@ -158,7 +158,7 @@ void GPUExample::cluster(){
 
     segmentation_filter_.setInputCloud(concatenated_pc);
     segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
-        
+
     if (filter_inliers->indices.size () != 0){
         ROS_ERROR_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
         //extracting inliers (removing ground)
@@ -174,7 +174,7 @@ void GPUExample::cluster(){
     pcl::gpu::Octree::Ptr octree_device (new pcl::gpu::Octree);
     octree_device->setCloud(cloud_device);
     octree_device->build();
-   
+
     std::vector<pcl::PointIndices> cluster_indices_gpu;
     gec.setSearchMethod (octree_device);
 
