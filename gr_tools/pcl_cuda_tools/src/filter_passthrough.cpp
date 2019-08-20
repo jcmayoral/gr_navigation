@@ -39,11 +39,11 @@
 #include <pcl_cuda_tools/filters/filter_passthrough.h>
 #include <pcl_cuda_tools/cuda_filter_functions.cuh>
 
-using namespace pcl::gpu;
-using namespace pcl;
+//using namespace pcl::gpu;
+//using namespace pcl;
+using namespace pcl_gpu;
 
-
-void FilterPassThrough::do_stuff (){
+double FilterPassThrough::do_stuff (){
   float * x, *y, *z;
   int number_points = host_cloud_->points.size();
   std::cout <<"points number"  << number_points << std::endl;
@@ -54,7 +54,7 @@ void FilterPassThrough::do_stuff (){
     x[i] = host_cloud_->points[i].x;
   }
 
-  auto result = apply_cuda_filter(x,y,z, -1.0, 1.0);
+  return apply_cuda_filter(x,y,z, -1.0, 1.0);
 }
 
 

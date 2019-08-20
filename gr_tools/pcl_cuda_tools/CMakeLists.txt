@@ -22,21 +22,28 @@ include_directories(
 set_directory_properties( PROPERTIES COMPILE_DEFINITIONS "" )
 
 file(GLOB CUDA_FILES src/*.cu)
+
 file(GLOB DEPTH_CPP_FILES src/depth*.cpp)
+list(REMOVE_ITEM DEPTH_CPP_FILES "depth_test_filter.cpp")
+
 file(GLOB FILTER_CPP_FILES src/filter*.cpp)
+list(REMOVE_ITEM FILTER_CPP_FILES "filter_test.cpp")
+
 file(GLOB CPP_FILES src/*.cpp)
 
 
 cuda_add_library(
-  pcl_cuda_tools  SHARED ${CUDA_FILES} ${DEPTH_CPP_FILES}
+  pcl_cuda_tools  SHARED ${CUDA_FILES} ${DEPTH_CPP_FILES} ${FILTER_CPP_FILES}
 )
 
 add_executable(cuda_executable_example
+                src/test_depth_filter.cpp
                 ${DEPTH_CPP_FILES}
 )
 
 
 add_executable(cuda_filter_example
+              src/test_filter.cpp
               ${FILTER_CPP_FILES}
 )
 
@@ -60,10 +67,10 @@ target_link_libraries(cuda_filter_example
 )
 
 
-#install(TARGETS pcl_cuda_tools cuda_executable_example cuda_filter_example
-#        RUNTIME DESTINATION bin
-#        LIBRARY DESTINATION lib
-#        ARCHIVE DESTINATION lib)
+install(TARGETS pcl_cuda_tools
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
   DESTINATION include
