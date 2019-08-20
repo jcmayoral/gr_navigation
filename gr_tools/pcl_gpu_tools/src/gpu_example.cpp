@@ -90,7 +90,7 @@ void GPUExample::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
 //template <template <typename> class Storage> void
 int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered){
     boost::mutex::scoped_lock lock(mutex_);
-
+    bb.boxes.clear();
     //ROS_INFO("WORKING");
     //pcl::PCDWriter writer;
 
@@ -143,25 +143,23 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     return 1;
 }
 
-void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array){
-  const std::vector<geometry_msgs::Pose>& ps = cluster_array.poses;
-  jsk_recognition_msgs::BoundingBoxArray bb;
-  bb.header.stamp = ros::Time::now();
-  bb.header.frame_id = cluster_array.header.frame_id;
-
+void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z){
   jsk_recognition_msgs::BoundingBox cluster_bb;
   cluster_bb.header.stamp = ros::Time::now();
-  cluster_bb.header.frame_id = cluster_array.header.frame_id;
+  cluster_bb.header.frame_id = "velodyne"; //this should be a param
+  cluster_bb.pose.position.x = center.position.x;
+  cluster_bb.pose.position.y = center.position.y;
+  cluster_bb.pose.position.z = center.position.z;
+  cluster_bb.dimensions.x = v_x;
+  cluster_bb.dimensions.y = v_y;
+  cluster_bb.dimensions.z = v_z;
+  bb.boxes.push_back(cluster_bb);
+}
 
-  for (auto i=0; i < ps.size(); i++){
-    cluster_bb.pose.position.x = ps[i].position.x;
-    cluster_bb.pose.position.y = ps[i].position.y;
-    cluster_bb.pose.position.z = ps[i].position.z;
-    cluster_bb.dimensions.x = 1;
-    cluster_bb.dimensions.y = 1;
-    cluster_bb.dimensions.z = 1;
-    bb.boxes.push_back(cluster_bb);
-  }
+void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array){
+  const std::vector<geometry_msgs::Pose>& ps = cluster_array.poses;
+  bb.header.stamp = ros::Time::now();
+  bb.header.frame_id = cluster_array.header.frame_id;
   bb_pub_.publish(bb);
 }
 
@@ -229,7 +227,7 @@ void GPUExample::cluster(){
     std::vector<double> y_vector;
     std::vector<double> z_vector;
 
-    double cluster_std, z_std;
+    double cluster_std;
 
     for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_gpu.begin (); it != cluster_indices_gpu.end (); ++it){
         //pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZ>);
@@ -249,13 +247,16 @@ void GPUExample::cluster(){
         }
 
         //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
-        cluster_std = calculateVariance<double>(x_vector)*calculateVariance<double>(y_vector);// * calculateStd<double>(z_vector);
-        z_std = calculateVariance<double>(z_vector);
+        double var_x = calculateVariance<double>(x_vector);
+        double var_y = calculateVariance<double>(y_vector);
+        double var_z = calculateVariance<double>(z_vector);
+
+        cluster_std = var_x * var_y;// * calculateStd<double>(z_vector);
         //if (cluster_std> dynamic_std_ && dynamic_std_z_/2 < z_std  < dynamic_std_z_){
-          if (cluster_std< dynamic_std_ && z_std  > dynamic_std_z_){
-            std::cout << "VAR " << cluster_std  << " and "<< z_std <<  std::endl;
-        //if (z_std  > dynamic_std_z_)
-            clusters_msg.poses.push_back(cluster_center);
+        if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_){
+          std::cout << "VAR " << cluster_std << std::endl;
+          clusters_msg.poses.push_back(cluster_center);
+          addBoundingBox(cluster_center, var_x, var_y, var_z);
         }
     }
 

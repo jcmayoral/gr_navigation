@@ -76,6 +76,7 @@ private:
   double dynamic_std_;
   double dynamic_std_z_;
   bool output_publish_;
+  jsk_recognition_msgs::BoundingBoxArray bb;
 
 public:
     GPUExample ();
@@ -86,5 +87,6 @@ public:
     void timer_cb(const ros::TimerEvent&);
     void cluster();
     void publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array);
+    void addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z);
     void dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level);
 };
