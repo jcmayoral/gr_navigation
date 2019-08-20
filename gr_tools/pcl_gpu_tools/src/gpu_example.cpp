@@ -162,6 +162,7 @@ void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_ar
   bb.header.stamp = ros::Time::now();
   bb.header.frame_id = cluster_array.header.frame_id;
   bb_pub_.publish(bb);
+  ROS_INFO_STREAM("BoundingBoxes " << bb.boxes.size());
 }
 
 void GPUExample::cluster(){
@@ -252,17 +253,14 @@ void GPUExample::cluster(){
         double var_y = calculateVariance<double>(y_vector);
         double var_z = calculateVariance<double>(z_vector);
 
-        auto range_x = getAbsoluteRange<double>(x_vector);
-        auto range_y = getAbsoluteRange<double>(y_vector);
-        auto range_z = getAbsoluteRange<double>(z_vector);
-
         cluster_std = var_x * var_y;// * calculateStd<double>(z_vector);
-        //cluster_std = range_x * range_y;// * calculateStd<double>(z_vector);
-        std::cout << cluster_std << "," << range_z << std::endl;
         if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_){
         //std::cout << "VAR " << cluster_std << std::endl;
         //if (cluster_std< dynamic_std_ && range_z  > dynamic_std_z_){
           clusters_msg.poses.push_back(cluster_center);
+          auto range_x = getAbsoluteRange<double>(x_vector);
+          auto range_y = getAbsoluteRange<double>(y_vector);
+          auto range_z = getAbsoluteRange<double>(z_vector);
           addBoundingBox(cluster_center, range_x, range_y, range_z);
         }
     }
