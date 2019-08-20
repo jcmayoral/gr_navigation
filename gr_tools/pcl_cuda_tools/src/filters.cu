@@ -15,7 +15,7 @@ extern "C"
     return threadId;
   }
     __global__
-    void filter_passthrough_kernel(float *x, float *y, float *z, float limit){
+    void filter_passthrough_kernel(float *x, float *y, float *z, float min_limit, float max_limit){
       //__shared__ int s[256];
       //int idx = blockIdx.x * blockDim.x + threadIdx.x;
       //int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -25,13 +25,13 @@ extern "C"
       if (index > 1024*1024)
       printf("%d \n", index  );
 
-      if (x[index] > limit){
+      if (max_limit > x[index] > min_limit){
         x[index] = -1;
       }
-      if (y[index] > limit){
+      if (max_limit > y[index] > min_limit){
         y[index] = -1;
       }
-      if (z[index] > limit){
+      if (max_limit > z[index] > min_limit){
         z[index] = -1;
       }
     }
@@ -40,7 +40,7 @@ extern "C"
       cudaFree(x);
     }
 
-    int apply_cuda_filter(float *o_x, float *o_y, float *o_z, float limit){
+    int apply_cuda_filter(float *o_x, float *o_y, float *o_z, float min_limit, float max_limit){
       // initialize x array on the host
       float * x, * y, *z;
       int size = 1024*1024;//sizeof(o_x)/sizeof(float);
@@ -64,7 +64,7 @@ extern "C"
       //  blocks, threads each
       printf("C %d\n", nblocks);
 
-      filter_passthrough_kernel<<<blocks,threads>>>(x,y,z,limit);
+      filter_passthrough_kernel<<<blocks,threads>>>(x,y,z, min_limit, max_limit);
       cudaDeviceSynchronize(); // to print results
       //cudaMemcpy(tr, t, sizeof(x), cudaMemcpyDeviceToHost);
       free_memory(x);

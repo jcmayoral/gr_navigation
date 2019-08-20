@@ -54,7 +54,7 @@ void FilterPassThrough::do_stuff (){
     x[i] = host_cloud_->points[i].x;
   }
 
-  auto result = apply_cuda_filter(x,y,z, 1.0);
+  auto result = apply_cuda_filter(x,y,z, -1.0, 1.0);
 }
 
 
