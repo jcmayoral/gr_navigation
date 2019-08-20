@@ -1,6 +1,6 @@
 #include <pcl_gpu_tools/gpu_example.h>
 
-GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
+GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true) {
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -33,7 +33,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
 
     timer_ = nh.createTimer(ros::Duration(time_window), &GPUExample::timer_cb, this);
-	dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
+    dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
 
     pc_sub_ = nh.subscribe("/velodyne_points", 1, &GPUExample::pointcloud_cb, this);
@@ -45,6 +45,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
 
 void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level){
     ROS_ERROR("RECONFIGURING");
+    remove_ground_ = config.remove_ground;
     pass_through_filter_.setFilterLimits (config.min_passthrough_z, config.max_passthrough_z);
     segmentation_filter_.setEpsAngle(config.eps_angle* (M_PI/180.0f) ); // plane can be within n degrees of X-Z plane
     segmentation_filter_.setMaxIterations(config.max_iterations);
@@ -105,28 +106,30 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     int number_of_surfaces = 0;
     bool start = true;
 
-    do{
-        segmentation_filter_.setInputCloud(cloud_filtered);
-        segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
+    if (remove_ground_){
+      do{
+          segmentation_filter_.setInputCloud(cloud_filtered);
+          segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
 
-        if (filter_inliers->indices.size () != 0){
-            //ROS_INFO_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
-            //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
-            //extracting inliers (removing ground)
-            extraction_filter_.setInputCloud(cloud_filtered);
-            extraction_filter_.setIndices(filter_inliers);
-            extraction_filter_.filter(*cloud_filtered);
-            number_of_surfaces++;
-        }
-        //else{
-           // ROS_INFO("ERROR");
-            //publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
-            //break;//return false;
-        //}
+          if (filter_inliers->indices.size () != 0){
+              //ROS_INFO_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
+              //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
+              //extracting inliers (removing ground)
+              extraction_filter_.setInputCloud(cloud_filtered);
+              extraction_filter_.setIndices(filter_inliers);
+              extraction_filter_.filter(*cloud_filtered);
+              number_of_surfaces++;
+          }
+          //else{
+             // ROS_INFO("ERROR");
+              //publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
+              //break;//return false;
+          //}
 
-        //ROS_INFO_STREAM(filter_inliers->indices.size () );
+          //ROS_INFO_STREAM(filter_inliers->indices.size () );
+      }
+      while (filter_inliers->indices.size () != 0 && cloud_filtered->points.size()> init_size*0.3);
     }
-    while (filter_inliers->indices.size () != 0 && cloud_filtered->points.size()> init_size*0.3);
 
     //removing points out of borders (potential false positives)
     pass_through_filter_.setInputCloud (cloud_filtered);

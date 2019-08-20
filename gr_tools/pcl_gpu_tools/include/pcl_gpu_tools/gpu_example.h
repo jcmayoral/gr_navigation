@@ -76,6 +76,7 @@ private:
   double dynamic_std_;
   double dynamic_std_z_;
   bool output_publish_;
+  bool remove_ground_;
   jsk_recognition_msgs::BoundingBoxArray bb;
 
 public:
