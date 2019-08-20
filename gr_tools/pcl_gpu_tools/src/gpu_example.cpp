@@ -33,7 +33,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
 
     timer_ = nh.createTimer(ros::Duration(time_window), &GPUExample::timer_cb, this);
-    dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
+	dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
 
     pc_sub_ = nh.subscribe("/velodyne_points", 1, &GPUExample::pointcloud_cb, this);
@@ -72,7 +72,6 @@ void GPUExample::timer_cb(const ros::TimerEvent&){
 template <class T> void GPUExample::publishPointCloud(T t){
     sensor_msgs::PointCloud2 output_pointcloud_;
     pcl::toROSMsg(t, output_pointcloud_);
-    //TODO transform
     output_pointcloud_.header.frame_id = "velodyne";
     output_pointcloud_.header.stamp = ros::Time::now();
     // Publish the data

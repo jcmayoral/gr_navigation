@@ -1,9 +1,4 @@
-template<typename T>
-        double getAbsoluteRange(std::vector<T> v){
-            auto min_value = *std::min_element(std::begin(v), std::end(v));
-            auto max_value = *std::max_element(std::begin(v), std::end(v));
-            return std::fabs(max_value-min_value);
-            }
+
 
 template<typename T>
         T variance(const std::list<T> &li, T mean)

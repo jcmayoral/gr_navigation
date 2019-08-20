@@ -1,6 +1,6 @@
 <package>
     <name>pcl_gpu_tools</name>
-    <version>0.1.11</version>
+    <version>0.1.9</version>
     <description>
       ROS Wrapper of pcl gpu examples
     </description>
