@@ -7,10 +7,13 @@ int main (int argc, char **argv){
 
   for (auto i=0; i< 1024*1024; i++){
     pcl::PointXYZ p;
+    p.x = 10;
+    p.y = 10;
+    p.z = 10;
     input->points.emplace_back(p);
   }
   passthrough_filter_.setHostCloud(input);
-  std::cout <<  "RESULT: " << passthrough_filter_.do_stuff();
+  std::cout <<  "RESULT: " << passthrough_filter_.do_stuff(*input);
   std::cout << "DOING NOTHING...NOT FINISHED"<< std::endl;
   return 0;
 }

@@ -43,18 +43,26 @@
 //using namespace pcl;
 using namespace pcl_gpu;
 
-double FilterPassThrough::do_stuff (){
+double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
   float * x, *y, *z;
   int number_points = host_cloud_->points.size();
   std::cout <<"points number"  << number_points << std::endl;
   x = static_cast<float*>(malloc(sizeof(float) * number_points));
   y = static_cast<float*>(malloc(sizeof(float) * number_points));
   z = static_cast<float*>(malloc(sizeof(float) * number_points));
-  for (auto i=0; i< 1024; i++){
+  for (auto i=0; i< number_points; i++){
     x[i] = host_cloud_->points[i].x;
+    y[i] = host_cloud_->points[i].y;
+    z[i] = host_cloud_->points[i].z;
   }
 
-  return apply_cuda_filter(x,y,z, -1.0, 1.0);
+  auto result = apply_cuda_filter(x,y,z, -1.0, 20.0);
+
+  for (auto i=0; i< 200; i++){
+    std::cout << "this should be -1 " << x[i] << std::endl;
+  }
+
+  input_cloud = *host_cloud_;
 }
 
 

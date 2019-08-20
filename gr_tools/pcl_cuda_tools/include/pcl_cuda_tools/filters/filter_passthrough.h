@@ -136,7 +136,7 @@ namespace pcl_gpu{
         * \param clusters the resultant point clusters
         */
       void extract (std::vector<pcl::PointIndices> &clusters);
-      double do_stuff ();
+      double do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
 
     protected:
       /** \brief the input cloud on the GPU */

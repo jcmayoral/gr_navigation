@@ -49,9 +49,9 @@ extern "C"
       cudaMallocManaged(&y, size*sizeof(float));
       cudaMallocManaged(&z, size*sizeof(float));
       printf("A\n");
-      cudaMemcpy(x, o_x, sizeof(o_x), cudaMemcpyHostToDevice);
-      cudaMemcpy(y, o_x, sizeof(o_y), cudaMemcpyHostToDevice);
-      cudaMemcpy(z, o_x, sizeof(o_z), cudaMemcpyHostToDevice);
+      cudaMemcpy(x, o_x, size*sizeof(float), cudaMemcpyHostToDevice);
+      cudaMemcpy(y, o_x, size*sizeof(float), cudaMemcpyHostToDevice);
+      cudaMemcpy(z, o_x, size*sizeof(float), cudaMemcpyHostToDevice);
       printf("b\n");
 
       int nthreads = 32;
@@ -67,6 +67,10 @@ extern "C"
       filter_passthrough_kernel<<<blocks,threads>>>(x,y,z, min_limit, max_limit);
       cudaDeviceSynchronize(); // to print results
       //cudaMemcpy(tr, t, sizeof(x), cudaMemcpyDeviceToHost);
+      cudaMemcpy(o_x, x, size*sizeof(float), cudaMemcpyDeviceToHost);
+      cudaMemcpy(o_y, y, size*sizeof(float), cudaMemcpyDeviceToHost);
+      cudaMemcpy(o_z, z, size*sizeof(float), cudaMemcpyDeviceToHost);
+
       free_memory(x);
       free_memory(y);
       free_memory(z);
