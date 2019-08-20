@@ -152,7 +152,6 @@ void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, do
   cluster_bb.pose.position.y = center.position.y;
   cluster_bb.pose.position.z = center.position.z;
   //TODO add orientation
-  std::cout << v_x << " , " << v_y << " , "<< v_z << std::endl;
   cluster_bb.pose.orientation.w = 1.0;
   cluster_bb.dimensions.x = v_x;
   cluster_bb.dimensions.y = v_y;
@@ -254,13 +253,18 @@ void GPUExample::cluster(){
         double var_y = calculateVariance<double>(y_vector);
         double var_z = calculateVariance<double>(z_vector);
 
+        auto range_x = getAbsoluteRange<double>(x_vector);
+        auto range_y = getAbsoluteRange<double>(y_vector);
+        auto range_z = getAbsoluteRange<double>(z_vector);
+
         cluster_std = var_x * var_y;// * calculateStd<double>(z_vector);
-        //if (cluster_std> dynamic_std_ && dynamic_std_z_/2 < z_std  < dynamic_std_z_){
+        //cluster_std = range_x * range_y;// * calculateStd<double>(z_vector);
+        std::cout << cluster_std << "," << range_z << std::endl;
         if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_){
-          std::cout << "VAR " << cluster_std << std::endl;
+        //std::cout << "VAR " << cluster_std << std::endl;
+        //if (cluster_std< dynamic_std_ && range_z  > dynamic_std_z_){
           clusters_msg.poses.push_back(cluster_center);
-          addBoundingBox(cluster_center, getAbsoluteRange<double>(x_vector),
-                  getAbsoluteRange<double>(y_vector), getAbsoluteRange<double>(z_vector));
+          addBoundingBox(cluster_center, range_x, range_y, range_z);
         }
     }
 
