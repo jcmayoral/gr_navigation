@@ -33,7 +33,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false)  {
     segmentation_filter_.setMethodType(pcl::SAC_RANSAC);
 
     timer_ = nh.createTimer(ros::Duration(time_window), &GPUExample::timer_cb, this);
-	dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
+    dyn_server_cb_ = boost::bind(&GPUExample::dyn_reconfigureCB, this, _1, _2);
     dyn_server_.setCallback(dyn_server_cb_);
 
     pc_sub_ = nh.subscribe("/velodyne_points", 1, &GPUExample::pointcloud_cb, this);
@@ -72,6 +72,7 @@ void GPUExample::timer_cb(const ros::TimerEvent&){
 template <class T> void GPUExample::publishPointCloud(T t){
     sensor_msgs::PointCloud2 output_pointcloud_;
     pcl::toROSMsg(t, output_pointcloud_);
+    //TODO transform
     output_pointcloud_.header.frame_id = "velodyne";
     output_pointcloud_.header.stamp = ros::Time::now();
     // Publish the data
@@ -150,6 +151,9 @@ void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, do
   cluster_bb.pose.position.x = center.position.x;
   cluster_bb.pose.position.y = center.position.y;
   cluster_bb.pose.position.z = center.position.z;
+  //TODO add orientation
+  std::cout << v_x << " , " << v_y << " , "<< v_z << std::endl;
+  cluster_bb.pose.orientation.w = 1.0;
   cluster_bb.dimensions.x = v_x;
   cluster_bb.dimensions.y = v_y;
   cluster_bb.dimensions.z = v_z;
@@ -157,7 +161,6 @@ void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, do
 }
 
 void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array){
-  const std::vector<geometry_msgs::Pose>& ps = cluster_array.poses;
   bb.header.stamp = ros::Time::now();
   bb.header.frame_id = cluster_array.header.frame_id;
   bb_pub_.publish(bb);
@@ -256,7 +259,8 @@ void GPUExample::cluster(){
         if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_){
           std::cout << "VAR " << cluster_std << std::endl;
           clusters_msg.poses.push_back(cluster_center);
-          addBoundingBox(cluster_center, var_x, var_y, var_z);
+          addBoundingBox(cluster_center, getAbsoluteRange<double>(x_vector),
+                  getAbsoluteRange<double>(y_vector), getAbsoluteRange<double>(z_vector));
         }
     }
 
