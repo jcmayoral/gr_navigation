@@ -88,48 +88,44 @@ void GPUExample::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
     auto result = run_filter(output);
 };
 
+
+void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> pc){
+  int original_size = (int) pc->points.size ();
+  pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
+  pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
+
+  auto init_size = pc->points.size();
+  int number_of_surfaces = 0;
+  bool start = true;
+
+  if (remove_ground_){
+    do{
+        segmentation_filter_.setInputCloud(pc);
+        segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
+
+        if (filter_inliers->indices.size () != 0){
+            extraction_filter_.setInputCloud(pc);
+            extraction_filter_.setIndices(filter_inliers);
+            extraction_filter_.filter(*pc);
+            number_of_surfaces++;
+        }
+    }
+    while (filter_inliers->indices.size () != 0 && pc->points.size()> init_size*0.3);
+  }
+
+}
+
 //template <template <typename> class Storage> void
 int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered){
     boost::mutex::scoped_lock lock(mutex_);
     bb.boxes.clear();
-    //ROS_INFO("WORKING");
-    //pcl::PCDWriter writer;
 
+    //Reducing x,y
     condition_removal_.setInputCloud (cloud_filtered);
     condition_removal_.filter (*cloud_filtered);
 
-    int original_size = (int) cloud_filtered->points.size ();
-    pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
-
-    auto init_size = cloud_filtered->points.size();
-    int number_of_surfaces = 0;
-    bool start = true;
-
-    if (remove_ground_){
-      do{
-          segmentation_filter_.setInputCloud(cloud_filtered);
-          segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
-
-          if (filter_inliers->indices.size () != 0){
-              //ROS_INFO_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
-              //last_ground_height_ = filter_coefficients->values[3]/filter_coefficients->values[2];
-              //extracting inliers (removing ground)
-              extraction_filter_.setInputCloud(cloud_filtered);
-              extraction_filter_.setIndices(filter_inliers);
-              extraction_filter_.filter(*cloud_filtered);
-              number_of_surfaces++;
-          }
-          //else{
-             // ROS_INFO("ERROR");
-              //publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
-              //break;//return false;
-          //}
-
-          //ROS_INFO_STREAM(filter_inliers->indices.size () );
-      }
-      while (filter_inliers->indices.size () != 0 && cloud_filtered->points.size()> init_size*0.3);
-    }
+    //Remove Ground
+    removeGround(cloud_filtered);
 
     //removing points out of borders (potential false positives)
     pass_through_filter_.setInputCloud (cloud_filtered);
@@ -139,8 +135,6 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     auto original_ponts_number = cloud_filtered->points.size();
     outliers_filter_.setInputCloud(cloud_filtered);
     outliers_filter_.filter(*cloud_filtered);
-
-    ROS_WARN_STREAM("INFO: starting with the GPU version: PC outliers original size " << original_ponts_number << "actual "<< cloud_filtered->points.size());
 
     main_cloud_ += *cloud_filtered;
     return 1;
