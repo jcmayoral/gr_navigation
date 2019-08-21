@@ -82,7 +82,7 @@ namespace pcl_gpu{
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       /** \brief Empty constructor. */
-      FilterPassThrough () : min_pts_per_cluster_ (1), max_pts_per_cluster_ (std::numeric_limits<int>::max ())
+      FilterPassThrough () : minimum_value_ (-1.0), maximum_value_(1.0), filter_value_ (std::numeric_limits<float>::max ())
       {
         printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
       };
@@ -112,21 +112,11 @@ namespace pcl_gpu{
       /** \brief Get the spatial cluster tolerance as a measure in the L2 Euclidean space. */
       inline double getClusterTolerance () { return (cluster_tolerance_); }
 
-      /** \brief Set the minimum number of points that a cluster needs to contain in order to be considered valid.
-        * \param min_cluster_size the minimum cluster size
-        */
-      inline void setMinClusterSize (int min_cluster_size) { min_pts_per_cluster_ = min_cluster_size; }
+      inline void setMinimumValue (float min_limit) { minimum_value_ = min_limit; }
+      inline float getMimumumValue () { return minimum_value_; }
 
-      /** \brief Get the minimum number of points that a cluster needs to contain in order to be considered valid. */
-      inline int getMinClusterSize () { return (min_pts_per_cluster_); }
-
-      /** \brief Set the maximum number of points that a cluster needs to contain in order to be considered valid.
-        * \param max_cluster_size the maximum cluster size
-        */
-      inline void setMaxClusterSize (int max_cluster_size) { max_pts_per_cluster_ = max_cluster_size; }
-
-      /** \brief Get the maximum number of points that a cluster needs to contain in order to be considered valid. */
-      inline int getMaxClusterSize () { return (max_pts_per_cluster_); }
+      inline void setMaximumValue (float max_limit) { maximum_value_ = max_limit; }
+      inline float getMaxClusterSize () { return (maximum_value_); }
 
       inline void setInput (CloudDevice input) {input_ = input;}
 
@@ -151,11 +141,9 @@ namespace pcl_gpu{
       /** \brief The spatial cluster tolerance as a measure in the L2 Euclidean space. */
       double cluster_tolerance_;
 
-      /** \brief The minimum number of points that a cluster needs to contain in order to be considered valid (default = 1). */
-      int min_pts_per_cluster_;
-
-      /** \brief The maximum number of points that a cluster needs to contain in order to be considered valid (default = MAXINT). */
-      int max_pts_per_cluster_;
+      float minimum_value_;
+      float maximum_value_;
+      float filter_value_;
 
       /** \brief Class getName method. */
       virtual std::string getClassName () const { return ("gpu::EuclideanClusterExtraction"); }

@@ -46,23 +46,59 @@ using namespace pcl_gpu;
 double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
   float * x, *y, *z;
   int number_points = host_cloud_->points.size();
+  pcl::PointCloud<pcl::PointXYZ> tmp_pc;
+  tmp_pc = input_cloud;
+  //boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_pointer;
+  //pc_pointer = input_cloud.makeShared();//boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(input_cloud);
+
+  //make_shared somewhere here
   std::cout <<"points number"  << number_points << std::endl;
+  std::cout <<"min limit"  << minimum_value_ << std::endl;
+  std::cout <<"max limit"  << maximum_value_ << std::endl;
+
   x = static_cast<float*>(malloc(sizeof(float) * number_points));
   y = static_cast<float*>(malloc(sizeof(float) * number_points));
   z = static_cast<float*>(malloc(sizeof(float) * number_points));
+
+  int removed_points = 0;
+
   for (auto i=0; i< number_points; i++){
-    x[i] = host_cloud_->points[i].x;
-    y[i] = host_cloud_->points[i].y;
-    z[i] = host_cloud_->points[i].z;
+    x[i] = input_cloud.points[i].x;
+    y[i] = input_cloud.points[i].y;
+    z[i] = input_cloud.points[i].z;
   }
 
-  auto result = apply_cuda_filter(x,y,z, -1.0, 20.0);
 
-  for (auto i=0; i< 200; i++){
-    std::cout << "this should be -1 " << x[i] << std::endl;
+  auto result = apply_cuda_filter(x,y,z, minimum_value_, maximum_value_, filter_value_,  number_points);
+
+  input_cloud.points.clear();
+  //TODO I SHOULD FIND A FASTER WAY
+  for (auto i=0; i< number_points; i++){
+    if (x[i] == filter_value_ || y[i] == filter_value_ || z[i] == filter_value_){
+      removed_points++;
+      continue;
+    }
+    pcl::PointXYZ point;
+    point.x = x[i];
+    point.y = y[i];
+    point.z = z[i];
+    std::cout << point.x << ","<< point.y << "," << point.z << std::endl;
+    input_cloud.points.push_back(point);
+    //host_cloud_->points[i].x = x[i];
+    //host_cloud_->points[i].y = y[i];
+    //host_cloud_->points[i].z = z[i];
   }
 
-  input_cloud = *host_cloud_;
+
+  for (auto it = input_cloud.fields.begin(); it!= input_cloud.fields.end(); it++){
+    *(it).datatype = 8;
+  }
+
+  std::cout << "REMOVING "<< removed_points << std::endl;
+  input_cloud.width = number_points - removed_points;
+  //input_cloud = *pc_pointer;
+
+  return result;
 }
 
 
@@ -201,6 +237,8 @@ void FilterPassThrough::applyFilter (const boost::shared_ptr<pcl::PointCloud<pcl
   }
 }
 
+
+//@ deprecated
 void FilterPassThrough::extract (std::vector<pcl::PointIndices> &clusters)
 {
 /*
@@ -224,7 +262,7 @@ void FilterPassThrough::extract (std::vector<pcl::PointIndices> &clusters)
   }
 */
   // Extract the actual clusters
-  applyFilter (host_cloud_, tree_, cluster_tolerance_, clusters, min_pts_per_cluster_, max_pts_per_cluster_);
+  //applyFilter (host_cloud_, tree_, cluster_tolerance_, clusters, min_pts_per_cluster_, max_pts_per_cluster_);
   //std::cout << "INFO: end of extractEuclideanClusters " << std::endl;
   // Sort the clusters based on their size (largest one first)
   //std::sort (clusters.rbegin (), clusters.rend (), comparePointClusters);
