@@ -112,8 +112,8 @@ namespace pcl_gpu{
       /** \brief Get the spatial cluster tolerance as a measure in the L2 Euclidean space. */
       inline double getClusterTolerance () { return (cluster_tolerance_); }
 
-      inline void setMinimumValue (float min_limit) { minimum_value_ = min_limit; }
-      inline float getMimumumValue () { return minimum_value_; }
+      inline void setMinimumValue (float min_limit) { std::cout<< "W" << std::endl; minimum_value_ = min_limit; }
+      inline float getMimumumValue () { std::cout<< "W" << std::endl; return minimum_value_; }
 
       inline void setMaximumValue (float max_limit) { maximum_value_ = max_limit; }
       inline float getMaxClusterSize () { return (maximum_value_); }

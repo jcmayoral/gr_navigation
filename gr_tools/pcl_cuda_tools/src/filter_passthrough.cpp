@@ -45,52 +45,59 @@ using namespace pcl_gpu;
 
 double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
   float * x, *y, *z;
-  int number_points = host_cloud_->points.size();
+  bool *b;
+  int number_points = input_cloud.points.size();
   //boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_pointer;
   //pc_pointer = input_cloud.makeShared();//boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(input_cloud);
-
-  //make_shared somewhere here
-  std::cout <<"points number"  << number_points << std::endl;
-  std::cout <<"min limit"  << minimum_value_ << std::endl;
-  std::cout <<"max limit"  << maximum_value_ << std::endl;
 
   x = static_cast<float*>(malloc(sizeof(float) * number_points));
   y = static_cast<float*>(malloc(sizeof(float) * number_points));
   z = static_cast<float*>(malloc(sizeof(float) * number_points));
+  b = static_cast<bool*>(malloc(sizeof(bool) * number_points));
 
   int removed_points = 0;
 
   for (auto i=0; i< number_points; i++){
-    x[i] = input_cloud.points[i].x;
-    y[i] = input_cloud.points[i].y;
-    z[i] = input_cloud.points[i].z;
+    x[i] = static_cast<float>(input_cloud.points[i].x);
+    y[i] = static_cast<float>(input_cloud.points[i].y);
+    z[i] = static_cast<float>(input_cloud.points[i].z);
   }
+  memset(b, false, number_points);
 
 
-  auto result = apply_cuda_filter(x,y,z, minimum_value_, maximum_value_, filter_value_,  number_points);
+  auto result = apply_cuda_filter(x,y,z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
 
   input_cloud.points.clear();
+
   //TODO I SHOULD FIND A FASTER WAY
-  for (auto i=0; i< number_points; i++){
-    if (x[i] == filter_value_ || y[i] == filter_value_ || z[i] == filter_value_){
+  for (int j=0; j< number_points; j++){
+    if (b[j]){
       removed_points++;
       continue;
     }
+    /*
+    if (std::isnan(x[i]) || std::isnan(y[i]) || std::isnan(z[i])){
+      removed_points++;
+      continue;
+    }*/
     pcl::PointXYZ point;
-    point.x = x[i];
-    point.y = y[i];
-    point.z = z[i];
-    std::cout << point.x << ","<< point.y << "," << point.z << std::endl;
+    point.x = static_cast<float>(x[j]);
+    point.y = static_cast<float>(y[j]);
+    point.z = static_cast<float>(z[j]);
+    //std::cout << point.x << ","<< point.y << "," << point.z << std::endl;
     input_cloud.points.push_back(point);
     //host_cloud_->points[i].x = x[i];
     //host_cloud_->points[i].y = y[i];
     //host_cloud_->points[i].z = z[i];
   }
 
+  std::cout <<"points number before"  << number_points << std::endl;
+  std::cout <<"points number after "  << input_cloud.points.size() << std::endl;
 
+  /*
   for (auto it = input_cloud.fields.begin(); it!= input_cloud.fields.end(); it++){
     *(it).datatype = 8;
-  }
+  }*/
 
   std::cout << "REMOVING "<< removed_points << std::endl;
   input_cloud.width = number_points - removed_points;
