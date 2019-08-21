@@ -1,6 +1,6 @@
 #include <pcl_gpu_tools/gpu_example.h>
 
-GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true) {
+GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true), passthrough_enable_(true) {
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -44,8 +44,11 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_gro
 };
 
 void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level){
+    boost::mutex::scoped_lock lock(mutex_);
+    main_cloud_.points.clear();
     ROS_ERROR("RECONFIGURING");
-    remove_ground_ = config.remove_ground;
+    timer_.stop();
+    timer_.setPeriod(ros::Duration(config.cummulative_time), true);
     pass_through_filter_.setFilterLimits (config.min_passthrough_z, config.max_passthrough_z);
     segmentation_filter_.setEpsAngle(config.eps_angle* (M_PI/180.0f) ); // plane can be within n degrees of X-Z plane
     segmentation_filter_.setMaxIterations(config.max_iterations);
@@ -59,6 +62,18 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     dynamic_std_ = config.dynamic_classifier;
     dynamic_std_z_ = config.dynamic_classifier_z;
     output_publish_ = config.publish_output;
+
+    if (config.mode == 1){
+      remove_ground_ = false;//config.remove_ground = false;
+      passthrough_enable_ = true;//config.passthrough_filter = true;
+    }
+
+    if (config.mode == 0){
+      remove_ground_ = true;//config.remove_ground = true;
+      passthrough_enable_ = true;//config.passthrough_filter = true;
+    }
+
+    timer_.start();
 
 };
 
@@ -98,21 +113,18 @@ void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>>
   int number_of_surfaces = 0;
   bool start = true;
 
-  if (remove_ground_){
-    do{
-        segmentation_filter_.setInputCloud(pc);
-        segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
+  do{
+    segmentation_filter_.setInputCloud(pc);
+    segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
 
-        if (filter_inliers->indices.size () != 0){
-            extraction_filter_.setInputCloud(pc);
-            extraction_filter_.setIndices(filter_inliers);
-            extraction_filter_.filter(*pc);
-            number_of_surfaces++;
-        }
-    }
-    while (filter_inliers->indices.size () != 0 && pc->points.size()> init_size*0.3);
+      if (filter_inliers->indices.size () != 0){
+          extraction_filter_.setInputCloud(pc);
+          extraction_filter_.setIndices(filter_inliers);
+          extraction_filter_.filter(*pc);
+          number_of_surfaces++;
+      }
   }
-
+  while (filter_inliers->indices.size () != 0 && pc->points.size()> init_size*0.3);
 }
 
 //template <template <typename> class Storage> void
@@ -125,12 +137,14 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     condition_removal_.filter (*cloud_filtered);
 
     //Remove Ground
-    removeGround(cloud_filtered);
-
+    if (remove_ground_){
+      removeGround(cloud_filtered);
+    }
     //removing points out of borders (potential false positives)
-    pass_through_filter_.setInputCloud (cloud_filtered);
-    pass_through_filter_.filter (*cloud_filtered);
-
+    if (passthrough_enable_){
+      pass_through_filter_.setInputCloud (cloud_filtered);
+      pass_through_filter_.filter (*cloud_filtered);
+    }
     //removing outliers
     auto original_ponts_number = cloud_filtered->points.size();
     outliers_filter_.setInputCloud(cloud_filtered);
@@ -201,22 +215,6 @@ void GPUExample::cluster(){
     gec.extract (cluster_indices_gpu);
     //octree_device->clear();
     //std::cout << "INFO: stopped with the GPU version" << std::endl;
-
-    int j = 0;
-    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices_gpu.begin (); it != cluster_indices_gpu.end (); ++it){
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster_gpu (new pcl::PointCloud<pcl::PointXYZ>);
-        for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit)
-            cloud_cluster_gpu->points.push_back (main_cloud_.points[*pit]); //*
-        cloud_cluster_gpu->width = cloud_cluster_gpu->points.size ();
-        cloud_cluster_gpu->height = 1;
-        cloud_cluster_gpu->is_dense = true;
-
-        //std::cout << "PointCloud representing the Cluster: " << cloud_cluster_gpu->points.size () << " data points." << std::endl;
-        //std::stringstream ss;
-        //ss << "gpu_cloud_cluster_" << j << ".pcd";
-        //writer.write<pcl::PointXYZ> (ss.str (), *cloud_cluster_gpu, false); //*
-        //j++;
-    }
 
     geometry_msgs::PoseArray clusters_msg;
     clusters_msg.header.frame_id = "velodyne";

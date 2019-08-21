@@ -46,8 +46,6 @@ using namespace pcl_gpu;
 double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
   float * x, *y, *z;
   int number_points = host_cloud_->points.size();
-  pcl::PointCloud<pcl::PointXYZ> tmp_pc;
-  tmp_pc = input_cloud;
   //boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_pointer;
   //pc_pointer = input_cloud.makeShared();//boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(input_cloud);
 
