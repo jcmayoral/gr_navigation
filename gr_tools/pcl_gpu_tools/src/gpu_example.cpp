@@ -1,6 +1,6 @@
 #include <pcl_gpu_tools/gpu_example.h>
 
-GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true) {
+GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true), cuda_pass_through(){
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -14,17 +14,13 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_gro
     ROS_INFO_STREAM("Time Window [s] "<< time_window );
 
     pass_through_filter_.setFilterFieldName ("z");
-    pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
-    //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.8)));
-    //range_condAND->      addComparison (     FieldComparisonConstPtr (new pcl::FieldComparison<PointT> ("x", pcl::ComparisonOps::GE, newOriginX)));
-    //conditional_filter_->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -limit)));
-    //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::LT, 2.0)));
-    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::GT, -limit)));
-    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::LT, limit)));
-    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -limit)));
-    conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
-    condition_removal_.setCondition (conditional_filter);
-    condition_removal_.setKeepOrganized(true);
+    //pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
+    //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::GT, -limit)));
+    //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("y", pcl::ComparisonOps::LT, limit)));
+    //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -limit)));
+    //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
+    //condition_removal_.setCondition (conditional_filter);
+    //condition_removal_.setKeepOrganized(true);
 
     segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
     Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
@@ -46,6 +42,9 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_gro
 void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level){
     ROS_ERROR("RECONFIGURING");
     remove_ground_ = config.remove_ground;
+    cuda_pass_through.setMinimumValue(config.min_passthrough_z);
+    cuda_pass_through.setMaximumValue(config.max_passthrough_z);
+
     pass_through_filter_.setFilterLimits (config.min_passthrough_z, config.max_passthrough_z);
     segmentation_filter_.setEpsAngle(config.eps_angle* (M_PI/180.0f) ); // plane can be within n degrees of X-Z plane
     segmentation_filter_.setMaxIterations(config.max_iterations);
@@ -94,9 +93,22 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     bb.boxes.clear();
     //ROS_INFO("WORKING");
     //pcl::PCDWriter writer;
+    std::cout << "a filter " << cloud_filtered->width << std::endl;
+    std::cout << "a filter " << cloud_filtered->height << std::endl;
 
-    condition_removal_.setInputCloud (cloud_filtered);
-    condition_removal_.filter (*cloud_filtered);
+    cuda_pass_through.setHostCloud(cloud_filtered);
+    cuda_pass_through.do_stuff(*cloud_filtered);
+    std::cout << "after filter " << cloud_filtered->points.size() << std::endl;
+
+    std::cout << "b filter " << cloud_filtered->width << std::endl;
+    std::cout << "b filter " << cloud_filtered->height << std::endl;
+
+
+    publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*cloud_filtered);
+
+
+    //condition_removal_.setInputCloud (cloud_filtered);
+    //condition_removal_.filter (*cloud_filtered);
 
     int original_size = (int) cloud_filtered->points.size ();
     pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
@@ -272,7 +284,7 @@ void GPUExample::cluster(){
     publishBoundingBoxes(clusters_msg);
 
     if (output_publish_){
-        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(main_cloud_);
+        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*concatenated_pc);
     }
     ROS_INFO_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
 

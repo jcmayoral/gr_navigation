@@ -35,6 +35,7 @@
 #include <geometry_msgs/PoseArray.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl_cuda_tools/filters/filter_passthrough.h>
 #include <pcl_gpu_tools/GPUFilterConfig.h>
 #include <dynamic_reconfigure/server.h>
 
@@ -65,6 +66,7 @@ private:
   pcl::SACSegmentation<pcl::PointXYZ> segmentation_filter_;
   //pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter_;
   pcl::PassThrough<pcl::PointXYZ> pass_through_filter_;
+  pcl_gpu::FilterPassThrough cuda_pass_through;
   pcl::ConditionalRemoval<pcl::PointXYZ> condition_removal_;
   pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
   pcl::PointCloud<pcl::PointXYZ> main_cloud_;

@@ -11,12 +11,11 @@ find_package(catkin REQUIRED
         pcl_conversions
         geometry_msgs
         jsk_recognition_msgs
-        pcl_ros
+        #pcl_ros
         dynamic_reconfigure
 )
 
 find_package(PCL 1.9 REQUIRED)
-
 
 #SET(CUDA_NVCC_FLAGS "-arch=sm_61" CACHE STRING "nvcc flags" FORCE)
 #SET (CUDA_VERBOSE_BUILD ON CACHE BOOL "nvcc verbose" FORCE)
@@ -52,11 +51,11 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     pcl_conversions
-    pcl_ros
+    #pcl_ros
     geometry_msgs
     jsk_recognition_msgs
+    DEPENDS
     dynamic_reconfigure
-  DEPENDS
     PCL
 )
 
@@ -80,6 +79,7 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${PROJECT_NAME}
+   pcl_cuda_tools
    #${Boost_LIBRARIES}
    #Threads::Threads
    #TestLib
@@ -90,6 +90,7 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${PROJECT_NAME}
+   pcl_cuda_tools
    #${Boost_LIBRARIES}
    #Threads::Threads
    #TestLib
