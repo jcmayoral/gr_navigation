@@ -51,6 +51,9 @@
 * \ingroup segmentation
 */
 
+#include <cassert>
+
+
 using namespace pcl::gpu;
 using namespace pcl;
 

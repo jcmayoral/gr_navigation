@@ -16,7 +16,7 @@ int main (int argc, char **argv){
   std::cout <<  "RESULT: " << passthrough_filter_.do_stuff(*input);
 
   for (auto i=0; i< 10; i++){
-    std::cout << "this should be a ridiculous big value " << input->points[i].x << std::endl;
+    std::cout << "this should be a ridiculous big value " << input->points[i].z << std::endl;
   }
 
   std::cout << "DOING NOTHING...NOT FINISHED"<< std::endl;

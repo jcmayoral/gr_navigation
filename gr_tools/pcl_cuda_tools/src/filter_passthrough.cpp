@@ -65,7 +65,7 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
   memset(b, false, number_points);
 
 
-  auto result = apply_cuda_filter(x,y,z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+  auto result = apply_cuda_filter(z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
 
   input_cloud.points.clear();
 
@@ -91,8 +91,6 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
     //host_cloud_->points[i].z = z[i];
   }
 
-  std::cout <<"points number before"  << number_points << std::endl;
-  std::cout <<"points number after "  << input_cloud.points.size() << std::endl;
 
   /*
   for (auto it = input_cloud.fields.begin(); it!= input_cloud.fields.end(); it++){
@@ -100,7 +98,7 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
   }*/
 
   std::cout << "REMOVING "<< removed_points << std::endl;
-  input_cloud.width = number_points - removed_points;
+  input_cloud.width = input_cloud.points.size();
   //input_cloud = *pc_pointer;
 
   return result;
