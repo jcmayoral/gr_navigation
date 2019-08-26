@@ -75,15 +75,18 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
       removed_points++;
       continue;
     }
-    /*
-    if (std::isnan(x[i]) || std::isnan(y[i]) || std::isnan(z[i])){
+
+    if (std::isnan(x[j]) || std::isnan(y[j]) || std::isnan(z[j])){
       removed_points++;
+      printf("Shit found \n");
       continue;
-    }*/
+    }
+
     pcl::PointXYZ point;
     point.x = static_cast<float>(x[j]);
     point.y = static_cast<float>(y[j]);
     point.z = static_cast<float>(z[j]);
+
     //std::cout << point.x << ","<< point.y << "," << point.z << std::endl;
     input_cloud.points.push_back(point);
     //host_cloud_->points[i].x = x[i];

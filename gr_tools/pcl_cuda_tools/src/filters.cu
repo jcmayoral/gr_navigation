@@ -70,9 +70,9 @@ extern "C"
       cudaMemcpy(z, o_z, size*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(b, o_b, size*sizeof(float), cudaMemcpyHostToDevice);
 
-      int nthreads = 32;
+      int nthreads = 512;
       dim3 threads (nthreads);
-      int nblocks = size/nthreads;//7ceil(size / nthreads);//size/ nthreads -1;
+      int nblocks = size/nthreads -1;//7ceil(size / nthreads);//size/ nthreads -1;
       //memset(t, 0x00, nthreads);
       dim3 blocks(nblocks);
       // First param blocks

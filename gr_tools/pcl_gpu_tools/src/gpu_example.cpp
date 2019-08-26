@@ -50,6 +50,9 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     timer_.stop();
     timer_.setPeriod(ros::Duration(config.cummulative_time), true);
     pass_through_filter_.setFilterLimits (config.min_passthrough_z, config.max_passthrough_z);
+    cuda_pass_.setMinimumValue(config.min_passthrough_z);
+    cuda_pass_.setMaximumValue(config.max_passthrough_z);
+
     segmentation_filter_.setEpsAngle(config.eps_angle* (M_PI/180.0f) ); // plane can be within n degrees of X-Z plane
     segmentation_filter_.setMaxIterations(config.max_iterations);
     segmentation_filter_.setDistanceThreshold(config.distance_threshold);
@@ -79,6 +82,7 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
 
 void GPUExample::timer_cb(const ros::TimerEvent&){
     //boost::mutex::scoped_lock lock(mutex_);
+    //  ROS_ERROR("timer ");
     cluster();
     main_cloud_.points.clear();
 }
@@ -99,6 +103,7 @@ template <class T> void GPUExample::publishPointCloud(T t){
 
 void GPUExample::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
     //run_filter(*msg);
+    //ROS_ERROR("pointcloud cb");
     pcl::PointCloud<pcl::PointXYZ>::Ptr output (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *output);
     //ROS_INFO("PointCloud conversion succeded");
@@ -107,6 +112,7 @@ void GPUExample::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
 
 
 void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> pc){
+  //ROS_ERROR("Remove ground");
   int original_size = (int) pc->points.size ();
   pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
   pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
@@ -131,8 +137,8 @@ void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>>
 
 //template <template <typename> class Storage> void
 int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered){
-    boost::mutex::scoped_lock lock(mutex_);
-
+    //boost::mutex::scoped_lock lock(mutex_);
+    ROS_INFO("filter");
     bb.boxes.clear();
 
     //Reducing x,y
@@ -145,16 +151,11 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     }
     //removing points out of borders (potential false positives)
     if (passthrough_enable_){
-
-      /*
-      pcl_gpu::FilterPassThrough cuda_pass_;
-      cuda_pass_.setMinimumValue(-0.5);
-      cuda_pass_.setMaximumValue(1);
       cuda_pass_.setHostCloud(cloud_filtered);
       auto res = cuda_pass_.do_stuff(*cloud_filtered);
-      */
-      pass_through_filter_.setInputCloud (cloud_filtered);
-      pass_through_filter_.filter (*cloud_filtered);
+      cloud_filtered->is_dense = true;
+      //pass_through_filter_.setInputCloud (cloud_filtered);
+      //pass_through_filter_.filter (*cloud_filtered);
     }
     //removing outliers
     outliers_filter_.setInputCloud(cloud_filtered);
@@ -183,12 +184,20 @@ void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_ar
   bb.header.stamp = ros::Time::now();
   bb.header.frame_id = cluster_array.header.frame_id;
   bb_pub_.publish(bb);
-  ROS_INFO_STREAM("BoundingBoxes " << bb.boxes.size());
+  //ROS_INFO_STREAM("BoundingBoxes " << bb.boxes.size());
 }
 
 void GPUExample::cluster(){
+    //ROS_ERROR("cluster");
     boost::mutex::scoped_lock lock(mutex_);
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
+
+    if (concatenated_pc->points.size() == 0 ){
+      ROS_ERROR("Cluster empty");
+      return;
+    }
+    ROS_INFO_STREAM("points "<< concatenated_pc->points.size());
+    concatenated_pc->width  = concatenated_pc->points.size();
     cloud_device.upload(concatenated_pc->points);
     pcl::gpu::Octree::Ptr octree_device (new pcl::gpu::Octree);
     octree_device->setCloud(cloud_device);
