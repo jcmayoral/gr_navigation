@@ -44,6 +44,8 @@
 #include <pcl_gpu_tools/math_functions.hpp>
 
 
+#include <pcl_cuda_tools/filters/filter_passthrough.h>
+
 //using namespace pcl::cuda;
 //using pcl::cuda::PointCloudAOS;
 //using pcl::cuda::Device;
@@ -70,6 +72,10 @@ private:
   pcl::PointCloud<pcl::PointXYZ> main_cloud_;
   ros::Timer timer_;
 
+
+  //Testing
+  //pcl_gpu::FilterPassThrough cuda_pass_;
+
   //Dynamic Reconfigure
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig>::CallbackType dyn_server_cb_;
@@ -78,6 +84,7 @@ private:
   bool output_publish_;
   bool remove_ground_;
   bool passthrough_enable_;
+  bool is_processing_;
   jsk_recognition_msgs::BoundingBoxArray bb;
 
 public:

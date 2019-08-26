@@ -80,9 +80,7 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${PROJECT_NAME}
-   #${Boost_LIBRARIES}
-   #Threads::Threads
-   #TestLib
+   pcl_cuda_tools
  )
 
 
@@ -90,9 +88,6 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${PROJECT_NAME}
-   #${Boost_LIBRARIES}
-   #Threads::Threads
-   #TestLib
  )
 
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})

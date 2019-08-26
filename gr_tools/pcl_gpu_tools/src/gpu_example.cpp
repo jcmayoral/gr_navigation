@@ -1,6 +1,6 @@
 #include <pcl_gpu_tools/gpu_example.h>
 
-GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true), passthrough_enable_(true) {
+GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true), passthrough_enable_(true), is_processing_(false) {
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -79,13 +79,15 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
 
 void GPUExample::timer_cb(const ros::TimerEvent&){
     //boost::mutex::scoped_lock lock(mutex_);
-    //ROS_ERROR("TIMER CB");
     cluster();
     main_cloud_.points.clear();
 }
 
 
 template <class T> void GPUExample::publishPointCloud(T t){
+
+    if(t.points.size() ==0 )
+      return;
     sensor_msgs::PointCloud2 output_pointcloud_;
     pcl::toROSMsg(t, output_pointcloud_);
     output_pointcloud_.header.frame_id = "velodyne";
@@ -130,6 +132,7 @@ void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>>
 //template <template <typename> class Storage> void
 int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered){
     boost::mutex::scoped_lock lock(mutex_);
+
     bb.boxes.clear();
 
     //Reducing x,y
@@ -142,15 +145,22 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     }
     //removing points out of borders (potential false positives)
     if (passthrough_enable_){
+
+      /*
+      pcl_gpu::FilterPassThrough cuda_pass_;
+      cuda_pass_.setMinimumValue(-0.5);
+      cuda_pass_.setMaximumValue(1);
+      cuda_pass_.setHostCloud(cloud_filtered);
+      auto res = cuda_pass_.do_stuff(*cloud_filtered);
+      */
       pass_through_filter_.setInputCloud (cloud_filtered);
       pass_through_filter_.filter (*cloud_filtered);
     }
     //removing outliers
-    auto original_ponts_number = cloud_filtered->points.size();
     outliers_filter_.setInputCloud(cloud_filtered);
     outliers_filter_.filter(*cloud_filtered);
-
     main_cloud_ += *cloud_filtered;
+    //timer_cb(ros::TimerEvent());
     return 1;
 }
 
@@ -179,38 +189,12 @@ void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_ar
 void GPUExample::cluster(){
     boost::mutex::scoped_lock lock(mutex_);
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
-    if (concatenated_pc->points.size() == 0){
-        return;
-    }
-    clock_t tStart = clock();
-
-    //START TEMPORAL
-    /*
-    pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
-    pcl::PointIndices::Ptr filter_inliers(new pcl::PointIndices);
-
-    segmentation_filter_.setInputCloud(concatenated_pc);
-    segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
-
-    if (filter_inliers->indices.size () != 0){
-        ROS_ERROR_STREAM("Plane height" << std::to_string(filter_coefficients->values[3]/filter_coefficients->values[2]));
-        //extracting inliers (removing ground)
-        extraction_filter_.setInputCloud(concatenated_pc);
-        extraction_filter_.setIndices(filter_inliers);
-        extraction_filter_.filter(*concatenated_pc);
-    }
-    */
-    //END TEMPORAL
-
-
     cloud_device.upload(concatenated_pc->points);
     pcl::gpu::Octree::Ptr octree_device (new pcl::gpu::Octree);
     octree_device->setCloud(cloud_device);
     octree_device->build();
-
     std::vector<pcl::PointIndices> cluster_indices_gpu;
     gec.setSearchMethod (octree_device);
-
     gec.setHostCloud(concatenated_pc);
     gec.extract (cluster_indices_gpu);
     //octree_device->clear();
@@ -235,12 +219,12 @@ void GPUExample::cluster(){
         cluster_center.orientation.w = 1.0;
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
             //cloud_cluster->points.push_back (main_cloud_.points[*pit]);
-            cluster_center.position.x += main_cloud_.points[*pit].x/it->indices.size();
-            cluster_center.position.y += main_cloud_.points[*pit].y/it->indices.size();
-            cluster_center.position.z += main_cloud_.points[*pit].z/it->indices.size();
-            x_vector.push_back(main_cloud_.points[*pit].x);
-            y_vector.push_back(main_cloud_.points[*pit].y);
-            z_vector.push_back(main_cloud_.points[*pit].z);
+            cluster_center.position.x += concatenated_pc->points[*pit].x/it->indices.size();
+            cluster_center.position.y += concatenated_pc->points[*pit].y/it->indices.size();
+            cluster_center.position.z += concatenated_pc->points[*pit].z/it->indices.size();
+            x_vector.push_back(concatenated_pc->points[*pit].x);
+            y_vector.push_back(concatenated_pc->points[*pit].y);
+            z_vector.push_back(concatenated_pc->points[*pit].z);
         }
 
         //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
@@ -264,8 +248,8 @@ void GPUExample::cluster(){
     publishBoundingBoxes(clusters_msg);
 
     if (output_publish_){
-        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(main_cloud_);
+        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*concatenated_pc);
     }
-    ROS_INFO_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
+    //ROS_INFO_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
 };
