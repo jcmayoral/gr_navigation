@@ -1,6 +1,8 @@
 #include <pcl_gpu_tools/gpu_example.h>
 
-GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_ground_(true), passthrough_enable_(true), is_processing_(false) {
+GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
+                           remove_ground_(true), passthrough_enable_(true),
+                           is_processing_(false), is_timer_enable_(true) {
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -24,7 +26,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false), remove_gro
     conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::GT, -limit)));
     conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
     condition_removal_.setCondition (conditional_filter);
-    condition_removal_.setKeepOrganized(true);
+    condition_removal_.setKeepOrganized(false);
 
     segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
     Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
@@ -76,7 +78,11 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
       passthrough_enable_ = true;//config.passthrough_filter = true;
     }
 
-    timer_.start();
+    is_timer_enable_ = config.timer_enable;
+
+    if (config.timer_enable){
+      timer_.start();
+    }
 
 };
 
@@ -153,7 +159,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     if (passthrough_enable_){
       cuda_pass_.setHostCloud(cloud_filtered);
       auto res = cuda_pass_.do_stuff(*cloud_filtered);
-      cloud_filtered->is_dense = true;
+      cloud_filtered->is_dense = false;
       //pass_through_filter_.setInputCloud (cloud_filtered);
       //pass_through_filter_.filter (*cloud_filtered);
     }
@@ -161,7 +167,11 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     outliers_filter_.setInputCloud(cloud_filtered);
     outliers_filter_.filter(*cloud_filtered);
     main_cloud_ += *cloud_filtered;
-    //timer_cb(ros::TimerEvent());
+
+
+    if(!is_timer_enable_){
+      timer_cb(ros::TimerEvent());
+    }
     return 1;
 }
 

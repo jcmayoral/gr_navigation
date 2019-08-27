@@ -65,7 +65,7 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
   memset(b, false, number_points);
 
 
-  auto result = apply_cuda_filter(z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+  auto result = apply_cuda_filter(x,y,z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
 
   input_cloud.points.clear();
 
@@ -76,11 +76,14 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
       continue;
     }
 
+
+    /*
     if (std::isnan(x[j]) || std::isnan(y[j]) || std::isnan(z[j])){
       removed_points++;
-      printf("Shit found \n");
+      //printf("Shit found \n");
       continue;
     }
+    */
 
     pcl::PointXYZ point;
     point.x = static_cast<float>(x[j]);

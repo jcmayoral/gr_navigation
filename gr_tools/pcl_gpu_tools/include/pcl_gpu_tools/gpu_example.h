@@ -85,6 +85,7 @@ private:
   bool remove_ground_;
   bool passthrough_enable_;
   bool is_processing_;
+  bool is_timer_enable_;
   jsk_recognition_msgs::BoundingBoxArray bb;
 
 public:
