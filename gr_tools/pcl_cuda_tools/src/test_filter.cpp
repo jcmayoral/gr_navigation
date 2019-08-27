@@ -13,7 +13,7 @@ int main (int argc, char **argv){
     input->points.emplace_back(p);
   }
   passthrough_filter_.setHostCloud(input);
-  std::cout <<  "RESULT: " << passthrough_filter_.do_stuff(*input);
+  std::cout <<  "RESULT: " << passthrough_filter_.do_stuff('z', *input);
 
   for (auto i=0; i< 10; i++){
     std::cout << "this should be a ridiculous big value " << input->points[i].z << std::endl;

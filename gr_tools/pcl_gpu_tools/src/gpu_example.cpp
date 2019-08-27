@@ -16,6 +16,10 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
     ROS_INFO_STREAM("Time Window [s] "<< time_window );
 
     pass_through_filter_.setFilterFieldName ("z");
+    radius_cuda_pass_.setMinimumValue(-limit);
+    radius_cuda_pass_.setMaximumValue(limit);
+
+    /*
     pcl::ConditionAnd<pcl::PointXYZ>::Ptr conditional_filter (new pcl::ConditionAnd<pcl::PointXYZ> ());
     //conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("z", pcl::ComparisonOps::GT, -0.8)));
     //range_condAND->      addComparison (     FieldComparisonConstPtr (new pcl::FieldComparison<PointT> ("x", pcl::ComparisonOps::GE, newOriginX)));
@@ -27,6 +31,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
     conditional_filter->addComparison (pcl::FieldComparison<pcl::PointXYZ>::ConstPtr (new pcl::FieldComparison<pcl::PointXYZ> ("x", pcl::ComparisonOps::LT, limit)));
     condition_removal_.setCondition (conditional_filter);
     condition_removal_.setKeepOrganized(false);
+    */
 
     segmentation_filter_.setModelType(pcl::SACMODEL_PERPENDICULAR_PLANE);
     Eigen::Vector3f axis = Eigen::Vector3f(0.0,0.0,1.0);
@@ -148,8 +153,13 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     bb.boxes.clear();
 
     //Reducing x,y
-    condition_removal_.setInputCloud (cloud_filtered);
-    condition_removal_.filter (*cloud_filtered);
+    radius_cuda_pass_.setHostCloud(cloud_filtered);
+    auto res = radius_cuda_pass_.do_stuff('x', *cloud_filtered);
+
+    radius_cuda_pass_.setHostCloud(cloud_filtered);
+    auto res2 = radius_cuda_pass_.do_stuff('y', *cloud_filtered);
+    //condition_removal_.setInputCloud (cloud_filtered);
+    //condition_removal_.filter (*cloud_filtered);
 
     //Remove Ground
     if (remove_ground_){
@@ -158,7 +168,7 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     //removing points out of borders (potential false positives)
     if (passthrough_enable_){
       cuda_pass_.setHostCloud(cloud_filtered);
-      auto res = cuda_pass_.do_stuff(*cloud_filtered);
+      auto res = cuda_pass_.do_stuff('z', *cloud_filtered);
       cloud_filtered->is_dense = false;
       //pass_through_filter_.setInputCloud (cloud_filtered);
       //pass_through_filter_.filter (*cloud_filtered);

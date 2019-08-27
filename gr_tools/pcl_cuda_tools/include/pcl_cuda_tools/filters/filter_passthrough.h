@@ -5,9 +5,7 @@
 #include <cassert>
 
 
-using namespace pcl::gpu;
 using namespace pcl;
-
 
 namespace pcl_gpu{
 
@@ -44,13 +42,9 @@ namespace pcl_gpu{
         host_cloud_ = host_cloud;
       }
 
-      double do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
+      double do_stuff(char channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
 
     protected:
-      /** \brief the input cloud on the GPU */
-      CloudDevice input_;
-
-      /** \brief the original cloud the Host */
       PointCloudHostPtr host_cloud_;
 
       /** \brief The spatial cluster tolerance as a measure in the L2 Euclidean space. */

@@ -75,6 +75,7 @@ private:
 
   //Testing
   pcl_gpu::FilterPassThrough cuda_pass_;
+  pcl_gpu::FilterPassThrough radius_cuda_pass_;
 
   //Dynamic Reconfigure
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;

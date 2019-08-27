@@ -60,13 +60,6 @@ extern "C"
       */
     }
 
-    void free_memory(float *x){
-      cudaFree(x);
-    }
-    void free_memory_bool(bool *x){
-      cudaFree(x);
-    }
-
     int apply_cuda_filter(float *o_z, bool *o_b, float min_limit, float max_limit, float filter_value, int size){
       // initialize x array on the host
       float *z;
@@ -105,10 +98,10 @@ extern "C"
       //cudaMemcpy(o_z, z, size*sizeof(float), cudaMemcpyDeviceToHost);
       cudaMemcpy(o_b, b, size*sizeof(bool), cudaMemcpyDeviceToHost);
 
-      free_memory(x);
-      free_memory(y);
-      free_memory(z);
-      free_memory_bool(b);
+      //free_memory(x);
+      //free_memory(y);
+      cudaFree(z);
+      cudaFree(b);
 
       return 1;
     }

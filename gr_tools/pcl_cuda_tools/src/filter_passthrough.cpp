@@ -5,7 +5,7 @@
 //using namespace pcl;
 using namespace pcl_gpu;
 
-double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
+double FilterPassThrough::do_stuff (char channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
   float * x, *y, *z;
   bool *b;
   int number_points = input_cloud.points.size();
@@ -25,9 +25,19 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
     z[i] = static_cast<float>(input_cloud.points[i].z);
   }
   memset(b, false, number_points);
+  bool result = false;
 
+  if (channel == 'z'){
+    result = apply_cuda_filter(z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+  }
 
-  auto result = apply_cuda_filter(x,y,z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+  if (channel == 'x'){
+    result = apply_cuda_filter(x,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+  }
+
+  if (channel == 'y'){
+    result = apply_cuda_filter(z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+  }
 
   input_cloud.points.clear();
 
@@ -59,6 +69,8 @@ double FilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud
     //host_cloud_->points[i].z = z[i];
   }
 
+
+  input_cloud.is_dense = false;
 
   /*
   for (auto it = input_cloud.fields.begin(); it!= input_cloud.fields.end(); it++){
