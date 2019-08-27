@@ -15,7 +15,7 @@ extern "C"
     return threadId;
   }
     __global__
-    void filter_passthrough_kernel(float *x, float *y,float *z, bool *b, float min_limit, float max_limit, float filter_value, int size){
+    void filter_passthrough_kernel(float *z, bool *b, float min_limit, float max_limit, float filter_value, int size){
       //__shared__ int s[256];
       //int idx = blockIdx.x * blockDim.x + threadIdx.x;
       //int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -67,24 +67,24 @@ extern "C"
       cudaFree(x);
     }
 
-    int apply_cuda_filter(float *o_x, float *o_y, float *o_z, bool *o_b, float min_limit, float max_limit, float filter_value, int size){
+    int apply_cuda_filter(float *o_z, bool *o_b, float min_limit, float max_limit, float filter_value, int size){
       // initialize x array on the host
       float *z;
-      float *y;
-      float *x;
+      //float *y;
+      //float *x;
       bool *b;
       // Allocate Unified Memory – accessible from CPU or GPU
       //cudaMallocManaged(&x, size*sizeof(float));
       //cudaMallocManaged(&y, size*sizeof(float));
       cudaMallocManaged(&z, size*sizeof(float));
-      cudaMallocManaged(&y, size*sizeof(float));
-      cudaMallocManaged(&x, size*sizeof(float));
+      //cudaMallocManaged(&y, size*sizeof(float));
+      //cudaMallocManaged(&x, size*sizeof(float));
       cudaMallocManaged(&b, size*sizeof(float));
 
       printf("min limit %f", min_limit);
       printf("max limit %f", max_limit);
-      cudaMemcpy(x, o_x, size*sizeof(float), cudaMemcpyHostToDevice);
-      cudaMemcpy(y, o_y, size*sizeof(float), cudaMemcpyHostToDevice);
+      //cudaMemcpy(x, o_x, size*sizeof(float), cudaMemcpyHostToDevice);
+      //cudaMemcpy(y, o_y, size*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(z, o_z, size*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(b, o_b, size*sizeof(float), cudaMemcpyHostToDevice);
 
@@ -98,7 +98,7 @@ extern "C"
       //  blocks, threads each
       printf("C %d\n", nblocks);
 
-      filter_passthrough_kernel<<<blocks,threads>>>(x,y,z,b,min_limit, max_limit, filter_value, size);
+      filter_passthrough_kernel<<<blocks,threads>>>(z,b,min_limit, max_limit, filter_value, size);
       cudaDeviceSynchronize(); // to print results
       //cudaMemcpy(o_x, x, size*sizeof(float), cudaMemcpyDeviceToHost);
       //cudaMemcpy(o_y, y, size*sizeof(float), cudaMemcpyDeviceToHost);
