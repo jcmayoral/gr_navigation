@@ -28,6 +28,9 @@
 #include <dynamic_reconfigure/server.h>
 #include <gr_safety_policies/ProximityPolicyConfig.h>
 
+#include <yaml-cpp/yaml.h>
+#include <ros/package.h>
+
 namespace gr_safety_policies
 {
 
@@ -53,7 +56,7 @@ namespace gr_safety_policies
       bool is_obstacle_detected_;
       ros::Timer timer_;
       ros::Publisher marker_pub_;
-      ros::Subscriber pointcloud_sub_;
+      std::vector <ros::Subscriber> monitor_sub_;
       visualization_msgs::MarkerArray marker_array_;
 
       ros::Time last_detection_time_;

@@ -15,6 +15,7 @@ find_package(catkin REQUIRED
         std_msgs
         cv_bridge
         message_filters
+        yaml_cpp_0_3
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -44,6 +45,7 @@ catkin_package(
         std_msgs
         cv_bridge
         message_filters
+        yaml_cpp_0_3
 )
 
 file(GLOB POLICIES src/policies/*.cpp)
@@ -60,7 +62,7 @@ add_executable(action_manager_node src/action_manager_node.cpp)
 
 add_definitions(-DCURL_STATICLIB)
 
-target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl ${JSON_INCLUDE_DIRS} ${OpenCV_LIBRARIES})
+target_link_libraries(gr_safety_policies ${catkin_LIBRARIES} curl ${JSON_INCLUDE_DIRS} ${OpenCV_LIBRARIES} yaml-cpp)
 #Independent policies
 target_link_libraries(proximity_policy_node gr_safety_policies gr_safe_actions)
 target_link_libraries(hri_policy_node gr_safety_policies gr_safe_actions)
