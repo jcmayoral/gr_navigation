@@ -3,7 +3,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <cassert>
-
+#include <string>
 
 using namespace pcl;
 
@@ -42,7 +42,7 @@ namespace pcl_gpu{
         host_cloud_ = host_cloud;
       }
 
-      double do_stuff(char channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
+      double do_stuff(std::string channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
 
     protected:
       PointCloudHostPtr host_cloud_;

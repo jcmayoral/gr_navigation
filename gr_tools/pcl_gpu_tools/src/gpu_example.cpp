@@ -2,7 +2,7 @@
 
 GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
                            remove_ground_(true), passthrough_enable_(true),
-                           is_processing_(false), is_timer_enable_(true) {
+                           is_processing_(false), is_timer_enable_(true){
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -80,7 +80,7 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
 
     if (config.mode == 0){
       remove_ground_ = true;//config.remove_ground = true;
-      passthrough_enable_ = true;//config.passthrough_filter = true;
+      passthrough_enable_ = false;//config.passthrough_filter = true;
     }
 
     is_timer_enable_ = config.timer_enable;
@@ -135,7 +135,7 @@ void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>>
   do{
     segmentation_filter_.setInputCloud(pc);
     segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
-
+    ROS_INFO_STREAM("Distance to floor " << filter_coefficients->values[3]/filter_coefficients->values[2]);
       if (filter_inliers->indices.size () != 0){
           extraction_filter_.setInputCloud(pc);
           extraction_filter_.setIndices(filter_inliers);
@@ -143,7 +143,9 @@ void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>>
           number_of_surfaces++;
       }
   }
-  while (filter_inliers->indices.size () != 0 && pc->points.size()> init_size*0.3);
+  while (filter_inliers->indices.size () != 0 && pc->points.size()> init_size*0.8);
+
+  ROS_INFO_STREAM("Surface remove " << number_of_surfaces);
 }
 
 //template <template <typename> class Storage> void
@@ -154,28 +156,27 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 
     //Reducing x,y
     radius_cuda_pass_.setHostCloud(cloud_filtered);
-    auto res = radius_cuda_pass_.do_stuff('x', *cloud_filtered);
+    auto res = radius_cuda_pass_.do_stuff("xy", *cloud_filtered);
 
-    radius_cuda_pass_.setHostCloud(cloud_filtered);
-    auto res2 = radius_cuda_pass_.do_stuff('y', *cloud_filtered);
+    //radius_cuda_pass_.setHostCloud(cloud_filtered);
+    //auto res2 = radius_cuda_pass_.do_stuff('y', *cloud_filtered);
     //condition_removal_.setInputCloud (cloud_filtered);
     //condition_removal_.filter (*cloud_filtered);
 
-    //Remove Ground
+    //Remove Ground or passthrough on z
     if (remove_ground_){
       removeGround(cloud_filtered);
+      //removing outliers
+      outliers_filter_.setInputCloud(cloud_filtered);
+      outliers_filter_.filter(*cloud_filtered);
+
     }
-    //removing points out of borders (potential false positives)
     if (passthrough_enable_){
       cuda_pass_.setHostCloud(cloud_filtered);
-      auto res = cuda_pass_.do_stuff('z', *cloud_filtered);
-      cloud_filtered->is_dense = false;
+      auto res = cuda_pass_.do_stuff("z", *cloud_filtered);
       //pass_through_filter_.setInputCloud (cloud_filtered);
       //pass_through_filter_.filter (*cloud_filtered);
     }
-    //removing outliers
-    outliers_filter_.setInputCloud(cloud_filtered);
-    outliers_filter_.filter(*cloud_filtered);
     main_cloud_ += *cloud_filtered;
 
 

@@ -5,7 +5,7 @@
 //using namespace pcl;
 using namespace pcl_gpu;
 
-double FilterPassThrough::do_stuff (char channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
+double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
   float * x, *y, *z;
   bool *b;
   int number_points = input_cloud.points.size();
@@ -27,16 +27,16 @@ double FilterPassThrough::do_stuff (char channel, pcl::PointCloud<pcl::PointXYZ>
   memset(b, false, number_points);
   bool result = false;
 
-  if (channel == 'z'){
+  if (channel.find("z")!= -1){
     result = apply_cuda_filter(z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
   }
 
-  if (channel == 'x'){
+  if (channel.find("x")!= -1){
     result = apply_cuda_filter(x,b, minimum_value_, maximum_value_, filter_value_,  number_points);
   }
 
-  if (channel == 'y'){
-    result = apply_cuda_filter(z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+  if (channel.find("y")!= -1){
+    result = apply_cuda_filter(y,b, minimum_value_, maximum_value_, filter_value_,  number_points);
   }
 
   input_cloud.points.clear();
@@ -48,34 +48,16 @@ double FilterPassThrough::do_stuff (char channel, pcl::PointCloud<pcl::PointXYZ>
       continue;
     }
 
-
-    /*
-    if (std::isnan(x[j]) || std::isnan(y[j]) || std::isnan(z[j])){
-      removed_points++;
-      //printf("Shit found \n");
-      continue;
-    }
-    */
-
     pcl::PointXYZ point;
     point.x = static_cast<float>(x[j]);
     point.y = static_cast<float>(y[j]);
     point.z = static_cast<float>(z[j]);
 
-    //std::cout << point.x << ","<< point.y << "," << point.z << std::endl;
     input_cloud.points.push_back(point);
-    //host_cloud_->points[i].x = x[i];
-    //host_cloud_->points[i].y = y[i];
-    //host_cloud_->points[i].z = z[i];
   }
 
 
   input_cloud.is_dense = false;
-
-  /*
-  for (auto it = input_cloud.fields.begin(); it!= input_cloud.fields.end(); it++){
-    *(it).datatype = 8;
-  }*/
 
   std::cout << "REMOVING "<< removed_points << std::endl;
   input_cloud.width = input_cloud.points.size();
