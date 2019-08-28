@@ -11,8 +11,24 @@ namespace gr_safety_policies
 {
 
   void ProximityPolicy::instantiateServices(ros::NodeHandle nh){
+    std::string path = ros::package::getPath("gr_safety_policies");
+    std::string config_path;
+    std::string config_file;
+    nh.param<std::string>("config_path", config_path, "config");
+    nh.param<std::string>("config_file", config_file, "proximity_monitor.yaml");
+    std::cout << path+"/"+config_path+"/"+config_file << std::endl;
+    YAML::Node config_yaml = YAML::LoadFile((path+"/"+config_path+"/"+config_file).c_str());
+
+    const YAML::Node& topics_to_subscribe = config_yaml["topics"];
+    std::cout << topics_to_subscribe.size() << std::endl;
+
+    for (YAML::const_iterator a= topics_to_subscribe.begin(); a != topics_to_subscribe.end(); ++a){
+      std::string topic = a->as<std::string>();
+      ROS_INFO_STREAM("Subscribing to " << topic);
+      monitor_sub_.push_back(nh.subscribe(topic.c_str(), 1, &ProximityPolicy::poses_CB, this));
+    }
+
     marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("proximity_visualization", 1);
-    pointcloud_sub_ = nh.subscribe("/detected_objects", 1, &ProximityPolicy::poses_CB, this);
   }
 
   void ProximityPolicy::poses_CB(const geometry_msgs::PoseArray::ConstPtr& poses){
@@ -168,7 +184,7 @@ namespace gr_safety_policies
     publishTopics();
 
     //The next condition is true when is obstacle not detected and
-    // and executer is initialized (obstacle not anymore on danger region)    
+    // and executer is initialized (obstacle not anymore on danger region)
     if(action_executer_!= NULL && !is_obstacle_detected_){
       //ROS_WARN("Stopping executer due no obstacle detected");
       //action_executer_->stop();

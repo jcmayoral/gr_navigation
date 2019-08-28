@@ -10,6 +10,7 @@ find_package(catkin REQUIRED
         roscpp
         pcl_conversions
         geometry_msgs
+        jsk_recognition_msgs
         pcl_ros
         dynamic_reconfigure
 )
@@ -53,6 +54,7 @@ catkin_package(
     pcl_conversions
     pcl_ros
     geometry_msgs
+    jsk_recognition_msgs
     dynamic_reconfigure
   DEPENDS
     PCL
@@ -78,9 +80,7 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${PROJECT_NAME}
-   #${Boost_LIBRARIES}
-   #Threads::Threads
-   #TestLib
+   pcl_cuda_tools
  )
 
 
@@ -88,9 +88,6 @@ target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${PROJECT_NAME}
-   #${Boost_LIBRARIES}
-   #Threads::Threads
-   #TestLib
  )
 
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})

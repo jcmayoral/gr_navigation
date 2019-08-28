@@ -4,6 +4,7 @@
 #include <opencv2/video/background_segm.hpp>
 #include <darknet_ros_msgs/BoundingBox.h>
 #include <sensor_msgs/CameraInfo.h>
+#include <pcl_cuda_tools/depth_registration.h>
 
 #include <math.h>
 #include <random>
@@ -229,7 +230,7 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
             is_initialize = true;
         }
         else{
-            int auxiliar = sizeof(scores_indices) / sizeof(scores_indices[0]); 
+            int auxiliar = sizeof(scores_indices) / sizeof(scores_indices[0]);
             int worst_inlier = std::distance(scores_indices, std::max_element(scores_indices, scores_indices+ auxiliar));
             int best_inlier = std::distance(scores_indices, std::min_element(scores_indices, scores_indices+ auxiliar));
 
@@ -293,7 +294,7 @@ double register_ransac_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
                         }
                         */
                         current_indices[worst_inlier] = std::make_pair(cell_x,cell_y);
-                        new_inlier_accepted = true;       
+                        new_inlier_accepted = true;
                         //depth_image.at<uint16_t>(cell_y,cell_x) = 0xffff;
                     }
                 }
@@ -367,20 +368,20 @@ double register_median_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
                 index = croppedImage.at<ushort>(j,i) / delta;
                 hist[index] = hist[index] + 1;
             }
-            
+
         }
 
         //ignoring 0
         hist[0] = 0;
 
-        int auxiliar = sizeof(hist) / sizeof(hist[0]); 
+        int auxiliar = sizeof(hist) / sizeof(hist[0]);
         int median = std::distance(hist, std::max_element(hist, hist+ auxiliar));
 
         /*
 
 
         //cv::imshow("cropped ", croppedImage);
-         
+
         std::vector<cv::Mat> bgr_planes;
         //cv::split( croppedImage, bgr_planes );
         int histSize = 65535;
@@ -397,7 +398,7 @@ double register_median_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
         //cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat() );
         //normalize(g_hist, g_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
         //normalize(r_hist, r_hist, 0, histImage.rows, NORM_MINMAX, -1, Mat() );
-    
+
 
         for( int i = 1; i < histSize; i++ )
         {
@@ -413,16 +414,16 @@ double register_median_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
                 Scalar( 0, 0, 255), 2, 8, 0  );
         }
 
-        
+
         imshow("Source image", histImage );
         cv::waitKey(2000);
-        
+
         //Initialize m
-        double minVal; 
-        double maxVal; 
+        double minVal;
+        double maxVal;
         int minindex;
         int maxindex;
-        //cv::Point minLoc; 
+        //cv::Point minLoc;
         //cv::Point maxLoc;
 
         minMaxIdx( b_hist, &minVal, &maxVal, &minindex, &maxindex );
@@ -437,6 +438,39 @@ double register_median_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
 
 
 
+      }
+      catch( cv::Exception& e ){
+        return 0.0;
+      }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+double cuda_register_median_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, cv::Mat& depth_image, sensor_msgs::CameraInfo camera_info){
+  try{
+      // Setup a rectangle to define your region of interest
+      cv::Rect myROI(bounding_box.xmin,bounding_box.ymin,bounding_box.xmax -bounding_box.xmin , bounding_box.ymax-bounding_box.ymin);
+
+      // Crop the full image to that image contained by the rectangle myROI
+      // Note that this doesn't copy the data
+      cv::Mat croppedImage = depth_image(myROI);
+      DepthRegistration depth_registrator(croppedImage);
+      double result = depth_registrator.run();
+      ROS_INFO_STREAM("Finished"<< result);
+
+      return result;
       }
       catch( cv::Exception& e ){
         return 0.0;

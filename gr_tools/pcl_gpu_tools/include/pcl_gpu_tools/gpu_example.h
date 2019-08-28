@@ -19,7 +19,6 @@
 #include <pcl/gpu/segmentation/impl/gpu_extract_clusters.hpp>
 
 
-
 #include <functional>
 #include <iostream>
 #include <mutex>
@@ -34,6 +33,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <geometry_msgs/PoseArray.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl_gpu_tools/GPUFilterConfig.h>
 #include <dynamic_reconfigure/server.h>
@@ -43,6 +43,8 @@
 
 #include <pcl_gpu_tools/math_functions.hpp>
 
+
+#include <pcl_cuda_tools/filters/filter_passthrough.h>
 
 //using namespace pcl::cuda;
 //using pcl::cuda::PointCloudAOS;
@@ -58,6 +60,7 @@ private:
   ros::Subscriber pc_sub_;
   ros::Publisher pc_pub_;
   ros::Publisher cluster_pub_;
+  ros::Publisher bb_pub_;
   pcl::gpu::Octree::PointCloud cloud_device;
   pcl::gpu::EuclideanClusterExtraction gec;
   pcl::ExtractIndices<pcl::PointXYZ> extraction_filter_;
@@ -69,12 +72,22 @@ private:
   pcl::PointCloud<pcl::PointXYZ> main_cloud_;
   ros::Timer timer_;
 
+
+  //Testing
+  pcl_gpu::FilterPassThrough cuda_pass_;
+  pcl_gpu::FilterPassThrough radius_cuda_pass_;
+
   //Dynamic Reconfigure
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig>::CallbackType dyn_server_cb_;
   double dynamic_std_;
   double dynamic_std_z_;
   bool output_publish_;
+  bool remove_ground_;
+  bool passthrough_enable_;
+  bool is_processing_;
+  bool is_timer_enable_;
+  jsk_recognition_msgs::BoundingBoxArray bb;
 
 public:
     GPUExample ();
@@ -84,5 +97,8 @@ public:
     template <class T> void publishPointCloud(T);
     void timer_cb(const ros::TimerEvent&);
     void cluster();
+    void publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array);
+    void addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z);
     void dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level);
+    void removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> pc);
 };
