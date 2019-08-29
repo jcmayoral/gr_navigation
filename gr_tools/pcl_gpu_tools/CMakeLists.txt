@@ -12,6 +12,8 @@ find_package(catkin REQUIRED
         geometry_msgs
         jsk_recognition_msgs
         pcl_ros
+        tf2
+        tf2_ros
         dynamic_reconfigure
 )
 
@@ -55,6 +57,8 @@ catkin_package(
     pcl_ros
     geometry_msgs
     jsk_recognition_msgs
+    tf2
+    tf2_ros
     dynamic_reconfigure
   DEPENDS
     PCL

@@ -2,12 +2,14 @@
 
 GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
                            remove_ground_(true), passthrough_enable_(true),
-                           is_processing_(false), is_timer_enable_(true){
+                           is_processing_(false), is_timer_enable_(true),
+                           tf2_listener_(tf_buffer_), last_detection_(ros::Time(0)){
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
     //conditional_filter_ = pc0l::ConditionAnd<pcl::PointXYZ>::Ptr(new pcl::ConditionAnd<pcl::PointXYZ> ());
     //cilinder ROI
+    tStart = clock();
     double limit = 15.0;
     double time_window = 0.2;
     nh.getParam("roi", limit);
@@ -94,6 +96,7 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
 void GPUExample::timer_cb(const ros::TimerEvent&){
     //boost::mutex::scoped_lock lock(mutex_);
     //  ROS_ERROR("timer ");
+    tStart = clock();
     cluster();
     main_cloud_.points.clear();
 }
@@ -188,11 +191,16 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 
 void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z){
   jsk_recognition_msgs::BoundingBox cluster_bb;
-  cluster_bb.header.stamp = ros::Time::now();
-  cluster_bb.header.frame_id = "velodyne"; //this should be a param
-  cluster_bb.pose.position.x = center.position.x;
-  cluster_bb.pose.position.y = center.position.y;
-  cluster_bb.pose.position.z = center.position.z;
+  //cluster_bb.header.stamp = ros::Time::now();
+  geometry_msgs::Pose out;
+  tf2::doTransform(center, out, to_odom_transform);
+  ROS_WARN("WORKS :)");
+
+  cluster_bb.header.frame_id = "odom"; //this should be a param
+  cluster_bb.header.stamp = last_detection_;
+  cluster_bb.pose.position.x = out.position.x;
+  cluster_bb.pose.position.y = out.position.y;
+  cluster_bb.pose.position.z = out.position.z;
   //TODO add orientation
   cluster_bb.pose.orientation.w = 1.0;
   cluster_bb.dimensions.x = v_x;
@@ -203,7 +211,7 @@ void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, do
 
 void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array){
   bb.header.stamp = ros::Time::now();
-  bb.header.frame_id = cluster_array.header.frame_id;
+  bb.header.frame_id = "odom";//cluster_array.header.frame_id;
   bb_pub_.publish(bb);
   //ROS_INFO_STREAM("BoundingBoxes " << bb.boxes.size());
 }
@@ -212,6 +220,8 @@ void GPUExample::cluster(){
     //ROS_ERROR("cluster");
     boost::mutex::scoped_lock lock(mutex_);
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
+
+    to_odom_transform = tf_buffer_.lookupTransform("odom", "velodyne", last_detection_, ros::Duration(0.5) );
 
     if (concatenated_pc->points.size() == 0 ){
       ROS_ERROR("Cluster empty");
@@ -231,8 +241,6 @@ void GPUExample::cluster(){
     //std::cout << "INFO: stopped with the GPU version" << std::endl;
 
     geometry_msgs::PoseArray clusters_msg;
-    clusters_msg.header.frame_id = "velodyne";
-    clusters_msg.header.stamp = ros::Time::now();
 
     std::vector<double> x_vector;
     std::vector<double> y_vector;
@@ -274,12 +282,14 @@ void GPUExample::cluster(){
         }
     }
 
+    clusters_msg.header.frame_id = "velodyne";
+    clusters_msg.header.stamp = ros::Time::now();
     cluster_pub_.publish(clusters_msg);
     publishBoundingBoxes(clusters_msg);
 
     if (output_publish_){
         publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*concatenated_pc);
     }
-    //ROS_INFO_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
+    ROS_ERROR_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
 };
