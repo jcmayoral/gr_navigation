@@ -81,17 +81,30 @@ extern "C"
       cudaMemcpy(z, o_z, size*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(b, o_b, size*sizeof(float), cudaMemcpyHostToDevice);
 
-      int nthreads = 1024;
-      dim3 threads (nthreads);
-      int nblocks = size/nthreads -1;//7ceil(size / nthreads);//size/ nthreads -1;
+
+      int ngrid;      // The launch configurator returned block size
+      int nblocks;    // The minimum grid size needed to achieve the maximum occupancy for a full device launch
+      //cudaOccupancyMaxPotentialBlockSize(&nblocks, &nthreads, filter_passthrough_kernel, 0, 0);
+      ngrid = 256;
+      dim3 grid (ngrid);
+      nblocks = ceil((size+ngrid -1)/ngrid);
+
+      //nblocks = (size + nblocks -1)/nblocks;
+      printf("\n A %d %d %d\n", size, nblocks, ngrid);
+
+      //int nthreads = 1024;
+      //int nblocks = ceil(size/nthreads);//7ceil(size / nthreads);//size/ nthreads -1;
       //memset(t, 0x00, nthreads);
       dim3 blocks(nblocks);
       // First param blocks
       // Second param number of threads
       //  blocks, threads each
-      printf("C %d\n", nblocks);
+      printf("C %d %d\n", nblocks, ngrid);
+      printf("D %d\n", size);
 
-      filter_passthrough_kernel<<<blocks,threads>>>(z,b,min_limit, max_limit, filter_value, size);
+      //printf("OK %d", max_thread - size);
+      //filter_passthrough_kernel<<<blocks,threads>>>(z,b,min_limit, max_limit, filter_value, size);
+      filter_passthrough_kernel<<<blocks,grid>>>(z,b,min_limit, max_limit, filter_value, size);
       cudaDeviceSynchronize(); // to print results
       //cudaMemcpy(o_x, x, size*sizeof(float), cudaMemcpyDeviceToHost);
       //cudaMemcpy(o_y, y, size*sizeof(float), cudaMemcpyDeviceToHost);

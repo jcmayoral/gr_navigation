@@ -32,7 +32,7 @@ extern "C"{
 
       int nthreads = 512;
       dim3 threads (nthreads);
-      int nblocks =  ceil(size / nthreads);//size/ nthreads -1;
+      int nblocks =  1 + ceil(size / nthreads);//size/ nthreads -1;
       //printf("blocks....%d %d\n", nblocks, nblocks*nthreads);
       cudaMallocManaged(&t, nthreads*sizeof(int));
       t = static_cast<int*>(malloc(sizeof(int) * nthreads));
