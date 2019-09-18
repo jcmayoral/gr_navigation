@@ -43,8 +43,11 @@
 
 #include <pcl_gpu_tools/math_functions.hpp>
 
-
 #include <pcl_cuda_tools/filters/filter_passthrough.h>
+#include <pcl_cuda_tools/filters/pcl_filter_passthrough.h>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
 
 //using namespace pcl::cuda;
 //using pcl::cuda::PointCloudAOS;
@@ -71,11 +74,12 @@ private:
   pcl::StatisticalOutlierRemoval<pcl::PointXYZ> outliers_filter_;
   pcl::PointCloud<pcl::PointXYZ> main_cloud_;
   ros::Timer timer_;
-
+  geometry_msgs::TransformStamped to_odom_transform;
 
   //Testing
-  pcl_gpu::FilterPassThrough cuda_pass_;
+  //pcl_gpu::FilterPassThrough cuda_pass_;
   pcl_gpu::FilterPassThrough radius_cuda_pass_;
+  pcl_gpu::PCLFilterPassThrough pcl_cuda_pass_;
 
   //Dynamic Reconfigure
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;
@@ -88,6 +92,10 @@ private:
   bool is_processing_;
   bool is_timer_enable_;
   jsk_recognition_msgs::BoundingBoxArray bb;
+  std::clock_t tStart;
+  ros::Time last_detection_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf2_listener_;
 
 public:
     GPUExample ();

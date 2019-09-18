@@ -1,5 +1,3 @@
-#pragma once
-
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <cassert>
@@ -9,7 +7,7 @@ using namespace pcl;
 
 namespace pcl_gpu{
 
-  class FilterPassThrough
+  class PCLFilterPassThrough
   {
     public:
       //using PointType = pcl::PointXYZ;
@@ -17,9 +15,9 @@ namespace pcl_gpu{
       //using PointCloudHostPtr = PointCloudHost::Ptr;
       //using PointCloudHostConstPtr = PointCloudHost::ConstPtr;
 
-      FilterPassThrough () : minimum_value_ (-1.0), maximum_value_(1.0), filter_value_ (std::numeric_limits<float>::max ())
+      PCLFilterPassThrough () : minimum_value_ (-1.0), maximum_value_(1.0), filter_value_ (std::numeric_limits<float>::max ())
       {
-        printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        printf("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP");
       };
 
       inline void setMinimumValue(float min_limit) {
@@ -38,14 +36,14 @@ namespace pcl_gpu{
         return (maximum_value_);
       }
 
-      inline void setHostCloud ( pcl::PointCloud<pcl::PointXYZ>::Ptr host_cloud) {
+      inline void setHostCloud (pcl::PointCloud<pcl::PointXYZ>::Ptr host_cloud) {
         host_cloud_ = host_cloud;
       }
 
-      double do_stuff(std::string channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
+      double do_stuff(pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
 
     protected:
-       pcl::PointCloud<pcl::PointXYZ>::Ptr host_cloud_;
+      pcl::PointCloud<pcl::PointXYZ>::Ptr host_cloud_;
 
       /** \brief The spatial cluster tolerance as a measure in the L2 Euclidean space. */
       double cluster_tolerance_;
@@ -54,6 +52,6 @@ namespace pcl_gpu{
       float maximum_value_;
       float filter_value_;
 
-      virtual std::string getClassName () const { return ("gpu::PassThroughFilter"); }
+      virtual std::string getClassName () const { return ("gpu::PCLPassThroughFilter"); }
   };
 }

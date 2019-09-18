@@ -19,7 +19,7 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
 
   int removed_points = 0;
 
-  for (auto i=0; i< number_points; i++){
+  for (int i=0; i< number_points; i++){
     x[i] = static_cast<float>(input_cloud.points[i].x);
     y[i] = static_cast<float>(input_cloud.points[i].y);
     z[i] = static_cast<float>(input_cloud.points[i].z);
@@ -59,7 +59,7 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
 
   input_cloud.is_dense = false;
 
-  std::cout << "REMOVING "<< removed_points << std::endl;
+  //std::cout << "REMOVING "<< removed_points << std::endl;
   input_cloud.width = input_cloud.points.size();
   //input_cloud = *pc_pointer;
 
