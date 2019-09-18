@@ -8,7 +8,7 @@ DepthRegistration::DepthRegistration(cv::Mat image): frame_(image){
 };
 
 double DepthRegistration::run(){
-  std::lock_guard<std::mutex> lock(mtx);
+  //std::lock_guard<std::mutex> lock(mtx);
   int  x[frame_.rows*frame_.cols];
 
   int width = frame_.cols;
@@ -36,7 +36,7 @@ double DepthRegistration::run(){
   int n = frame_.rows * frame_.cols;
   std::cout << "size" << sizeof(x)/sizeof(*x) << n << std::endl;
 
-  auto result = do_cuda_stuff(x, n);
+  bool result = do_cuda_stuff(x, n);
   std::cout << "RUN results"<< result *  0.001 << std::endl;
   return result * 0.001;
 

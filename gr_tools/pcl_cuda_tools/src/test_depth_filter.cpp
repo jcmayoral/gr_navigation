@@ -22,7 +22,7 @@ int main (int argc, char **argv)
   std::cout << "Mat has been filled"<<std::endl;
 
   DepthRegistration depth_registrator_(sample_img);
-  auto result = depth_registrator_.run();
+  bool result = depth_registrator_.run();
   /*
   for (int i = 0; i < depth_registrator_.getN(); i++)
   // Check for errors (all values should be 3.0f)
