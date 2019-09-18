@@ -72,14 +72,14 @@ extern "C"
       cudaMallocManaged(&z, size*sizeof(float));
       //cudaMallocManaged(&y, size*sizeof(float));
       //cudaMallocManaged(&x, size*sizeof(float));
-      cudaMallocManaged(&b, size*sizeof(float));
+      cudaMallocManaged(&b, size*sizeof(bool));
 
       printf("min limit %f", min_limit);
       printf("max limit %f", max_limit);
       //cudaMemcpy(x, o_x, size*sizeof(float), cudaMemcpyHostToDevice);
       //cudaMemcpy(y, o_y, size*sizeof(float), cudaMemcpyHostToDevice);
       cudaMemcpy(z, o_z, size*sizeof(float), cudaMemcpyHostToDevice);
-      cudaMemcpy(b, o_b, size*sizeof(float), cudaMemcpyHostToDevice);
+      cudaMemcpy(b, o_b, size*sizeof(bool), cudaMemcpyHostToDevice);
 
 
       int ngrid;      // The launch configurator returned block size
@@ -115,6 +115,8 @@ extern "C"
       //free_memory(y);
       cudaFree(z);
       cudaFree(b);
+      printf("DONE!!!!");
+
 
       return 1;
     }

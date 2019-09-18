@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 
 add_definitions(-Wno-deprecated-declarations)
+add_definitions(-Wno-deprecated-gpu-targets)
+
 add_definitions(-Wno-dev)
 
 #set(CMAKE_CXX_FLAGS "-std=c++11")

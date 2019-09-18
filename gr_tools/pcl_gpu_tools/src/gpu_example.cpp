@@ -59,8 +59,10 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     timer_.stop();
     timer_.setPeriod(ros::Duration(config.cummulative_time), true);
     pass_through_filter_.setFilterLimits (config.min_passthrough_z, config.max_passthrough_z);
-    cuda_pass_.setMinimumValue(config.min_passthrough_z);
-    cuda_pass_.setMaximumValue(config.max_passthrough_z);
+    //cuda_pass_.setMinimumValue(config.min_passthrough_z);
+    //cuda_pass_.setMaximumValue(config.max_passthrough_z);
+    pcl_cuda_pass_.setMinimumValue(config.min_passthrough_z);
+    pcl_cuda_pass_.setMaximumValue(config.max_passthrough_z);
 
     segmentation_filter_.setEpsAngle(config.eps_angle* (M_PI/180.0f) ); // plane can be within n degrees of X-Z plane
     segmentation_filter_.setMaxIterations(config.max_iterations);
@@ -175,8 +177,10 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
 
     }
     if (passthrough_enable_){
-      cuda_pass_.setHostCloud(cloud_filtered);
-      auto res = cuda_pass_.do_stuff("z", *cloud_filtered);
+      pcl_cuda_pass_.setHostCloud(cloud_filtered);
+      pcl_cuda_pass_.do_stuff(*cloud_filtered);
+      //cuda_pass_.setHostCloud(cloud_filtered);
+      //auto res = cuda_pass_.do_stuff("z", *cloud_filtered);
       //pass_through_filter_.setInputCloud (cloud_filtered);
       //pass_through_filter_.filter (*cloud_filtered);
     }

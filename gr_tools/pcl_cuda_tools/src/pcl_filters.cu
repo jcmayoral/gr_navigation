@@ -19,9 +19,10 @@ extern "C"
       float vSrcVector[3] = {d_point_cloud[index].x, d_point_cloud[index].y, d_point_cloud[index].z};
 
       if (max_limit < vSrcVector[2] || vSrcVector[2] < min_limit){
-        d_point_cloud[index].x = filter_value;
-        d_point_cloud[index].y = filter_value;
-        d_point_cloud[index].z = filter_value;
+        //d_point_cloud[index].x = filter_value;
+        //d_point_cloud[index].y = filter_value;
+        //d_point_cloud[index].z = filter_value;
+        b[index] = false;
       }
 
     }
@@ -29,14 +30,12 @@ extern "C"
     int pcl_apply_cuda_filter(pcl::PointCloud<pcl::PointXYZ> &point_cloud, bool* o_b,float min_limit, float max_limit, float filter_value, int size){
       // initialize x array on the host
       bool *b;
-      bool *mask;
-
       pcl::PointXYZ * d_point_cloud;
 
-      cudaMallocManaged(&b, size*sizeof(float));
+      cudaMallocManaged(&b, size*sizeof(bool));
       cudaMalloc((void**)&d_point_cloud, point_cloud.points.size()*sizeof(pcl::PointXYZ) );
       cudaMemcpy(d_point_cloud, point_cloud.points.data(), point_cloud.points.size()*sizeof(pcl::PointXYZ), cudaMemcpyHostToDevice);
-      cudaMemcpy(b, o_b, size*sizeof(float), cudaMemcpyHostToDevice);
+      cudaMemcpy(b, o_b, size*sizeof(bool), cudaMemcpyHostToDevice);
 
       int ngrid;      // The launch configurator returned block size
       int nblocks;    // The minimum grid size needed to achieve the maximum occupancy for a full device launch
@@ -51,9 +50,9 @@ extern "C"
 
       //cudaMemcpy(point_cloud.points.data(), d_point_cloud, point_cloud.points.size()*sizeof(pcl::PointXYZ), cudaMemcpyDeviceToHost);
 
-      mask = (bool *)malloc(point_cloud.points.size()*sizeof(bool));
+      //mask = (bool *)malloc(point_cloud.points.size()*sizeof(bool));
 
-      cudaMemcpy(mask, b, size*sizeof(bool), cudaMemcpyDeviceToHost);
+      //cudaMemcpy(mask, b, size*sizeof(bool), cudaMemcpyDeviceToHost);
 
 
       pcl::PointCloud<pcl::PointXYZ> new_point_cloud;
@@ -63,8 +62,9 @@ extern "C"
         }
       }
 
+      printf("DONE\n");
+
       point_cloud = new_point_cloud;
-      cudaFree(mask);
       cudaFree(d_point_cloud);
       cudaFree(b);
       return 1;

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <cassert>
@@ -19,7 +17,7 @@ namespace pcl_gpu{
 
       PCLFilterPassThrough () : minimum_value_ (-1.0), maximum_value_(1.0), filter_value_ (std::numeric_limits<float>::max ())
       {
-        printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        printf("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP");
       };
 
       inline void setMinimumValue(float min_limit) {

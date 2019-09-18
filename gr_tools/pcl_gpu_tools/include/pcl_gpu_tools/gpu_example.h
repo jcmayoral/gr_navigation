@@ -44,6 +44,7 @@
 #include <pcl_gpu_tools/math_functions.hpp>
 
 #include <pcl_cuda_tools/filters/filter_passthrough.h>
+#include <pcl_cuda_tools/filters/pcl_filter_passthrough.h>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
@@ -76,8 +77,9 @@ private:
   geometry_msgs::TransformStamped to_odom_transform;
 
   //Testing
-  pcl_gpu::FilterPassThrough cuda_pass_;
+  //pcl_gpu::FilterPassThrough cuda_pass_;
   pcl_gpu::FilterPassThrough radius_cuda_pass_;
+  pcl_gpu::PCLFilterPassThrough pcl_cuda_pass_;
 
   //Dynamic Reconfigure
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig> dyn_server_;

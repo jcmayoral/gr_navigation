@@ -59,7 +59,7 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
 
   input_cloud.is_dense = false;
 
-  std::cout << "REMOVING "<< removed_points << std::endl;
+  //std::cout << "REMOVING "<< removed_points << std::endl;
   input_cloud.width = input_cloud.points.size();
   //input_cloud = *pc_pointer;
 
