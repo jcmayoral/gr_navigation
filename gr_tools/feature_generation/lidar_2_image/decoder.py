@@ -113,7 +113,8 @@ class ImageToPc():
 
         z_scaler =  np.fabs(self.range[1]-self.range[0])/255
         print(z_scaler)
-
+        full_range = self.range[1]-self.range[0]
+        meters_per_pixel = full_range/height
 
         for i in range(height):
             for j in range(width):
@@ -157,15 +158,17 @@ class ImageToPc():
                 #    print(mean_height, std_height, "A")
                 #    pbar.update()
                 #    continue
-                mean_height = ((float(b)-127)/255) * (self.range[1]-self.range[0])
-                std_height = ((float(g))/255) * (self.range[1]-self.range[0])
+                mean_height = ((float(b)-127)/255) * full_range
+                std_height = ((float(g))/255) * full_range
                 #print (mean_height, std_height)
 
                 #TODO calculate number of samples according something
                 #TODO USE r value
-                for _ in range(3):
+                for _ in range(r):
+                    s_x = random.uniform(x -meters_per_pixel, x + meters_per_pixel)
+                    s_y = random.uniform(y -meters_per_pixel, y + meters_per_pixel)
                     z = random.uniform(mean_height - std_height, mean_height + std_height)
-                    self.points.append([x,y,z])
+                    self.points.append([s_x,s_y,z])
                     self.rgb.append([r,g,b])
                 #self.points.append([x,y,mean_height])
                 #if b == g:
@@ -191,8 +194,11 @@ class ImageToPc():
         if self.enable_ros:
             self.test()
         else:
+            print (np.asarray(img).shape)
+            row_mean = np.mean(np.asarray(img), axis=0)
+            col_mean = np.mean(np.asarray(img), axis=1)
+            print (row_mean)
             self.rgb = np.array(self.rgb, np.float64).reshape(len(self.rgb),3)
-            print (np.mean(self.rgb))
             self.rgb /= 255
             self.viewer = pptk.viewer(self.points,self.rgb)
             self.viewer.set(point_size=0.05)
