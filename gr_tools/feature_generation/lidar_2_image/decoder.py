@@ -80,10 +80,10 @@ class ImageToPc():
         if self.viewer is not None:
             self.close()
         if self.index == 0:
-            img_name = os.path.join(self.folder , str(self.counter)+self.extension) #self.transformed_image.header.stamp
+            img_name = os.path.join(self.folder , str(self.counter)+self.extension)
             self.counter = self.counter + 25
         else:
-            img_name = os.path.join(self.folder , str(self.index)+self.extension) #self.transformed_image.header.stamp
+            img_name = os.path.join(self.folder , str(self.index)+self.extension)
             self.task_done = True
             self.counter = self.counter + 1
 
@@ -101,12 +101,12 @@ class ImageToPc():
 
     def close(self):
         if not self.enable_ros:
-            plt.figure()
-            print self.feature_x.shape
-            print self.mask.shape
+            plt.clf()
+            plt.cla()
             plt.scatter(self.feature_x, self.feature_y, c=self.mask)
             plt.show(False)
-            time.sleep(1.0)
+            time.sleep(2.0)
+            plt.close()
             if self.viewer is not None:
                 self.viewer.clear()
                 self.feature_x = list()
