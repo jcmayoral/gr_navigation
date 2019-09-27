@@ -77,8 +77,7 @@ class ImageToPc():
 
     def get_next_image(self):
         print ("READING IMAGE")
-        if self.viewer is not None:
-            self.close()
+
         if self.index == 0:
             img_name = os.path.join(self.folder , str(self.counter)+self.extension)
             self.counter = self.counter + 25
@@ -93,6 +92,7 @@ class ImageToPc():
             if im is None:
                 print "No image", img_name
                 self.task_done = True
+                self.close()
             return im
         except cv2.error as e:
             print ("ERROR")
@@ -195,6 +195,9 @@ class ImageToPc():
 
         self.points = np.array(self.points).reshape(len(self.points),3)
 
+        if self.viewer is not None:
+            self.close()
+
         if self.enable_ros:
             self.test()
         else:
@@ -207,6 +210,7 @@ class ImageToPc():
                 self.viewer.set(point_size=0.05)
             else:
                 self.viewer.load(self.points,self.rgb)
+
 
 
 if __name__ == '__main__':
