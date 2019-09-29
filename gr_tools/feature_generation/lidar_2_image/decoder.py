@@ -252,25 +252,25 @@ class ImageToPc():
         if self.ground_truth:
             self.save_results()
 
-        if self.viewer is not None:
-            self.close()
-
-        if self.enable_ros:
-            self.test()
         else:
-            self.rgb = np.array(self.rgb, np.float64).reshape(len(self.rgb),3)
-
-            self.rgb /= 255
-
-            if self.viewer is None:
-                self.viewer = pptk.viewer(self.points,self.rgb)
-                self.viewer.set(point_size=0.05)
+            if self.viewer is not None:
+                self.close()
+            if self.enable_ros:
+                self.test()
             else:
-                self.viewer.load(self.points,self.rgb)
+                self.rgb = np.array(self.rgb, np.float64).reshape(len(self.rgb),3)
+
+                self.rgb /= 255
+
+                if self.viewer is None:
+                    self.viewer = pptk.viewer(self.points,self.rgb)
+                    self.viewer.set(point_size=0.05)
+                else:
+                    self.viewer.load(self.points,self.rgb)
 
 
-        if self.index != 0:
-            self.close()
+            if self.index != 0:
+                self.close()
 
 
 if __name__ == '__main__':
