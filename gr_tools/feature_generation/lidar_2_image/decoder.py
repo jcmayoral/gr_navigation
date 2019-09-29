@@ -270,7 +270,6 @@ class ImageToPc():
 
 
         if self.index != 0:
-            raw_input("PRESS SOMEthin")
             self.close()
 
 
