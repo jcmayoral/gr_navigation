@@ -12,20 +12,23 @@ import ast
 import random
 import rospy
 import ros_numpy
+import pcl
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans, AffinityPropagation, DBSCAN
 
 help_text = 'This is a script that converts RGB images to PointCloud2 messages'
 
 
 class ImageToPc():
-    def __init__(self, extension, folder, topic=None, index = -1, enable_ros= 1):
+    def __init__(self, extension, folder, topic=None, index = -1, enable_ros= 1, ground_truth = 0, debug_mode=0):
         #rospy.init_node("pointcloud_decoder")
         self.index = int(index)
-        self.counter = 1
+        self.ground_truth = int(ground_truth)
         self.folder = folder
         self.extension = extension
         self.task_done = False
         self.viewer = None
+        self.debug_mode = int(debug_mode)
         self.enable_ros = bool(int(enable_ros))
         #100 cm per meter
         if self.enable_ros:
@@ -38,9 +41,55 @@ class ImageToPc():
             self.feature_y = list()
         self.load_params()
 
+        if self.ground_truth:
+            try:
+                os.mkdir("results_" + self.folder)
+            except OSError:
+                print ("Creation of the directory failed")
+            else:
+                print ("Successfully created the directory ")
+
+
+    def save_results(self):
+        #points_2d = self.points[:10,:-1]
+        #print points_2d.shape
+        #km = k_means(points_2d, n_clusters=10)
+        #km = KMeans() #DBSCAN()#AffinityPropagation()
+        #km.fit(np.asarray(self.points_2_cluster))
+        pcl_pc = pcl.PointCloud(np.asarray(self.points_2_cluster, dtype = np.float32))
+        tree = pcl_pc.make_kdtree()
+        ec = pcl_pc.make_EuclideanClusterExtraction()
+        ec.set_ClusterTolerance(0.3)
+        ec.set_MinClusterSize(0)
+        ec.set_SearchMethod(tree)
+        cluster_indices = ec.Extract()
+        cluster_centers = list()
+
+
+        for j, indices in enumerate(cluster_indices):
+            # cloudsize = indices
+            #print('indices = ' + str(len(indices)))
+            # cloudsize = len(indices)
+            center = np.zeros(3)
+            # points = np.zeros((cloudsize, 3), dtype=np.float32)
+            # for indice in range(len(indices)):
+            for i, indice in enumerate(indices):
+                # print('dataNum = ' + str(i) + ', data point[x y z]: ' + str(cloud_filtered[indice][0]) + ' ' + str(cloud_filtered[indice][1]) + ' ' + str(cloud_filtered[indice][2]))
+                # print('PointCloud representing the Cluster: ' + str(cloud_cluster.size) + " data points.")
+                #points[i][0] = cloud_filtered[indice][0points[i][1] = cloud_filtered[indice][1]
+                #points[i][2] = cloud_filtered[indice][2]
+                #print i, indice
+                center += self.points_2_cluster[indice]
+            print j, center/len(indices)
+            cluster_centers.append(copy.copy(center/len(indices)))
+
+        f = open(os.path.join("results_" + self.folder, str(self.folder) + str(self.index)),"w")
+        f.seek(0)
+        for i in cluster_centers:
+            f.write( str(i)+"\n" )
+        f.close()
+
     def test(self):
-        print (self.points.shape)
-        print (self.points[:,0].shape)
         self.rgb = np.array(self.rgb, np.float32).reshape(len(self.rgb),3)
 
         data = np.zeros(self.points.shape[0], dtype=[
@@ -78,13 +127,13 @@ class ImageToPc():
     def get_next_image(self):
         print ("READING IMAGE")
 
-        if self.index == 0:
-            img_name = os.path.join(self.folder , str(self.counter)+self.extension)
-            self.counter = self.counter + 25
-        else:
-            img_name = os.path.join(self.folder , str(self.index)+self.extension)
+        if self.debug_mode:
+            print ("Running debug mode")
             self.task_done = True
-            self.counter = self.counter + 1
+            #self.index = 1
+
+        img_name = os.path.join(self.folder , str(self.index)+self.extension)
+        self.index = self.index + 1
 
         try:
             im = cv2.imread(img_name, cv2.IMREAD_COLOR)
@@ -144,6 +193,7 @@ class ImageToPc():
         print("computing %d points ", height * width)
         pbar = pyprind.ProgBar(height*width)
         self.points = list()
+        self.points_2_cluster = list()
         self.rgb = list()
         self.mask = list()
         self.feature_x = list()
@@ -173,7 +223,6 @@ class ImageToPc():
 
                 self.feature_x.append(mean_height)
                 self.feature_y.append(std_height)
-
                 class_flag = self.evaluate_point(mean_height, std_height)
 
                 for _ in range(r):
@@ -186,6 +235,10 @@ class ImageToPc():
                     else:
                         self.rgb.append([r,g,b])
 
+                #Last point of col goest to cluster with mean_height
+                if class_flag:
+                    self.points_2_cluster.append([s_x, s_y, mean_height])
+
                 pbar.update()
 
         print("number of points %d "% len(self.points))
@@ -194,6 +247,10 @@ class ImageToPc():
         self.evaluate()
 
         self.points = np.array(self.points).reshape(len(self.points),3)
+
+
+        if self.ground_truth:
+            self.save_results()
 
         if self.viewer is not None:
             self.close()
@@ -212,6 +269,10 @@ class ImageToPc():
                 self.viewer.load(self.points,self.rgb)
 
 
+        if self.index != 0:
+            raw_input("PRESS SOMEthin")
+            self.close()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = help_text)
@@ -220,10 +281,13 @@ if __name__ == '__main__':
     parser.add_argument("--topic", "-t", default="/velodyne_points")
     parser.add_argument("--index", "-i", default=0)
     parser.add_argument("--ros", "-r", default=0)
-
+    parser.add_argument("--ground_truth", "-gt", default=0)
+    parser.add_argument("--debug", "-db", default=0)
 
     args = parser.parse_args()
-    image2PC = ImageToPc(extension=args.extension, folder=args.folder, topic = args.topic, index = args.index, enable_ros = args.ros)
+    image2PC = ImageToPc(extension=args.extension, folder=args.folder, topic = args.topic,
+                         index = args.index, enable_ros = args.ros,
+                         ground_truth = args.ground_truth, debug_mode = args.debug)
 
     while True:
         current_image = image2PC.get_next_image()
