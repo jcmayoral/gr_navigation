@@ -83,7 +83,7 @@ class ImageToPc():
             print j, center/len(indices)
             cluster_centers.append(copy.copy(center/len(indices)))
 
-        f = open(os.path.join("results_" + self.folder, str(self.folder) + str(self.index)),"w")
+        f = open(os.path.join("results_" + self.folder, "results_"  + str(self.folder) + str(self.index-1)),"w")
         f.seek(0)
         for i in cluster_centers:
             f.write( str(i)+"\n" )
@@ -270,7 +270,8 @@ class ImageToPc():
 
 
             if self.index != 0:
-                self.close()
+                if self.viewer is not None:
+                    self.close()
 
 
 if __name__ == '__main__':
