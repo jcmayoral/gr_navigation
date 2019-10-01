@@ -52,7 +52,7 @@ class Lidar2Image:
         params["range_max"] = self.range[1]
         params["pix_per_meter"] = self.pixels_per_meter
 
-        f = open("params.txt","w")
+        f = open(self.filegroup+"params.txt","w")
         f.seek(0)
         f.write( str(params) )
         f.close()

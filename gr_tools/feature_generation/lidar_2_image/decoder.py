@@ -30,6 +30,9 @@ class ImageToPc():
         self.viewer = None
         self.debug_mode = int(debug_mode)
         self.enable_ros = bool(int(enable_ros))
+        self.m_l = -1#1.5
+        self.b_l = -1.4
+
         #100 cm per meter
         if self.enable_ros:
             rospy.init_node("pointcloud_to_image")
@@ -40,6 +43,7 @@ class ImageToPc():
             self.feature_x = list()
             self.feature_y = list()
         self.load_params()
+        self.load_reggresion_params()
 
         if self.ground_truth:
             try:
@@ -49,6 +53,15 @@ class ImageToPc():
             else:
                 print ("Successfully created the directory ")
 
+    def save_params(self):
+        params = dict()
+        params["m"] = self.m_l
+        params["b"] = self.b_l
+
+        f = open(self.folder+"regression_params.txt","w")
+        f.seek(0)
+        f.write( str(params) )
+        f.close()
 
     def save_results(self):
         #points_2d = self.points[:10,:-1]
@@ -114,7 +127,7 @@ class ImageToPc():
         self.publisher.publish(msg)
 
     def load_params(self):
-        f = open("params.txt","r")
+        f = open(self.folder+"params.txt","r")
         f.seek(0)
         params = ast.literal_eval(f.read())
         f.close()
@@ -123,6 +136,15 @@ class ImageToPc():
         self.meters = params["meters"]
         self.pixels_per_meter = params["pix_per_meter"]
 
+    def load_reggresion_params(self):
+
+        f = open(self.folder+"regression_params.txt","r")
+        f.seek(0)
+        params = ast.literal_eval(f.read())
+        f.close()
+        print(params)
+        self.m_l = params["m"]
+        self.b_l = params["b"]
 
     def get_next_image(self):
         print ("READING IMAGE")
@@ -155,23 +177,21 @@ class ImageToPc():
             plt.scatter(self.feature_x, self.feature_y, c=self.mask)
             plt.show(False)
             time.sleep(2.0)
+            raw_input("Press Enter to continue...")
             plt.close()
             if self.viewer is not None:
                 self.viewer.clear()
                 self.feature_x = list()
                 self.feature_y = list()
-            #raw_input("Press Enter to continue...")
 
         if self.task_done:
             if not self.enable_ros:
                 self.viewer.close()
 
     def evaluate(self):
-        m_l = -1
-        b_l = -1.4
         self.feature_x = np.asarray(self.feature_x)
         self.feature_y = np.asarray(self.feature_y)
-        eval = m_l*self.feature_x - self.feature_y + b_l
+        eval = self.m_l*self.feature_x - self.feature_y + self.b_l
         mask = np.ma.masked_greater(eval, 0.0).mask
         #masked_col = np.ma.masked_greater(measured_x, threshold).mask
         #mask = masked_row * masked_col
@@ -181,9 +201,7 @@ class ImageToPc():
 
 
     def evaluate_point(self,x,y):
-        m_l = -1#1.5
-        b_l = -1.4
-        eval = m_l*x - y + b_l
+        eval = self.m_l*x - y + self.b_l
         return eval <0
 
     def compute_pc(self, img):
@@ -221,8 +239,8 @@ class ImageToPc():
                 mean_height = ((float(g)-127)/255) * full_range
                 std_height = ((float(b))/255) * full_range
 
-                self.feature_x.append(mean_height)
-                self.feature_y.append(std_height)
+                self.feature_x.append(std_height)
+                self.feature_y.append(mean_height)
                 class_flag = self.evaluate_point(mean_height, std_height)
 
                 for _ in range(r):
@@ -289,6 +307,7 @@ if __name__ == '__main__':
                          index = args.index, enable_ros = args.ros,
                          ground_truth = args.ground_truth, debug_mode = args.debug)
 
+    #image2PC.save_params()
     while True:
         current_image = image2PC.get_next_image()
         if current_image is None:
