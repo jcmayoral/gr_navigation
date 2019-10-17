@@ -15,7 +15,6 @@
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseStamped.h>
 
-#include <visualization_msgs/MarkerArray.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -32,6 +31,7 @@
 #include <opencv2/video/background_segm.hpp>
 
 #include <darknet_ros_msgs/BoundingBoxes.h>
+#include <safety_msgs/FoundObjectsArray.h>
 
 namespace gr_depth_processing
 {
@@ -72,8 +72,10 @@ namespace gr_depth_processing
 
       ros::Publisher obstacle_pub_;
       ros::Publisher depth_image_pub_;
-      visualization_msgs::MarkerArray marker_array_;
+      ros::Publisher safety_pub_;
+
       geometry_msgs::PoseArray detected_objects_;
+      safety_msgs::FoundObjectsArray objects_array_;
 
       //intrinsic params
       sensor_msgs::CameraInfo camera_color_info_;

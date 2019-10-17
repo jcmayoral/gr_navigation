@@ -9,7 +9,7 @@ find_package(catkin REQUIRED
         dynamic_reconfigure
         roscpp
         pluginlib
-        visualization_msgs
+        safety_msgs
         sensor_msgs
         geometry_msgs
         std_msgs
@@ -21,10 +21,6 @@ find_package(catkin REQUIRED
 )
 
 find_package(OpenCV 3 REQUIRED)
-
-#generate_dynamic_reconfigure_options(
-#  cfg/ProximityPolicy.cfg
-#)
 
 include_directories(
   include
@@ -39,7 +35,7 @@ catkin_package(
         dynamic_reconfigure
         roscpp
         pluginlib
-        visualization_msgs
+        safety_msgs
         sensor_msgs
         geometry_msgs
         std_msgs

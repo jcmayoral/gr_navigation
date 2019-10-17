@@ -30,7 +30,6 @@ void cv_filter(cv::Mat& frame){
         //output_frame = detectPeople(input_frame);
         cv::Laplacian(frame, frame, CV_16U);
         //cv::Canny(frame, frame,120, 200 );
-
       }
       catch( cv::Exception& e ){
         return;
@@ -435,9 +434,6 @@ double register_median_pointclouds(darknet_ros_msgs::BoundingBox bounding_box, c
         return bin_w*maxindex;
         */
         return double(median * delta) *0.001;
-
-
-
       }
       catch( cv::Exception& e ){
         return 0.0;
