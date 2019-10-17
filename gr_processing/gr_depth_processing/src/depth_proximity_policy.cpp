@@ -166,6 +166,7 @@ namespace gr_depth_processing
       object.centroid.header = out.header;
       //Copy centroid position
       object.centroid.point = out.pose.position;
+      object.depth = dist;
       //copy class
       object.class_name = it->Class;
       objects_array_.objects.push_back(object);
