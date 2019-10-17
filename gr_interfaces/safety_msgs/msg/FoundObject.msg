@@ -1,0 +1,2 @@
+string class
+geometry_msgs/PointStamped centroid
