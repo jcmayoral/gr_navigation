@@ -18,8 +18,8 @@ add_message_files(
    FILES
    PolicyFeedback.msg
    SafetyState.msg
-   FoundObject.msg
-   FoundObjectArray.msg
+   Object.msg
+   FoundObjectsArray.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -30,5 +30,8 @@ generate_messages(
 )
 
 catkin_package(
-   CATKIN_DEPENDS message_runtime #fault_core
+   CATKIN_DEPENDS 
+    message_runtime
+    std_msgs 
+    geometry_msgs
 )
