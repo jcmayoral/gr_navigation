@@ -1,9 +1,10 @@
+#!/usr/bin/python
 import keras
 
 
 class NetworkModel:
     def __init__(self):
-        pass
+        print "NN"
     
     def fit(self, x, label):
         print "FIT ", x , label
