@@ -6,6 +6,7 @@ project(safety_msgs)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
    std_msgs
+   geometry_msgs
    message_generation)
 
 ################################################
@@ -17,14 +18,20 @@ add_message_files(
    FILES
    PolicyFeedback.msg
    SafetyState.msg
+   Object.msg
+   FoundObjectsArray.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
+   std_msgs 
+   geometry_msgs
 )
 
 catkin_package(
-   CATKIN_DEPENDS message_runtime #fault_core
+   CATKIN_DEPENDS 
+    message_runtime
+    std_msgs 
+    geometry_msgs
 )

@@ -16,14 +16,15 @@ import warnings
 import copy
 import ast
 import pptk
+from numpy.linalg import norm
 
 
 help_text = 'This is a script that converts PointCloud2 message to RGB images'
 
 
 class DetectionsScore:
-    def __init__(self, gt_location = None, measured_location = None, mark_detections=True):
-        self.index = 1
+    def __init__(self, gt_location = None, measured_location = None, mark_detections=True, index = 1):
+        self.index = index
         self.gt_location = gt_location
         self.measured_location = measured_location
         self.mark_detections = mark_detections
@@ -37,27 +38,26 @@ class DetectionsScore:
         raw_gt_detections = self.load_raw_values("results_", self.gt_location, split=True)
         raw_measured_detection = self.load_raw_values("measured_", self.measured_location, True, False)
 
-
         gt_detections = self.process_gt_detections(raw_gt_detections)
         measured_detections = self.process_measured_detections(raw_measured_detection)
-        print measured_detections.shape
-        print gt_detections.shape
+        print measured_detections.shape, norm(measured_detections)
+        print gt_detections.shape, norm(gt_detections)
+
         pc_points = self.extract_points(cloud_msg)
         print type(pc_points)
         acc_points = list()
         rgb_points = list()
         for i in pc_points:
             acc_points.append(i)
-            rgb_points.append([1,0,0,0.1])
+            rgb_points.append([0,1,1,0.01])
 
         for j in gt_detections:
             acc_points.append(j)
-            rgb_points.append([0,1,0,1])
+            rgb_points.append([0,0,0,1])
 
         for z in measured_detections:
-            print np.append(z[:2],[0,1]), "@"
             acc_points.append(np.append(z[:2],0))
-            rgb_points.append([0,0,1,1])
+            rgb_points.append([1,1,1,1])
         print np.asarray(acc_points).shape
         viewer = pptk.viewer(np.asarray(acc_points[:-1]), np.asarray(rgb_points[:-1]))
         viewer.set(point_size=0.25)
@@ -73,7 +73,6 @@ class DetectionsScore:
     def process_gt_detections(self, detections):
         return np.array(detections)#.reshape(-1,-1)
 
-
     def process(self,data):
         data = data.split(',')
         data = np.asarray(data[:3], dtype=np.float64)
@@ -81,7 +80,6 @@ class DetectionsScore:
 
     def process_measured_detections(self, detections):
         return np.asarray(map(self.process, detections))
-
 
     def load_raw_values(self, prefix, location, skip_header = False, split=True):
         detections = list()
@@ -112,12 +110,13 @@ if __name__ == '__main__':
     parser.add_argument("--gt_group", "-gg", default="nibio_2019")
     parser.add_argument("--measured_group", "-mg", default="nibio_2019")
     parser.add_argument("--topic", "-t", default="/velodyne_points")
+    parser.add_argument("--index", "-i", default=1)
 
     args = parser.parse_args()
     #debug_mode = bool(int(args.debug))
 
     bag = rosbag.Bag(args.bag, mode="r")
-    scoring_utils = DetectionsScore(gt_location=args.gt_group, measured_location=args.measured_group)
+    scoring_utils = DetectionsScore(gt_location=args.gt_group, measured_location=args.measured_group, index=int(args.index))
 
     for topic, msg, t in bag.read_messages(topics=args.topic):
         scoring_utils.score(msg)

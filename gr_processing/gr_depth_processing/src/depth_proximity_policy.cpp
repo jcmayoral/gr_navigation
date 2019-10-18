@@ -22,8 +22,12 @@ namespace gr_depth_processing
     camera_depth_info_ = getOneMessage<sensor_msgs::CameraInfo>("/camera/depth/camera_info");;
     ROS_INFO("Camera info received");
 
+    //Publisher to Proximity Monitor
     obstacle_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
+    //Publish depth_image + distances
     depth_image_pub_ = nh.advertise<sensor_msgs::Image>("depth_image_processed", 1);
+    //Publish FoundObjectArray using for training Models
+    safety_pub_ = nh.advertise<safety_msgs::FoundObjectsArray>("found_object",1);
 
     color_image_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/color/image_raw", 2);
     depth_image_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(nh, "/camera/depth/image_rect_raw", 2);
@@ -59,6 +63,7 @@ namespace gr_depth_processing
   void MyNodeletClass::publishOutput(cv::Mat frame, bool rotate){
 
     obstacle_pub_.publish(detected_objects_);
+    safety_pub_.publish(objects_array_);
 
     sensor_msgs::Image out_msg;
     cv_bridge::CvImage img_bridge;
@@ -126,36 +131,44 @@ namespace gr_depth_processing
    float constant_y = 1.0 /  camera_depth_info_.K[4];
    geometry_msgs::TransformStamped to_base_link_transform; // My frames are named "base_link" and "leap_motion"
 
+   objects_array_.objects.clear();
 
-    for (auto it = bounding_boxes->bounding_boxes.begin(); it != bounding_boxes->bounding_boxes.end(); ++it){
-      geometry_msgs::PoseStamped in, out;
+   for (auto it = bounding_boxes->bounding_boxes.begin(); it != bounding_boxes->bounding_boxes.end(); ++it){
+     geometry_msgs::PoseStamped in, out;
+     int center_row = it->xmin + (it->xmax - it->xmin)/2;
+     int center_col = it->ymin + (it->ymax - it->ymin)/2;
+     objects_center.push_back(std::make_pair(center_row, center_col));
+     dist = registerImage(*it, process_frame, camera_depth_info_);
 
-      int center_row = it->xmin + (it->xmax - it->xmin)/2;
-      int center_col = it->ymin + (it->ymax - it->ymin)/2;
-      objects_center.push_back(std::make_pair(center_row, center_col));
-      dist = registerImage(*it, process_frame, camera_depth_info_);
-
-      in.header = depth_image->header;
-      in.pose.orientation.w = 1.0;
-      in.pose.position.x = (center_row - center_x) * dist * constant_x;
-      in.pose.position.y = (center_col - center_y) * dist * constant_y;
-      in.pose.position.z = dist;
-
-
-      if (dist > max_range_){
-        ROS_WARN("Object out of range");
-        continue;
+     in.header = depth_image->header;
+     in.pose.orientation.w = 1.0;
+     in.pose.position.x = (center_row - center_x) * dist * constant_x;
+     in.pose.position.y = (center_col - center_y) * dist * constant_y;
+     in.pose.position.z = dist;
+     
+     if (dist > max_range_){
+       ROS_WARN("Object out of range");
+       continue;
       }
 
       to_base_link_transform = tf_buffer_.lookupTransform("base_link", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
       tf2::doTransform(in, out, to_base_link_transform);
-      //out.pose.orientation.x, out.pose.orientation.y, out.pose.orientation.z = 1.0;
-      //out.pose.orientation.w = 1.0;
+      
       detected_objects_.header= out.header;
       detected_objects_.header.stamp = ros::Time::now();
       detected_objects_.poses.push_back(out.pose);
       distance_to_objects.push_back(it->Class + std::to_string(dist));
       boundRect.push_back(cv::Rect(it->xmin, it->ymin, it->xmax - it->xmin, it->ymax - it->ymin));
+
+      //Fill Object
+      safety_msgs::Object object;
+      //Copy header from transform useful to match timestamps
+      object.centroid.header = out.header;
+      //Copy centroid position
+      object.centroid.point = out.pose.position;
+      //copy class
+      object.class_name = it->Class;
+      objects_array_.objects.push_back(object);
     }
 
     auto it = distance_to_objects.begin();
