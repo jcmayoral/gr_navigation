@@ -7,7 +7,7 @@ class NetworkModel:
         print "NN"
     
     def fit(self, x, label):
-        print "FIT ", x , label
+        print "FIT "
 
     def predict(self,msg):
         print "predict "
