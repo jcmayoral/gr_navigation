@@ -59,5 +59,6 @@ class PyTorchWrapper():
 
     def predict(self,data):
         output = self.network(torch.from_numpy(data).float())
-        print("prediction", output)
+        print (output)
+        print("prediction",any(output[:,0]>0))
 
