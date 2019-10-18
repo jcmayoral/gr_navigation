@@ -1,3 +1,2 @@
 string class_name
-float64 depth
 geometry_msgs/PointStamped centroid
