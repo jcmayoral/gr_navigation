@@ -9,7 +9,7 @@ import collections
 
 class PyTorchWrapper():
 
-    def __init__(self, batchsize=25, epochs=10, max_training_cycles = 5):
+    def __init__(self, batchsize=25, epochs=4, max_training_cycles = 20):
         self.network = NetworkModel() #.to(torch.device("cpu"))
         self.is_training = True
         self.current_batch = 0
@@ -19,12 +19,12 @@ class PyTorchWrapper():
         self.max_training_cycles = max_training_cycles
         #Current version just using poses
         self.processed_array = np.zeros((batchsize,3))
-        self.labels = np.zeros((batchsize,2))
+        self.labels = np.zeros((batchsize,3))
         self.fit_subscriber = rospy.Subscriber("/found_object", FoundObjectsArray, self.fit_cb, queue_size=1)
         self.mode_subscriber = rospy.Subscriber("mode_selector" , Bool, self.mode_cb)
         self.safety_monito_pub = rospy.Publisher("/observer_0" , SafetyState)
 
-        print ("keras wrapper constructor")
+        print ("pytorch wrapper constructor")
     
     def fit_cb(self, msg):
         #the fir n vaues of array 
@@ -32,11 +32,14 @@ class PyTorchWrapper():
             
         for j in msg.objects:
             #print j.class_name
+            flag = 0
+            if j.class_name == 'person':
+                flag = 1
             p = j.centroid.point
             #This is just simple version
             self.processed_array[self.current_batch] = [p.x,p.y,p.z]
             dist = np.sqrt(np.power(p.x,2) + np.power(p.y,2) + np.power(p.z,2) )
-            self.labels[self.current_batch] = [int(dist>1.0), int(dist<1.0)]
+            self.labels[self.current_batch] = [int(dist>1.5),  int(0.7<dist<1.5), int(dist<0.7)]
             self.current_batch = self.current_batch + 1
 
             #TODO Add skipped valyes to queue
@@ -75,6 +78,6 @@ class PyTorchWrapper():
         print("prediction",output.detach().numpy())
         fb = SafetyState()
         fb.msg.data = "ML"
-        fb.mode = int(output.detach().numpy()[1]>0.5)
+        fb.mode = np.argmax(output.detach().numpy())
         self.safety_monito_pub.publish(fb)
 
