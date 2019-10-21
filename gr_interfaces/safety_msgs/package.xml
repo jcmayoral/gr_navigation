@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>safety_msgs</name>
-  <version>0.0.4</version>
+  <version>0.0.5</version>
   <description>The safety_msgs package</description>
 
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
