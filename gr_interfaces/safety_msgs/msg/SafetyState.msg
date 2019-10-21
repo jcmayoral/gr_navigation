@@ -3,4 +3,5 @@ std_msgs/String msg
 
 byte mode
 byte SAFE=0
-byte UNSAFE=1
+byte WARNING=1
+byte UNSAFE=2
