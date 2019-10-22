@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gr_navigation</name>
-  <version>0.0.9</version>
+  <version>0.0.10</version>
   <description>grassrobotics_navigation package</description>
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
   <license>MIT</license>
@@ -11,6 +11,8 @@
   <exec_depend>gr_config_files</exec_depend>
   <exec_depend>gr_control_gui</exec_depend>
   <exec_depend>gr_map_utils</exec_depend>
+  <exec_depend>gr_ml</exec_depend>
+  <exec_depend>gr_mobilenet</exec_depend>
   <exec_depend>gr_pointcloud_filter</exec_depend>
   <exec_depend>gr_safety_policies</exec_depend>
   <exec_depend>gr_sbpl_trajectory_generator</exec_depend>
