@@ -1,0 +1,8 @@
+<launch>
+  <node pkg="gr_mobilenet" type="gr_mobilenet_node" name="gr_mobilenet_node" output="screen">
+    <param name="image_topic" value="/camera/color/image_raw"/>
+    <param name="classes_file" value="$(find gr_mobilenet)/config/classes.txt" />
+    <param name="model_bin" value="$(find gr_mobilenet)/config/MobileNetSSD_deploy.caffemodel" />
+    <param name="model_txt" value="$(find gr_mobilenet)/config/MobileNetSSD_deploy.prototxt" />
+  </node>
+</launch>

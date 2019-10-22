@@ -9,27 +9,33 @@ using namespace cv::dnn;
 #include <cstdlib>
 using namespace std;
 
-string CLASSES[] = {"background", "aeroplane", "bicycle", "bird", "boat",
-	"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-	"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-	"sofa", "train", "tvmonitor"};
-
+#include <gr_mobilenet/gr_mobilenet_wrapper.h>
+using namespace gr_mobilenet;
 
 int main(int argc, char **argv)
 {
+    ros::init(argc, argv, "gr_mobilenet");
     CV_TRACE_FUNCTION();
-    String modelTxt = "MobileNetSSD_deploy.prototxt";
-    String modelBin = "MobileNetSSD_deploy.caffemodel";
-    
+  
+    MobileNetWrapper mobile_net;
+
+    ros::spin();
+
+    String modelTxt = mobile_net.getModelTxtFile();
+    String modelBin = mobile_net.getModelBinFile();
+
+    std::cout << modelTxt << modelBin << std::endl;
+
     String imageFile = (argc > 1) ? argv[1] : "color.jpg";
-    Net net = dnn::readNetFromCaffe(modelTxt, modelBin);
-    if (net.empty())
+
+    if (mobile_net.net_.empty())
     {
         std::cerr << "Can't load network by using the following files: " << std::endl;
         std::cerr << "prototxt:   " << modelTxt << std::endl;
         std::cerr << "caffemodel: " << modelBin << std::endl;
         exit(-1);
     }
+    std::cout << "HERE" << std::endl;
     Mat img = imread(imageFile);
     if (img.empty())
     {
@@ -41,8 +47,8 @@ int main(int argc, char **argv)
     resize(img, img2, Size(300,300));
     Mat inputBlob = blobFromImage(img2, 0.007843, Size(300,300), Scalar(127.5, 127.5, 127.5), false);
 
-    net.setInput(inputBlob, "data");
-    Mat detection = net.forward("detection_out");
+    mobile_net.net_.setInput(inputBlob, "data");
+    Mat detection = mobile_net.net_.forward("detection_out");
     Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
     ostringstream ss;
@@ -65,12 +71,12 @@ int main(int argc, char **argv)
 
             rectangle(img, object, Scalar(0, 255, 0), 2);
 
-            cout << CLASSES[idx] << ": " << confidence << endl;
+            cout << mobile_net.getClassName(idx) << ": " << confidence << endl;
 
             ss.str("");
             ss << confidence;
             String conf(ss.str());
-            String label = CLASSES[idx] + ": " + conf;
+            String label = mobile_net.getClassName(idx) + ": " + conf;
             int baseLine = 0;
             Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
             putText(img, label, Point(xLeftBottom, yLeftBottom),
