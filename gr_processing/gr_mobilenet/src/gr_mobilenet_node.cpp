@@ -20,11 +20,5 @@ int main(int argc, char **argv)
     MobileNetWrapper mobile_net;
 
     ros::spin();
-
-    String modelTxt = mobile_net.getModelTxtFile();
-    String modelBin = mobile_net.getModelBinFile();
-
-    std::cout << modelTxt << modelBin << std::endl;
-
     return 0;
 }
