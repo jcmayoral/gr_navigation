@@ -17,6 +17,7 @@ find_package(catkin REQUIRED
         message_filters
         tf2
         tf2_ros
+        darknet_ros_msgs
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -42,6 +43,7 @@ catkin_package(
         message_filters
         tf2
         tf2_ros
+        darknet_ros_msgs
 )
 
 file(GLOB SOURCES src/*.cpp)

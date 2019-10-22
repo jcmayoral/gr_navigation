@@ -8,7 +8,6 @@ MobileNetWrapper::MobileNetWrapper():classes_(){
 
     std::string classes_file;
     if (private_nh.getParam("classes_file",classes_file)){
-        std::cout << "param" << std::endl;
         readClassesFile(classes_file);
         ROS_INFO_STREAM(classes_file);
     }
@@ -29,6 +28,7 @@ MobileNetWrapper::MobileNetWrapper():classes_(){
 
     net_ = dnn::readNetFromCaffe(model_txt_, model_bin_);
     image_pub_ = private_nh.advertise<sensor_msgs::Image>("detection", 1);
+    bb_pub_ = private_nh.advertise<darknet_ros_msgs::BoundingBoxes>("/darknet_ros/bounding_boxes", 1);
 
     if (net_.empty())
     {
@@ -85,47 +85,54 @@ void MobileNetWrapper::process_image(cv::Mat frame, int w , int h){
     std::unique_lock<std::mutex> lock(mutx);
     std::ostringstream ss;
 
-    float confidenceThreshold = 0.2;
+    float confidenceThreshold = 0.3;
 
-    std::cout << detectionMat.rows << std::endl;
+    darknet_ros_msgs::BoundingBoxes bbs;
+    bbs.header.frame_id = "camera_dummy";
+    bbs.header.stamp = ros::Time::now();
+    bbs.image_header = bbs.header;
 
     for (int i = 0; i < detectionMat.rows; i++)
     {
+        darknet_ros_msgs::BoundingBox bb;
+
         float confidence = detectionMat.at<float>(i, 2);
-        std::cout << confidence << std::endl;
         if (confidence > confidenceThreshold)
         {
             int idx = static_cast<int>(detectionMat.at<float>(i, 1));
-            int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * w);
-            int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * h);
-            int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * w);
-            int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * h);
+            int xmin = static_cast<int>(detectionMat.at<float>(i, 3) * w);
+            int ymin = static_cast<int>(detectionMat.at<float>(i, 4) * h);
+            int xmax = static_cast<int>(detectionMat.at<float>(i, 5) * w);
+            int ymax = static_cast<int>(detectionMat.at<float>(i, 6) * h);
 
-            std::cout << "!"<<detectionMat.at<float>(i, 3)<<","<< detectionMat.at<float>(i, 4) << " , "
-                     << detectionMat.at<float>(i, 5) << "," << detectionMat.at<float>(i, 6)<< std::endl;
-
-            std::cout << frame.cols << " , " << frame.rows << std::endl;
-            Rect object((int)xLeftBottom, (int)yLeftBottom,
-                        (int)(xRightTop - xLeftBottom),
-                        (int)(yRightTop - yLeftBottom));
+            Rect object((int)xmin, (int)ymin,
+                        (int)(xmax - xmin),
+                        (int)(ymax - ymin));
 
             cv::rectangle(cv_ptr_->image, object, Scalar(255, 255, 0), 2);
-            std::cout << "!"<< idx << std::endl;
 
             std::cout << getClassName(idx) << ": " << confidence << std::endl;
-            std::cout << "!"<< std::endl;
             ss.str("");
             ss << confidence;
             String conf(ss.str());
             String label = getClassName(idx) + ": " + conf;
             int baseLine = 0;
             Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.75, 2, &baseLine);
-            putText(cv_ptr_->image, label, Point(xLeftBottom, yLeftBottom),
+            putText(cv_ptr_->image, label, Point(xmin + (xmax - xmin)/2, ymin + (ymax - ymin)/2),
                     FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
+            //Fill Bounding Box message
+            bb.Class = getClassName(idx);
+            bb.probability = confidence;
+            bb.xmin = xmin;
+            bb.xmax = xmax;
+            bb.ymin = ymin;
+            bb.ymax = ymax;
+            bbs.bounding_boxes.push_back(bb);
         }
     }
     //publishDetection(frame);
     image_pub_.publish(cv_ptr_->toImageMsg());
+    bb_pub_.publish(bbs);
 }
 
 
@@ -136,11 +143,9 @@ void MobileNetWrapper::readClassesFile(const std::string filename){
     while (std::getline(file, s)){
         classes_.push_back(s);
     }
-    std::cout << "CLASSES " << classes_.size() << std::endl;
 }
 
 std::string MobileNetWrapper::getClassName(int index){
-    std::cout << "SIZE classes " << classes_.size();
     if (index < classes_.size()){
         return classes_[index];
     }  

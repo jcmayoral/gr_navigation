@@ -11,6 +11,7 @@
 
 #include <sensor_msgs/Image.h>
 #include <cv_bridge/cv_bridge.h>
+#include <darknet_ros_msgs/BoundingBoxes.h>
 
 using namespace cv;
 using namespace cv::dnn;
@@ -33,6 +34,7 @@ namespace gr_mobilenet{
             std::string model_bin_;
             ros::Subscriber image_sub_;
             ros::Publisher image_pub_;
+            ros::Publisher bb_pub_;
             std::mutex mutx;
             cv_bridge::CvImagePtr cv_ptr_;
     };
