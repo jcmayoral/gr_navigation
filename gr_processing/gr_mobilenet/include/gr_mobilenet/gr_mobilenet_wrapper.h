@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <mutex>
 
 #include <opencv2/dnn.hpp>
 #include <opencv2/imgproc.hpp>
@@ -31,5 +32,8 @@ namespace gr_mobilenet{
             std::string model_txt_ ;
             std::string model_bin_;
             ros::Subscriber image_sub_;
+            ros::Publisher image_pub_;
+            std::mutex mutx;
+            cv_bridge::CvImagePtr cv_ptr_;
     };
 }

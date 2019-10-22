@@ -3,6 +3,7 @@
 using namespace gr_mobilenet;
 
 MobileNetWrapper::MobileNetWrapper():classes_(){
+
     ros::NodeHandle private_nh("~");
 
     std::string classes_file;
@@ -25,13 +26,10 @@ MobileNetWrapper::MobileNetWrapper():classes_(){
         ROS_INFO("Model txt file found");
     }
 
-    std::string topic("image");
-    if (private_nh.getParam("image_topic",topic)){
-        ROS_INFO_STREAM("Subscribing to topic: " << topic);
-        image_sub_ = private_nh.subscribe(topic, 1, &MobileNetWrapper::image_CB, this);
-    }
 
     net_ = dnn::readNetFromCaffe(model_txt_, model_bin_);
+    image_pub_ = private_nh.advertise<sensor_msgs::Image>("detection", 1);
+
     if (net_.empty())
     {
         std::cerr << "Can't load network by using the following files: " << std::endl;
@@ -40,6 +38,11 @@ MobileNetWrapper::MobileNetWrapper():classes_(){
         exit(-1);
     }
 
+    std::string topic("image");
+    if (private_nh.getParam("image_topic",topic)){
+        ROS_INFO_STREAM("Subscribing to topic: " << topic);
+        image_sub_ = private_nh.subscribe(topic, 1, &MobileNetWrapper::image_CB, this);
+    }
 
 };
 
@@ -48,9 +51,24 @@ MobileNetWrapper::~MobileNetWrapper(){
 
 void MobileNetWrapper::image_CB(const sensor_msgs::ImageConstPtr image){
     ROS_INFO("RECEIVED");
+    cv::Mat resized_image;
+
     try{
-      cv::Mat frame = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::RGB8)->image;
-      process_image(frame);
+      //cv::Mat frame = cv_bridge::toCvShare(image, sensor_msgs::image_encodings::BGR8)->image;
+      cv_ptr_ = cv_bridge::toCvCopy(image, sensor_msgs::image_encodings::BGR8);
+      int w = cv_ptr_->image.cols;
+      int h = cv_ptr_->image.rows;
+
+      //if (rotate_flag >= 0) {
+      //   cv::rotate(cv_ptr->image, rotated_image, rotate_flag);
+      //   rotated_image.copyTo(cv_ptr->image);
+      //}
+
+      cv::resize(cv_ptr_->image, resized_image, cvSize(300, 300));
+      cv::Mat blob = cv::dnn::blobFromImage(resized_image, 0.007843f,
+                cvSize(300, 300), 127.5, false);
+
+      process_image(blob);
     }
     catch (cv_bridge::Exception& e){
       ROS_ERROR("cv_bridge exception: %s", e.what());
@@ -60,20 +78,21 @@ void MobileNetWrapper::image_CB(const sensor_msgs::ImageConstPtr image){
 }
 
 void MobileNetWrapper::process_image(cv::Mat frame){
-    Mat img2;
-    resize(frame, img2, Size(300,300));
-    Mat inputBlob = blobFromImage(img2, 0.007843, Size(300,300), Scalar(127.5, 127.5, 127.5), false);
-
-    net_.setInput(inputBlob, "data");
+    net_.setInput(frame, "data");
     Mat detection = net_.forward("detection_out");
     Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
+    std::unique_lock<std::mutex> lock(mutx);
     std::ostringstream ss;
+
     float confidenceThreshold = 0.2;
+
+    std::cout << detectionMat.rows << std::endl;
+
     for (int i = 0; i < detectionMat.rows; i++)
     {
         float confidence = detectionMat.at<float>(i, 2);
-
+        std::cout << confidence << std::endl;
         if (confidence > confidenceThreshold)
         {
             int idx = static_cast<int>(detectionMat.at<float>(i, 1));
@@ -82,28 +101,28 @@ void MobileNetWrapper::process_image(cv::Mat frame){
             int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
             int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
 
+            std::cout << "!"<<xLeftBottom<< yLeftBottom << xRightTop << yRightTop << std::endl;
             Rect object((int)xLeftBottom, (int)yLeftBottom,
                         (int)(xRightTop - xLeftBottom),
                         (int)(yRightTop - yLeftBottom));
 
-            rectangle(frame, object, Scalar(0, 255, 0), 2);
+            rectangle(cv_ptr_->image, object, Scalar(0, 255, 0), 2);
+            std::cout << "!"<< idx << std::endl;
 
             std::cout << getClassName(idx) << ": " << confidence << std::endl;
-
+            std::cout << "!"<< std::endl;
             ss.str("");
             ss << confidence;
             String conf(ss.str());
             String label = getClassName(idx) + ": " + conf;
             int baseLine = 0;
-            Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-            putText(frame, label, Point(xLeftBottom, yLeftBottom),
+            Size labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.75, 2, &baseLine);
+            putText(cv_ptr_->image, label, Point(xLeftBottom, yLeftBottom),
                     FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0,0,0));
         }
     }
-    imshow("detections", frame);
-    waitKey();
-
-
+    //publishDetection(frame);
+    image_pub_.publish(cv_ptr_->toImageMsg());
 }
 
 
@@ -111,13 +130,18 @@ void MobileNetWrapper::readClassesFile(const std::string filename){
     classes_.clear();
     std::ifstream file(filename);
     std::string s;
-    while (std::getline(file, s))
-        std::cout << s << std::endl;
+    while (std::getline(file, s)){
         classes_.push_back(s);
+    }
+    std::cout << "CLASSES " << classes_.size() << std::endl;
 }
 
 std::string MobileNetWrapper::getClassName(int index){
-    return classes_[index];
+    std::cout << "SIZE classes " << classes_.size();
+    if (index < classes_.size()){
+        return classes_[index];
+    }  
+    return "UNKNOWN";
 }
 
 
