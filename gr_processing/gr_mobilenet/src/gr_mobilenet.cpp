@@ -66,9 +66,9 @@ void MobileNetWrapper::image_CB(const sensor_msgs::ImageConstPtr image){
 
       cv::resize(cv_ptr_->image, resized_image, cvSize(300, 300));
       cv::Mat blob = cv::dnn::blobFromImage(resized_image, 0.007843f,
-                cvSize(300, 300), 127.5, false);
+                cvSize(300, 300), 100, false);
 
-      process_image(blob);
+      process_image(blob, w, h);
     }
     catch (cv_bridge::Exception& e){
       ROS_ERROR("cv_bridge exception: %s", e.what());
@@ -77,7 +77,7 @@ void MobileNetWrapper::image_CB(const sensor_msgs::ImageConstPtr image){
   }
 }
 
-void MobileNetWrapper::process_image(cv::Mat frame){
+void MobileNetWrapper::process_image(cv::Mat frame, int w , int h){
     net_.setInput(frame, "data");
     Mat detection = net_.forward("detection_out");
     Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
@@ -96,17 +96,20 @@ void MobileNetWrapper::process_image(cv::Mat frame){
         if (confidence > confidenceThreshold)
         {
             int idx = static_cast<int>(detectionMat.at<float>(i, 1));
-            int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * frame.cols);
-            int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * frame.rows);
-            int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * frame.cols);
-            int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * frame.rows);
+            int xLeftBottom = static_cast<int>(detectionMat.at<float>(i, 3) * w);
+            int yLeftBottom = static_cast<int>(detectionMat.at<float>(i, 4) * h);
+            int xRightTop = static_cast<int>(detectionMat.at<float>(i, 5) * w);
+            int yRightTop = static_cast<int>(detectionMat.at<float>(i, 6) * h);
 
-            std::cout << "!"<<xLeftBottom<< yLeftBottom << xRightTop << yRightTop << std::endl;
+            std::cout << "!"<<detectionMat.at<float>(i, 3)<<","<< detectionMat.at<float>(i, 4) << " , "
+                     << detectionMat.at<float>(i, 5) << "," << detectionMat.at<float>(i, 6)<< std::endl;
+
+            std::cout << frame.cols << " , " << frame.rows << std::endl;
             Rect object((int)xLeftBottom, (int)yLeftBottom,
                         (int)(xRightTop - xLeftBottom),
                         (int)(yRightTop - yLeftBottom));
 
-            rectangle(cv_ptr_->image, object, Scalar(0, 255, 0), 2);
+            cv::rectangle(cv_ptr_->image, object, Scalar(255, 255, 0), 2);
             std::cout << "!"<< idx << std::endl;
 
             std::cout << getClassName(idx) << ": " << confidence << std::endl;

@@ -22,7 +22,7 @@ namespace gr_mobilenet{
             ~MobileNetWrapper();
             void readClassesFile(const std::string filename);
             void image_CB(const sensor_msgs::ImageConstPtr image);
-            void process_image(cv::Mat frame);
+            void process_image(cv::Mat frame, int w, int h);
             std::string getClassName(int index);
             std::string getModelTxtFile();
             std::string getModelBinFile();
