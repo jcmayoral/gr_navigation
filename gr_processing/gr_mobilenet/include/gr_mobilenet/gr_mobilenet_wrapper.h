@@ -9,6 +9,7 @@
 #include <opencv2/core/utils/trace.hpp>
 
 #include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
 
 using namespace cv;
 using namespace cv::dnn;
@@ -20,6 +21,7 @@ namespace gr_mobilenet{
             ~MobileNetWrapper();
             void readClassesFile(const std::string filename);
             void image_CB(const sensor_msgs::ImageConstPtr image);
+            void process_image(cv::Mat frame);
             std::string getClassName(int index);
             std::string getModelTxtFile();
             std::string getModelBinFile();

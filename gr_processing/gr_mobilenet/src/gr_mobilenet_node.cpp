@@ -28,13 +28,6 @@ int main(int argc, char **argv)
 
     String imageFile = (argc > 1) ? argv[1] : "color.jpg";
 
-    if (mobile_net.net_.empty())
-    {
-        std::cerr << "Can't load network by using the following files: " << std::endl;
-        std::cerr << "prototxt:   " << modelTxt << std::endl;
-        std::cerr << "caffemodel: " << modelBin << std::endl;
-        exit(-1);
-    }
     std::cout << "HERE" << std::endl;
     Mat img = imread(imageFile);
     if (img.empty())
