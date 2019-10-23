@@ -184,29 +184,12 @@ void GRSBPLPlanner::stop(){
   cmd_vel_pub_.publish(cmd_vel);
 }
 
-void::GRSBPLPlanner::getCurrentPose(geometry_msgs::PoseStamped& pose){
-  geometry_msgs::TransformStamped base_link_to_odom;
-
-  //Error between odometry and last know position (base_link frame)
-  pose.header = odom_msg_.header;
-  pose.header.stamp = ros::Time::now();
-  pose.pose = odom_msg_.pose.pose;
-  base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
-  pose.header.stamp = ros::Time::now();
-  //Error in base_link coordinates
-  tf2::doTransform(pose, pose, base_link_to_odom);
-
-}
-
 double GRSBPLPlanner::getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame){
   geometry_msgs::TransformStamped transform_stamped;
   tf::Pose tf_pose;
-  double yaw;
-
   transform_stamped = tfBuffer.lookupTransform(frame, pose.header.frame_id, ros::Time(0), ros::Duration(1.0) );
   tf2::doTransform(pose, pose, transform_stamped);
   tf::poseMsgToTF(pose.pose, tf_pose);
-
   return tf::getYaw(tf_pose.getRotation());
 }
 
@@ -229,41 +212,32 @@ bool GRSBPLPlanner::executePath(){
     }
 
     geometry_msgs::Twist cmd_vel;
-    getCurrentPose(current_pose);
-
     //Transforming next waypoint on map_coordinates to base_libk
     plan_[0].header.stamp = ros::Time::now();
     base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
     tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
 
     //Calculating Angles
-    yaw1 = getRotationInFrame(current_pose, "base_link");
+    // Difference between base_link and plan_[0] on base_link
     yaw2 = getRotationInFrame(plan_[0], "base_link");
 
     //Difference between expected and actual position on time t (P Controller)
-    cmd_vel.linear.x = plan_[0].pose.position.x- current_pose.pose.position.x;
+    cmd_vel.linear.x = plan_[0].pose.position.x;
 
-    if (cmd_vel.linear.x > position_tolerance_){
+    if (cmd_vel.linear.x > position_tolerance_ || cmd_vel.angular.y > position_tolerance_){
       stop();
       return false;
     }
 
-    cmd_vel.linear.y = (plan_[0].pose.position.y - current_pose.pose.position.y);
-    cmd_vel.angular.z = (yaw2 - yaw1);
+    cmd_vel.linear.y = plan_[0].pose.position.y;
+    cmd_vel.angular.z = yaw2;
 
     //D Controller TODO configurable
     if (plan_.size()>2){
-      double yaw3;
       cmd_vel.linear.x -= 0.2*(plan_[1].pose.position.x - plan_[0].pose.position.x);
-      /*
-      tf::poseMsgToTF(plan_[1].pose, pose);
-      yaw3 = tf::getYaw(pose.getRotation());
-      cmd_vel.angular.z -= 0.2*(yaw3 - yaw2);
-      */
     }
 
     //TODO I Controller
-
     //this store the last pose while finish
     current_pose = plan_[0];
     plan_.erase(plan_.begin());
@@ -274,6 +248,19 @@ bool GRSBPLPlanner::executePath(){
 
   stop();
 
+
+  //orientation of current odometry to map
+  geometry_msgs::TransformStamped base_link_to_odom;
+  geometry_msgs::PoseStamped p;
+  p.header = odom_msg_.header;
+  p.header.stamp = ros::Time::now();
+  p.pose = odom_msg_.pose.pose;
+  base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+  tf2::doTransform(p, p, base_link_to_odom);
+
+  yaw1 = getRotationInFrame(p, "base_link");
+
+  //orientation of the goal on map frame
   yaw2 = getRotationInFrame(goal_, "map");
 
   geometry_msgs::Twist vel;
@@ -284,8 +271,16 @@ bool GRSBPLPlanner::executePath(){
     ROS_ERROR_STREAM("Correcting "<< yaw2 - yaw1);
     ros::Duration(0.05).sleep();
 
-    getCurrentPose(current_pose);
-    yaw1 = getRotationInFrame(current_pose, "map");
+    //orientation of current odometry to map
+    geometry_msgs::TransformStamped base_link_to_odom;
+    geometry_msgs::PoseStamped p;
+    p.header = odom_msg_.header;
+    p.header.stamp = ros::Time::now();
+    p.pose = odom_msg_.pose.pose;
+    base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+    tf2::doTransform(p, p, base_link_to_odom);
+
+    yaw1 = getRotationInFrame(p, "map");
   }
 
   stop();
