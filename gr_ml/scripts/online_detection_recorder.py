@@ -2,7 +2,7 @@
 import rospy
 import argparse
 from sensor_msgs.msg import PointCloud2
-from record_detections import DetectionRecorder
+from gr_ml.gr_terrain_recognition.record_detections import DetectionRecorder
 
 help_text="This script stores detection using ros comm"
 

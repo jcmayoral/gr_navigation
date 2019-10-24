@@ -1,16 +1,12 @@
 #!/usr/bin/python
 import rospy
-import rosbag
 import tf2_ros
 import tf2_geometry_msgs
 from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import PoseArray, PoseStamped
 from std_msgs.msg import Header
-import argparse
 import time
 import os
-
-help_text="This script stores detection results"
 
 class DetectionRecorder:
     def __init__(self, folder="measured_example" ):
@@ -67,23 +63,3 @@ class DetectionRecorder:
         f.close()
         self.message_processed = True
         self.index +=1
-
-
-if __name__ == '__main__':
-    if __name__ == '__main__':
-        parser = argparse.ArgumentParser(description = help_text)
-        parser.add_argument("--bag", "-b", help="set input bagname")
-        parser.add_argument("--group", "-g", default="nibio_2019")
-        parser.add_argument("--topic", "-t", default="/velodyne_points")
-        parser.add_argument("--debug", "-d", default=1)
-
-        args = parser.parse_args()
-        debug_mode = bool(int(args.debug))
-        bag = rosbag.Bag(args.bag, mode="r")
-        recoder = DetectionRecorder(folder=args.group)
-
-        for topic, msg, t in bag.read_messages(topics=args.topic):
-            recoder.publish_gt(msg)
-            while not recoder.message_processed:
-                pass
-        bag.close()
