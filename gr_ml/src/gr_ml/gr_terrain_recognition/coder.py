@@ -3,7 +3,8 @@ from __future__ import division
 import rospy
 import cv2
 import sensor_msgs.point_cloud2 as pc2
-from sensor_msgs.msg import PointCloud2, Image
+from sensor_msgs.msg import Image as rosImage
+from safety_msgs.msg import FoundObjectsArray
 from numpy import fabs,sqrt, floor
 from numpy.linalg import norm
 from cv_bridge import CvBridge, CvBridgeError
@@ -15,13 +16,14 @@ from PIL import Image
 import warnings
 import copy
 
-class Lidar2Image:
-    def __init__(self, save_image=False, ros = False, topic = "/velodyne_points", filegroup="images", meters=10, pix_per_meter=10, z_range=5):
+class Features2Image:
+    def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=10, pix_per_meter=10, z_range=5):
         self.save_image = save_image
         #TODO Add in metadata file
         self.meters = float(meters)
         self.pixels_per_meter = int(pix_per_meter)
         self.filegroup = filegroup
+        self.ros = ros
 
         self.bridge = CvBridge()
         self.counter = 1
@@ -40,8 +42,9 @@ class Lidar2Image:
             self.create_folder()
 
         if ros:
-            rospy.init_node("lidar_to_image")
-            rospy.Subscriber(topic, PointCloud2, self.topic_cb, queue_size=100)
+            rospy.init_node("features_to_image")
+            self.im_pub = rospy.Publisher("safety_terrain", rosImage, queue_size=1)
+            rospy.Subscriber(topic, FoundObjectsArray, self.topic_cb, queue_size=100)
             rospy.loginfo("Node initialized")
             rospy.spin()
 
@@ -76,6 +79,14 @@ class Lidar2Image:
         cv2.imwrite(name,img)
         self.counter += 1
 
+    def cv_to_ros(self, cv_img):
+        try:
+            ros_img = self.bridge.cv2_to_imgmsg(cv_img,"rgb8")
+        except CvBridgeError, e:
+            print(e)
+            return
+        return ros_img
+
     def ros_to_cv(self):
         try:
             # Convert your ROS Image message to OpenCV2
@@ -86,10 +97,13 @@ class Lidar2Image:
             return
         return cv2_img
 
+    def create_generator(self, msg):
+        for i in msg.objects:
+            yield i
 
     def topic_cb(self,msg):
-        gen = pc2.read_points(msg, skip_nans=True, field_names=("x", "y", "z"))
-        self.process_pc(gen)
+        gen = self.create_generator(msg)
+        self.process_features(gen)
 
     def calculate_mean(self,list_val):
         #warnings.filterwarnings('error')
@@ -144,7 +158,7 @@ class Lidar2Image:
                     pass
         return output
 
-    def process_pc(self, pc):
+    def process_features(self, features):
         rgb_color=(0, 0, 0)
         accumulator = [[list() for x in range(self.pixels_number)] for y in range(self.pixels_number)]
         
@@ -156,16 +170,17 @@ class Lidar2Image:
         color = tuple(rgb_color)
         cvMat[:] = color
 
-        for i in range(self.size-1, -1, -1):
+        while True:
             try:
-                point = pc.next()
-                x = point[0]
-                y = point[1]
-                z = point[2]
+                f = features.next()
+                rospy.loginfo(f)
+                x = f.centroid.point.x
+                y = f.centroid.point.y
+                z = f.centroid.point.z
                 cell_x = int(x*self.pixels_per_meter)
                 cell_y = int(y*self.pixels_per_meter)
             except:
-                continue
+                break
 
             if z > self.range[1] or z < self.range[0]:
                 continue
@@ -190,7 +205,12 @@ class Lidar2Image:
         cvMat[:,:,0] = self.count_elements(copy.copy(accumulator))
         cvMat[:,:,1] = self.calculate_mean(copy.copy(accumulator))
         cvMat[:,:,2] = self.calculate_variance(copy.copy(accumulator),copy.copy(cvMat[:,:,1]))
-
+        
+        
+        if self.ros:
+            ros_image = self.cv_to_ros(cvMat)
+            self.im_pub.publish(ros_image)
+            rospy.logerr("DONE")
         #TODO Normalize R channel
         #max_overlapping = np.max(cvMat[:,:,0])
         if self.save_image:

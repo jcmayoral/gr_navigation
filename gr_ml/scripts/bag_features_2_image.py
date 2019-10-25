@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import rosbag
 import argparse
-from gr_ml.gr_terrain_recognition.pc_to_image import Lidar2Image
+from gr_ml.gr_terrain_recognition.coder import Features2Image
 
 
 help_text = 'This is a script that converts PointCloud2 message to RGB images'
