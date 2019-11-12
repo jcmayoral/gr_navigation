@@ -80,6 +80,8 @@ void MobileNetWrapper::image_CB(const sensor_msgs::ImageConstPtr image){
 void MobileNetWrapper::process_image(cv::Mat frame, int w , int h){
     net_.setInput(frame, "data");
     Mat detection = net_.forward("detection_out");
+    //googlenet
+    //Mat detection = net_.forward("loss3/classifier");
     Mat detectionMat(detection.size[2], detection.size[3], CV_32F, detection.ptr<float>());
 
     std::unique_lock<std::mutex> lock(mutx);

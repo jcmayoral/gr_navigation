@@ -85,7 +85,7 @@ extern "C"
       int ngrid;      // The launch configurator returned block size
       int nblocks;    // The minimum grid size needed to achieve the maximum occupancy for a full device launch
       //cudaOccupancyMaxPotentialBlockSize(&nblocks, &nthreads, filter_passthrough_kernel, 0, 0);
-      ngrid = 256;
+      ngrid = 1024;
       dim3 grid (ngrid);
       nblocks = ceil((size+ngrid -1)/ngrid);
 
@@ -100,7 +100,7 @@ extern "C"
       // Second param number of threads
       //  blocks, threads each
       printf("C %d %d\n", nblocks, ngrid);
-      printf("D %d\n", size);
+      printf("Deeee %d\n", size);
 
       //printf("OK %d", max_thread - size);
       //filter_passthrough_kernel<<<blocks,threads>>>(z,b,min_limit, max_limit, filter_value, size);

@@ -17,7 +17,7 @@ import warnings
 import copy
 
 class Features2Image:
-    def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=10, pix_per_meter=10, z_range=5):
+    def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=5, pix_per_meter=2, z_range=5):
         self.save_image = save_image
         #TODO Add in metadata file
         self.meters = float(meters)
@@ -70,7 +70,7 @@ class Features2Image:
             print ("Successfully created the directory %s " % self.filegroup)
 
     def scalar_to_color(self,x):
-        color = self.max_value/(self.range[1]-self.range[0]) * x + self.max_value/2;
+        color = self.max_value/(self.range[1]-self.range[0]) * x + self.max_value/2
         return int(np.ceil(color))
 
 
@@ -81,7 +81,7 @@ class Features2Image:
 
     def cv_to_ros(self, cv_img):
         try:
-            ros_img = self.bridge.cv2_to_imgmsg(cv_img,"rgb8")
+            ros_img = self.bridge.cv2_to_imgmsg(cv_img,"bgr8")
         except CvBridgeError, e:
             print(e)
             return
@@ -148,7 +148,7 @@ class Features2Image:
         return output
 
     def count_elements(self,list_val):
-        output = np.zeros((self.pixels_number, self.pixels_number   ), np.uint16)
+        output = np.zeros((self.pixels_number, self.pixels_number   ), np.uint8)
         for i in range(self.pixels_number):
             for j in range(self.pixels_number):
                 try:
@@ -203,6 +203,7 @@ class Features2Image:
             accumulator[cell_x][cell_y].append(copy.copy(color_val))
 
         cvMat[:,:,0] = self.count_elements(copy.copy(accumulator))
+        cvMat[0,0,:] = 0
         cvMat[:,:,1] = self.calculate_mean(copy.copy(accumulator))
         cvMat[:,:,2] = self.calculate_variance(copy.copy(accumulator),copy.copy(cvMat[:,:,1]))
         

@@ -96,6 +96,8 @@ private:
   ros::Time last_detection_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf2_listener_;
+  std::string sensor_frame_;
+  std::string global_frame_;
 
 public:
     GPUExample ();

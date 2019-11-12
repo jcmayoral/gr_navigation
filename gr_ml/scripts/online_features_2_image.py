@@ -8,9 +8,9 @@ help_text = 'This is a script that converts FoundObjectsArray message to RGB ima
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = help_text)
     parser.add_argument("--topic", "-t", default="/found_object")
-    parser.add_argument("--meters", "-m", default=10)
-    parser.add_argument("--pix_meters", "-p", default=1)
-    parser.add_argument("--z_range", "-z", default=2.5)
+    parser.add_argument("--meters", "-m", default=4)
+    parser.add_argument("--pix_meters", "-p", default=4)
+    parser.add_argument("--z_range", "-z", default=10)
 
     args = parser.parse_args()
     lidar2image = Features2Image(ros=True, save_image=False, meters = args.meters, pix_per_meter=args.pix_meters, z_range=args.z_range)

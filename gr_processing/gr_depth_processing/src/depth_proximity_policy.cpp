@@ -146,8 +146,8 @@ namespace gr_depth_processing
      in.pose.position.y = (center_col - center_y) * dist * constant_y;
      in.pose.position.z = dist;
      
-     if (dist > max_range_){
-       ROS_WARN("Object out of range");
+     if (dist<0.1 || dist > max_range_){
+       ROS_WARN_STREAM("Object out of range"<< dist);
        continue;
       }
 
