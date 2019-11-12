@@ -12,9 +12,9 @@ class NetworkModel(nn.Module):
         super(NetworkModel, self).__init__()
         self.device = torch.device("cpu")
         #fully conected layer 3 inputs 3 output
-        self.fc1 = nn.Linear(3,4)
+        self.fc1 = nn.Linear(3,16)
         self.r1 = nn.ReLU()
-        self.fc2 = nn.Linear(4,3)
+        self.fc2 = nn.Linear(16,3)
         self.sm = nn.Softmax()
 
         self.optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.2)

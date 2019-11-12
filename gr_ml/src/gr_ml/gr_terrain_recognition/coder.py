@@ -18,15 +18,17 @@ import warnings
 import copy
 
 class Features2Image:
-    def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=5, pix_per_meter=2, z_range=5, msg_selection=1):
+    def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=5, pix_per_meter=2, z_range=5, msg_selection=1, memory=1):
         self.save_image = save_image
         #TODO Add in metadata file
         self.meters = float(meters)
         self.pixels_per_meter = int(pix_per_meter)
         self.filegroup = filegroup
         self.ros = ros
-        self.msg_selection = msg_selection
+        self.memory = memory
+        self.current_store = 1
 
+        self.msg_selection = msg_selection
         self.bridge = CvBridge()
         self.counter = 1
         #10 meters
@@ -179,19 +181,23 @@ class Features2Image:
 
     def process_features(self, features):
         rgb_color=(0, 0, 0)
-        accumulator = [[list() for x in range(self.pixels_number)] for y in range(self.pixels_number)]
+        color = tuple(rgb_color)
 
+        accumulator = [[list() for x in range(self.pixels_number)] for y in range(self.pixels_number)]
         for i in range(self.pixels_number):
             for j in range(self.pixels_number):
                 accumulator[i][j].append(0)
 
-        cvMat = np.zeros((self.pixels_number, self.pixels_number, 3), np.uint8)
-        color = tuple(rgb_color)
-        cvMat[:] = color
+        if self.current_store >= self.memory or self.current_store == 1:
+            self.cvMat = np.zeros((self.pixels_number, self.pixels_number, 3), np.uint8)
+            self.cvMat[:] = color
+            self.current_store = 1
+            rospy.logwarn("CLEARING")
+
+        self.current_store +=1
 
         while True:
             try:
-                print "a"
                 f = features.next()
                 rospy.loginfo(f)
                 if self.msg_selection == 1:
@@ -202,7 +208,6 @@ class Features2Image:
                     x = f.pose.position.x
                     y = f.pose.position.y
                     z = f.pose.position.z
-                print "b"
                 cell_x = int(x*self.pixels_per_meter)
                 cell_y = int(y*self.pixels_per_meter)
             except:
@@ -228,17 +233,17 @@ class Features2Image:
             color_val = self.scalar_to_color(z)
             accumulator[cell_x][cell_y].append(copy.copy(color_val))
 
-        cvMat[:,:,0] = self.count_elements(copy.copy(accumulator))
-        cvMat[0,0,:] = 0
-        cvMat[:,:,1] = self.calculate_mean(copy.copy(accumulator))
-        cvMat[:,:,2] = self.calculate_variance(copy.copy(accumulator),copy.copy(cvMat[:,:,1]))
+        self.cvMat[:,:,0] += self.count_elements(copy.copy(accumulator))
+        self.cvMat[0,0,:] += 0
+        self.cvMat[:,:,1] += self.calculate_mean(copy.copy(accumulator))
+        self.cvMat[:,:,2] += self.calculate_variance(copy.copy(accumulator),copy.copy(self.cvMat[:,:,1]))
 
 
         if self.ros:
-            ros_image = self.cv_to_ros(cvMat)
+            ros_image = self.cv_to_ros(self.cvMat)
             self.im_pub.publish(ros_image)
             rospy.logerr("DONE")
         #TODO Normalize R channel
         #max_overlapping = np.max(cvMat[:,:,0])
         if self.save_image:
-            self.save_image_to_file(cvMat)
+            self.save_image_to_file(self.cvMat)

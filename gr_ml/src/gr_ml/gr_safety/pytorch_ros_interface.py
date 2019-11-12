@@ -11,13 +11,14 @@ import collections
 
 class PyTorchWrapper():
 
-    def __init__(self, batchsize=20, epochs=2, max_training_cycles = 25):
+    def __init__(self, batchsize=20, epochs=2, max_training_cycles = 5):
         self.network = NetworkModel() #.to(torch.device("cpu"))
         self.is_training = True
         self.current_batch = 0
         self.batch_size = batchsize
         self.epochs = epochs
-        self.equi_dist = 4.0
+        self.danger_dist = 2.5
+        self.warn_dist = 3.5
         self.current_training = 0
         self.max_training_cycles = max_training_cycles
         #Current version just using poses
@@ -37,7 +38,7 @@ class PyTorchWrapper():
             #This is just simple version
             self.processed_array[self.current_batch] = [p.x,p.y,p.z]
             dist = np.sqrt(np.power(p.x,2) + np.power(p.y,2) + np.power(p.z,2) )
-            self.labels[self.current_batch] = [int(dist>self.equi_dist),  int(self.equi_dist/2<dist<self.equi_dist), int(dist<self.equi_dist/2)]
+            self.labels[self.current_batch] = [int(dist>self.warn_dist),  int(self.danger_dist<dist<self.warn_dist), int(dist<self.danger_dist)]
             self.current_batch = self.current_batch + 1
 
             #TODO Add skipped valyes to queue
@@ -47,7 +48,7 @@ class PyTorchWrapper():
                     #TODO check if possible to partial_fit
                     print (self.labels)
                     labels_count = np.count_nonzero(self.labels, axis=0)
-                    print (labels_count, np.any(labels_count > 10))
+                    print (labels_count, np.any(labels_count == 0))
                     if np.any(labels_count == self.batch_size):
                         print "Ignoring batch... high umbalanced"
                         return
