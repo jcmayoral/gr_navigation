@@ -15,6 +15,7 @@ class PyTorchWrapper():
         self.current_batch = 0
         self.batch_size = batchsize
         self.epochs = epochs
+        self.equi_dist = 1.0
         self.current_training = 0
         self.max_training_cycles = max_training_cycles
         #Current version just using poses
@@ -39,7 +40,7 @@ class PyTorchWrapper():
             #This is just simple version
             self.processed_array[self.current_batch] = [p.x,p.y,p.z]
             dist = np.sqrt(np.power(p.x,2) + np.power(p.y,2) + np.power(p.z,2) )
-            self.labels[self.current_batch] = [int(dist>1.5),  int(0.7<dist<1.5), int(dist<0.7)]
+            self.labels[self.current_batch] = [int(dist>self.equi_dist),  int(self.equi_dist/2<dist<self.equi_dist), int(dist<self.equi_dist/2)]
             self.current_batch = self.current_batch + 1
 
             #TODO Add skipped valyes to queue

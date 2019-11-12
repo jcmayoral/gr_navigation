@@ -11,6 +11,8 @@ import os
 class DetectionRecorder:
     def __init__(self, folder="measured_example" ):
         rospy.init_node("record_detection")
+        #TODO parametrize
+        self.root_path = '/media/experimental_data/'
         self.folder = "measured_"+folder
         self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0)) #tf buffer length
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
@@ -24,12 +26,13 @@ class DetectionRecorder:
 
     def create_folder(self):
         #path = os.getcwd()
+        directory = self.root_path + self.folder
         try:
-            os.mkdir(self.folder)
+            os.mkdir(directory)
         except OSError:
-            print ("Creation of the directory %s failed" % self.folder)
+            print ("Creation of the directory %s failed" % directory)
         else:
-            print ("Successfully created the directory %s " % self.folder)
+            print ("Successfully created the directory %s " % directory)
 
 
     def publish_gt(self, msg):
@@ -44,7 +47,7 @@ class DetectionRecorder:
         target_frame = "velodyne"
 
         header = ",".join(["x", "y", "timestamp", "class", "frame_id"])
-        f = open(os.path.join(self.folder, str(self.folder) + str(self.index)),"w")
+        f = open(os.path.join(self.root_path + self.folder, str(self.folder) + str(self.index)),"w")
         f.write(header + "\n")
 
 
