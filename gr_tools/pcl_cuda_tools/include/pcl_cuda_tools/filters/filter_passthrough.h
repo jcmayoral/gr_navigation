@@ -17,10 +17,28 @@ namespace pcl_gpu{
       //using PointCloudHostPtr = PointCloudHost::Ptr;
       //using PointCloudHostConstPtr = PointCloudHost::ConstPtr;
 
-      FilterPassThrough () : minimum_value_ (-1.0), maximum_value_(1.0), filter_value_ (std::numeric_limits<float>::max ())
+      FilterPassThrough () : minimum_value_ (-1.0), maximum_value_(1.0),
+                             filter_value_ (std::numeric_limits<float>::max ()),
+                             xy_scaler_(1), scale_axis_('w')
       {
-        printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        //printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
       };
+
+      inline void setScaleAxis(char axis) {
+        scale_axis_ = axis;
+      }
+
+      inline char getScaleAxis() {
+        return scale_axis_;
+      }
+
+      inline int getXYScaler() {
+        return xy_scaler_;
+      }
+
+      inline void setXYScaler(int scale) {
+        xy_scaler_ = scale;
+      }
 
       inline void setMinimumValue(float min_limit) {
         minimum_value_ = min_limit;
@@ -53,6 +71,8 @@ namespace pcl_gpu{
       float minimum_value_;
       float maximum_value_;
       float filter_value_;
+      int xy_scaler_;
+      char scale_axis_;
 
       virtual std::string getClassName () const { return ("gpu::PassThroughFilter"); }
   };

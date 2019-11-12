@@ -27,17 +27,30 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
   memset(b, false, number_points);
   bool result = false;
 
+  int x_scale = 1;
+  int y_scale = 1;
+
+  if (scale_axis_ == 'x'){
+    std::cout << "scaling x  by" << xy_scaler_ << std::endl;
+    y_scale = xy_scaler_;
+  }
+
+  if (scale_axis_ == 'y'){
+    x_scale = xy_scaler_;
+  }
+
+
   if (channel.find("z")!= -1){
     result = apply_cuda_filter(z,b, minimum_value_, maximum_value_, filter_value_,  number_points);
   }
 
   if (channel.find("x")!= -1){
-    result = apply_cuda_filter(x,b, minimum_value_/3, maximum_value_/3, filter_value_,  number_points);
+    result = apply_cuda_filter(x,b, minimum_value_/x_scale, maximum_value_/x_scale, filter_value_,  number_points);
   }
 
   if (channel.find("y")!= -1){
     //TODO REVIEW
-    result = apply_cuda_filter(y,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+    result = apply_cuda_filter(y,b, minimum_value_/y_scale, maximum_value_/y_scale, filter_value_,  number_points);
   }
 
   input_cloud.points.clear();
