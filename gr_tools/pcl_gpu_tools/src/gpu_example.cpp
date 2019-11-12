@@ -3,7 +3,8 @@
 GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
                            remove_ground_(true), passthrough_enable_(true),
                            is_processing_(false), is_timer_enable_(true),
-                           tf2_listener_(tf_buffer_), last_detection_(ros::Time(0)){
+                           tf2_listener_(tf_buffer_), last_detection_(ros::Time(0)),
+                           sensor_frame_("velodyne"), global_frame_("odom"){
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -14,8 +15,11 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
     double time_window = 0.2;
     nh.getParam("roi", limit);
     nh.getParam("time_window", time_window);
+    nh.getParam("global_frame", global_frame_);
+
     ROS_INFO_STREAM("ROI Radius [m] "<< limit );
     ROS_INFO_STREAM("Time Window [s] "<< time_window );
+    ROS_INFO_STREAM("Global Frame "<< global_frame_ );
 
     pass_through_filter_.setFilterFieldName ("z");
     radius_cuda_pass_.setMinimumValue(-limit);
@@ -110,7 +114,7 @@ template <class T> void GPUExample::publishPointCloud(T t){
       return;
     sensor_msgs::PointCloud2 output_pointcloud_;
     pcl::toROSMsg(t, output_pointcloud_);
-    output_pointcloud_.header.frame_id = "velodyne";
+    output_pointcloud_.header.frame_id = sensor_frame_;
     output_pointcloud_.header.stamp = ros::Time::now();
     // Publish the data
     pc_pub_.publish(output_pointcloud_);
@@ -120,6 +124,7 @@ template <class T> void GPUExample::publishPointCloud(T t){
 void GPUExample::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
     //run_filter(*msg);
     //ROS_ERROR("pointcloud cb");
+    sensor_frame_ = msg->header.frame_id;
     pcl::PointCloud<pcl::PointXYZ>::Ptr output (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*msg, *output);
     //ROS_INFO("PointCloud conversion succeded");
@@ -200,7 +205,7 @@ void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, do
   tf2::doTransform(center, out, to_odom_transform);
   ROS_WARN("WORKS :)");
 
-  cluster_bb.header.frame_id = "odom"; //this should be a param
+  cluster_bb.header.frame_id = global_frame_; //this should be a param
   cluster_bb.header.stamp = last_detection_;
   cluster_bb.pose.position.x = out.position.x;
   cluster_bb.pose.position.y = out.position.y;
@@ -215,7 +220,7 @@ void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, do
 
 void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array){
   bb.header.stamp = ros::Time::now();
-  bb.header.frame_id = "odom";//cluster_array.header.frame_id;
+  bb.header.frame_id = global_frame_;//cluster_array.header.frame_id;
   bb_pub_.publish(bb);
   //ROS_INFO_STREAM("BoundingBoxes " << bb.boxes.size());
 }
@@ -225,8 +230,9 @@ void GPUExample::cluster(){
     boost::mutex::scoped_lock lock(mutex_);
     boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
 
-    to_odom_transform = tf_buffer_.lookupTransform("odom", "velodyne", last_detection_, ros::Duration(0.5) );
-
+    std::cout << "A";
+    to_odom_transform = tf_buffer_.lookupTransform(global_frame_, sensor_frame_, last_detection_, ros::Duration(0.5) );
+    std::cout << "Z";
     if (concatenated_pc->points.size() == 0 ){
       ROS_ERROR("Cluster empty");
       return;
