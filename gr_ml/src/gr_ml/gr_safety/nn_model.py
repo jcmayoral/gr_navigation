@@ -12,12 +12,12 @@ class NetworkModel(nn.Module):
         super(NetworkModel, self).__init__()
         self.device = torch.device("cpu")
         #fully conected layer 3 inputs 3 output
-        self.fc1 = nn.Linear(3,8)
+        self.fc1 = nn.Linear(3,4)
         self.r1 = nn.ReLU()
-        self.fc2 = nn.Linear(8,3)
+        self.fc2 = nn.Linear(4,3)
         self.sm = nn.Softmax()
 
-        self.optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.5)
+        self.optimizer = optim.SGD(self.parameters(), lr=0.01, momentum=0.2)
         self.optimizer.zero_grad()
 
     def forward(self, x):
@@ -26,7 +26,7 @@ class NetworkModel(nn.Module):
 
     def predict(self,msg):
         print "predict "
-    
+
     def criterion(self, out, label):
         criteria = nn.NLLLoss()
 

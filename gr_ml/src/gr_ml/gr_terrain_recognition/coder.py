@@ -5,6 +5,7 @@ import cv2
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Image as rosImage
 from safety_msgs.msg import FoundObjectsArray
+from jsk_recognition_msgs.msg import BoundingBoxArray
 from numpy import fabs,sqrt, floor
 from numpy.linalg import norm
 from cv_bridge import CvBridge, CvBridgeError
@@ -17,13 +18,14 @@ import warnings
 import copy
 
 class Features2Image:
-    def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=5, pix_per_meter=2, z_range=5):
+    def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=5, pix_per_meter=2, z_range=5, msg_selection=1):
         self.save_image = save_image
         #TODO Add in metadata file
         self.meters = float(meters)
         self.pixels_per_meter = int(pix_per_meter)
         self.filegroup = filegroup
         self.ros = ros
+        self.msg_selection = msg_selection
 
         self.bridge = CvBridge()
         self.counter = 1
@@ -43,8 +45,17 @@ class Features2Image:
 
         if ros:
             rospy.init_node("features_to_image")
+            if msg_selection == 1:
+                msg_type = FoundObjectsArray
+                msg_cb = self.topic_cb
+                msg_topic = topic
+            if msg_selection == 2:
+                msg_type = BoundingBoxArray
+                msg_cb = self.topic_cb2
+                msg_topic = "/detection/bounding_boxes"
             self.im_pub = rospy.Publisher("safety_terrain", rosImage, queue_size=1)
-            rospy.Subscriber(topic, FoundObjectsArray, self.topic_cb, queue_size=100)
+            rospy.Subscriber(msg_topic, msg_type, msg_cb, queue_size=100)
+
             rospy.loginfo("Node initialized")
             rospy.spin()
 
@@ -96,6 +107,14 @@ class Features2Image:
             print(e)
             return
         return cv2_img
+
+    def topic_cb2(self,msg):
+        gen = self.create_generator_boxes(msg)
+        self.process_features(gen)
+
+    def create_generator_boxes(self, msg):
+        for i in msg.boxes:
+            yield i
 
     def create_generator(self, msg):
         for i in msg.objects:
@@ -161,7 +180,7 @@ class Features2Image:
     def process_features(self, features):
         rgb_color=(0, 0, 0)
         accumulator = [[list() for x in range(self.pixels_number)] for y in range(self.pixels_number)]
-        
+
         for i in range(self.pixels_number):
             for j in range(self.pixels_number):
                 accumulator[i][j].append(0)
@@ -172,11 +191,18 @@ class Features2Image:
 
         while True:
             try:
+                print "a"
                 f = features.next()
                 rospy.loginfo(f)
-                x = f.centroid.point.x
-                y = f.centroid.point.y
-                z = f.centroid.point.z
+                if self.msg_selection == 1:
+                    x = f.centroid.point.x
+                    y = f.centroid.point.y
+                    z = f.centroid.point.z
+                if self.msg_selection == 2:
+                    x = f.pose.position.x
+                    y = f.pose.position.y
+                    z = f.pose.position.z
+                print "b"
                 cell_x = int(x*self.pixels_per_meter)
                 cell_y = int(y*self.pixels_per_meter)
             except:
@@ -206,8 +232,8 @@ class Features2Image:
         cvMat[0,0,:] = 0
         cvMat[:,:,1] = self.calculate_mean(copy.copy(accumulator))
         cvMat[:,:,2] = self.calculate_variance(copy.copy(accumulator),copy.copy(cvMat[:,:,1]))
-        
-        
+
+
         if self.ros:
             ros_image = self.cv_to_ros(cvMat)
             self.im_pub.publish(ros_image)
