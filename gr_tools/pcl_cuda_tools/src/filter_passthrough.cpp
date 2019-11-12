@@ -32,10 +32,11 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
   }
 
   if (channel.find("x")!= -1){
-    result = apply_cuda_filter(x,b, minimum_value_, maximum_value_, filter_value_,  number_points);
+    result = apply_cuda_filter(x,b, minimum_value_/3, maximum_value_/3, filter_value_,  number_points);
   }
 
   if (channel.find("y")!= -1){
+    //TODO REVIEW
     result = apply_cuda_filter(y,b, minimum_value_, maximum_value_, filter_value_,  number_points);
   }
 
