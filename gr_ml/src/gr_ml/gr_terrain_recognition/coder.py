@@ -5,6 +5,7 @@ import cv2
 import sensor_msgs.point_cloud2 as pc2
 from sensor_msgs.msg import Image as rosImage
 from safety_msgs.msg import FoundObjectsArray
+from gr_ml.gr_safety.nn_model import TerrainNetworkModel
 from jsk_recognition_msgs.msg import BoundingBoxArray
 from numpy import fabs,sqrt, floor
 from numpy.linalg import norm
@@ -16,6 +17,7 @@ import os
 from PIL import Image
 import warnings
 import copy
+import torch
 
 class Features2Image:
     def __init__(self, save_image=False, ros = False, topic = "/found_object", filegroup="images", meters=5, pix_per_meter=2, z_range=5, msg_selection=1, memory=1):
@@ -33,6 +35,9 @@ class Features2Image:
         self.counter = 1
         #10 meters
         self.pixels_number = int(self.meters*self.pixels_per_meter)
+        self.nn = TerrainNetworkModel()
+        self.max_trains = 20
+        self.current_train = 0
 
         #assume symmetric
         #TODO FOR HIGH RANGE -> approach does not work
@@ -46,17 +51,30 @@ class Features2Image:
             self.create_folder()
 
         if ros:
+            #TODO a better way
             rospy.init_node("features_to_image")
             if msg_selection == 1:
                 msg_type = FoundObjectsArray
                 msg_cb = self.topic_cb
                 msg_topic = topic
+                rospy.Subscriber(msg_topic, msg_type, msg_cb, queue_size=100)
             if msg_selection == 2:
                 msg_type = BoundingBoxArray
                 msg_cb = self.topic_cb2
                 msg_topic = "/detection/bounding_boxes"
+                rospy.Subscriber(msg_topic, msg_type, msg_cb, queue_size=100)
+            if msg_selection ==3:
+                msg_type = FoundObjectsArray
+                msg_cb = self.topic_cb
+                msg_topic = topic
+                rospy.Subscriber(msg_topic, msg_type, msg_cb, queue_size=100)
+                msg_type = BoundingBoxArray
+                msg_cb = self.topic_cb2
+                msg_topic = "/detection/bounding_boxes"
+                rospy.Subscriber(msg_topic, msg_type, msg_cb, queue_size=100)
+
+
             self.im_pub = rospy.Publisher("safety_terrain", rosImage, queue_size=1)
-            rospy.Subscriber(msg_topic, msg_type, msg_cb, queue_size=100)
 
             rospy.loginfo("Node initialized")
             rospy.spin()
@@ -112,7 +130,7 @@ class Features2Image:
 
     def topic_cb2(self,msg):
         gen = self.create_generator_boxes(msg)
-        self.process_features(gen)
+        self.process_features(gen,2)
 
     def create_generator_boxes(self, msg):
         for i in msg.boxes:
@@ -124,7 +142,7 @@ class Features2Image:
 
     def topic_cb(self,msg):
         gen = self.create_generator(msg)
-        self.process_features(gen)
+        self.process_features(gen,1)
 
     def calculate_mean(self,list_val):
         #warnings.filterwarnings('error')
@@ -179,7 +197,19 @@ class Features2Image:
                     pass
         return output
 
-    def process_features(self, features):
+    def fit(self):
+        epochs = 2
+        for epoch in range(epochs):
+            output = self.nn(torch.from_numpy(self.cvMat.reshape(1,20,20,3)).float())
+            self.nn.loss = self.nn.criterion(output, torch.from_numpy(np.asarray(0).reshape(1,-1)).float())
+            self.nn.loss.mean().backward()
+            self.nn.optimizer.step()
+
+    def predict(self):
+        prediction = self.nn(torch.from_numpy(self.cvMat.reshape(1,20,20,3)).float())
+        print("Prediction", prediction.detach().numpy())
+
+    def process_features(self, features, mode):
         rgb_color=(0, 0, 0)
         color = tuple(rgb_color)
 
@@ -199,12 +229,12 @@ class Features2Image:
         while True:
             try:
                 f = features.next()
-                rospy.loginfo(f)
-                if self.msg_selection == 1:
+                #rospy.loginfo(f)
+                if mode == 1:
                     x = f.centroid.point.x
                     y = f.centroid.point.y
                     z = f.centroid.point.z
-                if self.msg_selection == 2:
+                if mode == 2:
                     x = f.pose.position.x
                     y = f.pose.position.y
                     z = f.pose.position.z
@@ -238,6 +268,12 @@ class Features2Image:
         self.cvMat[:,:,1] += self.calculate_mean(copy.copy(accumulator))
         self.cvMat[:,:,2] += self.calculate_variance(copy.copy(accumulator),copy.copy(self.cvMat[:,:,1]))
 
+
+        if self.current_train != self.max_trains:
+            self.fit()
+            self.current_train +=1
+        else:
+            self.predict()
 
         if self.ros:
             ros_image = self.cv_to_ros(self.cvMat)
