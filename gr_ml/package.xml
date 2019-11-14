@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gr_ml</name>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <description>gr_ml package</description>
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
   <license>MIT</license>
