@@ -8,6 +8,7 @@ from safety_msgs.msg import FoundObjectsArray
 from gr_ml.gr_safety.nn_model import TerrainNetworkModel
 from jsk_recognition_msgs.msg import BoundingBoxArray
 from numpy import fabs,sqrt, floor
+from safety_msgs.msg import FoundObjectsArray, SafetyState
 from numpy.linalg import norm
 from cv_bridge import CvBridge, CvBridgeError
 import numpy as np
@@ -53,6 +54,7 @@ class Features2Image:
         if ros:
             #TODO a better way
             rospy.init_node("features_to_image")
+            self.safety_monito_pub = rospy.Publisher("/observer_1" , SafetyState)
             if msg_selection == 1:
                 msg_type = FoundObjectsArray
                 msg_cb = self.topic_cb
@@ -208,6 +210,10 @@ class Features2Image:
     def predict(self):
         prediction = self.nn(torch.from_numpy(self.cvMat.reshape(1,20,20,3)).float())
         print("Prediction", prediction.detach().numpy())
+        fb = SafetyState()
+        fb.msg.data = "Terrain"
+        fb.mode = np.argmax(prediction.detach().numpy())
+        self.safety_monito_pub.publish(fb)
 
     def process_features(self, features, mode):
         rgb_color=(0, 0, 0)
