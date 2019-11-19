@@ -80,6 +80,8 @@ GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsil
 
 
     plan_pub_ = nh_.advertise<nav_msgs::Path>("plan", 1);
+    time_pub_ = nh_.advertise<std_msgs::Float32>("time_to_go", 1);
+
     ros::NodeHandle nh;
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("nav_vel", 1);
 
@@ -244,6 +246,9 @@ bool GRSBPLPlanner::executePath(){
 
     cmd_vel_pub_.publish(cmd_vel);
     ROS_INFO_STREAM_THROTTLE(2,"Time to GO " << plan_.size()*0.1);
+    std_msgs::Float32 fb_msg;
+    fb_msg.data = plan_.size()*0.1;
+    time_pub_.publish(fb_msg);
   }
 
   stop();

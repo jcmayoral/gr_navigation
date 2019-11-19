@@ -17,6 +17,7 @@ using namespace std;
 #include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/Path.h>
 #include <nav_msgs/MapMetaData.h>
+#include <std_msgs/Float32.h>
 #include <actionlib/server/simple_action_server.h>
 #include <move_base_msgs/MoveBaseAction.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -65,6 +66,7 @@ namespace gr_sbpl_trajectory_generator{
             double allocated_time_;
             double position_tolerance_;
             ros::Publisher plan_pub_;
+            ros::Publisher time_pub_;
             ros::Subscriber point_sub_;
             ros::Subscriber odom_sub_;
             geometry_msgs::PoseStamped start_;
