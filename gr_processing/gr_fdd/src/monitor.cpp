@@ -145,7 +145,7 @@ MainMonitor::MainMonitor(std::string config_file): cpu_monitor_(), fault_detecte
     monitor_status_pub_ = nh.advertise<std_msgs::Int8>("monitor_status", 10);
     monitor_diagnostic_pub_ = nh.advertise<diagnostic_msgs::DiagnosticArray>("/diagnostics_agg", 10);
     strategy_pub_ = nh.advertise<std_msgs::String>("/commands", 10);
-
+    safety_fb_pub_ = nh.advertise<safety_msgs::SafetyState>("/observer_2", 1);
     ros::spin();
 }
 
@@ -218,6 +218,9 @@ void MainMonitor::detect_faults(const ros::TimerEvent&){
     std_msgs::Int8 status;
     status.data = 0;
 
+    safety_msgs::SafetyState safety_fb_msgs;
+    safety_fb_msgs.msg.data = "FDD";
+
     for (std::vector<gr_fdd::DataContainer>::iterator it=data_containers_.begin(); it != data_containers_.end(); ++it){
         //std::lock_guard<std::mutex> lk(it->mtx_);
         //ROS_INFO_STREAM("Check Monitor " << it->getId());
@@ -226,6 +229,7 @@ void MainMonitor::detect_faults(const ros::TimerEvent&){
             detected_errors.push_back(it->getId());
             diagnostic_status.level = diagnostic_msgs::DiagnosticStatus::WARN;
             //std::cout << it->getCurrentStatus() << map_messages[it->getCurrentStatus()] << std::endl;
+            safety_fb_msgs.mode = safety_msgs::SafetyState::UNSAFE;
         }
 
         map_messages[it->getCurrentStatus()]+= it->getId();
@@ -254,9 +258,11 @@ void MainMonitor::detect_faults(const ros::TimerEvent&){
     if (detected_errors.size()>0 && !fault_detected_){
            diagnostic_status.message = isolate_components(detected_errors);
            fault_detected_ = true;
+           safety_fb_msgs.mode = safety_msgs::SafetyState::WARNING;
     }
     else{
         if(detected_errors.size() == 0 && fault_detected_){
+            safety_fb_msgs.mode = safety_msgs::SafetyState::SAFE;
             ROS_ERROR("Resuming normal behavior");
             std_msgs::String strategy_msg;
             strategy_msg.data = "continue";
@@ -268,6 +274,7 @@ void MainMonitor::detect_faults(const ros::TimerEvent&){
     diagnostic_msg.status.push_back(diagnostic_status);
     monitor_status_pub_.publish(status);
     monitor_diagnostic_pub_.publish(diagnostic_msg);
+    safety_fb_pub_.publish(safety_fb_msgs);
   
     if (fault_detected_)
         usleep(500); //just for visualization purposes

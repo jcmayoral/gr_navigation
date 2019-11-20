@@ -20,6 +20,7 @@
 #include <mutex>
 #include <fstream>
 #include <unistd.h>
+#include <safety_msgs/SafetyState.h>
 
 #ifndef MAINMONITOR_H
 #define MAINMONITOR_H
@@ -76,6 +77,7 @@ private:
     ros::Publisher monitor_status_pub_;
     ros::Publisher monitor_diagnostic_pub_;
     ros::Publisher strategy_pub_;
+    ros::Publisher safety_fb_pub_;
     gr_fdd::RecoveryExecutor* recovery_executor_;
     bool fault_detected_;
 };

@@ -12,13 +12,14 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   yaml_cpp_0_3
   roslib
+  safety_msgs
 )
 
 catkin_python_setup()
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp std_msgs topic_tools sensor_msgs geometry_msgs yaml_cpp_0_3 roslib
+  CATKIN_DEPENDS roscpp std_msgs topic_tools sensor_msgs geometry_msgs yaml_cpp_0_3 roslib safety_msgs
 )
 
 include_directories(
