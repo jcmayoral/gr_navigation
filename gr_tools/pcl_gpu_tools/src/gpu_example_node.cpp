@@ -40,11 +40,8 @@ int
 main (int argc, char **argv)
 {
   ros::init(argc, argv, "pcl_gpu_example");
-  bool use_device = false;
-  if (argc >= 2)
-    use_device = true;
   GPUExample v;
-  //v.run (use_device);
+  std::cout << "dfasgas" << std::endl;
   ros::spin();
   return 0;
 }

@@ -64,6 +64,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
    	pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/velodyne_points/filtered", 1);
     cluster_pub_ = nh.advertise<geometry_msgs::PoseArray>("detected_objects",1);
     bb_pub_ = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("/detection/bounding_boxes", 1);
+    ROS_INFO("Setup Done ready to work");
 
 };
 
@@ -107,6 +108,7 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     if (config.timer_enable){
       timer_.start();
     }
+    ROS_ERROR("END reconfigure");
 
 };
 
@@ -240,8 +242,8 @@ void GPUExample::cluster(){
     //ROS_ERROR("cluster");
     boost::mutex::scoped_lock lock(mutex_);
     //Cluster implementation requires XYZ ... If you have a lot of time maybe worth it to modifyied it
-    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc;
-    // = boost::make_shared<pcl::PointCloud<pcl::PointXYZI>>(main_cloud_);
+    std::cout << "HERE "<< std::endl;
+    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
     pcl::copyPointCloud(*concatenated_pc.get(),main_cloud_);
 
 
