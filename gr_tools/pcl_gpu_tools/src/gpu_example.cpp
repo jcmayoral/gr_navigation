@@ -136,14 +136,14 @@ void GPUExample::pointcloud_cb(const sensor_msgs::PointCloud2ConstPtr msg){
     //run_filter(*msg);
     //ROS_ERROR("pointcloud cb");
     sensor_frame_ = msg->header.frame_id;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr output (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr output (new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(*msg, *output);
     //ROS_INFO("PointCloud conversion succeded");
     auto result = run_filter(output);
 };
 
 
-void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> pc){
+void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZI>> pc){
   //ROS_ERROR("Remove ground");
   int original_size = (int) pc->points.size ();
   pcl::ModelCoefficients::Ptr filter_coefficients(new pcl::ModelCoefficients);
@@ -170,7 +170,7 @@ void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>>
 }
 
 //template <template <typename> class Storage> void
-int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> cloud_filtered){
+int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXYZI>> cloud_filtered){
     //boost::mutex::scoped_lock lock(mutex_);
     ROS_INFO("filter");
     bb.boxes.clear();
@@ -239,11 +239,14 @@ void GPUExample::publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_ar
 void GPUExample::cluster(){
     //ROS_ERROR("cluster");
     boost::mutex::scoped_lock lock(mutex_);
-    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>(main_cloud_);
+    //Cluster implementation requires XYZ ... If you have a lot of time maybe worth it to modifyied it
+    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc;
+    // = boost::make_shared<pcl::PointCloud<pcl::PointXYZI>>(main_cloud_);
+    pcl::copyPointCloud(*concatenated_pc.get(),main_cloud_);
 
-    std::cout << "A";
+
     to_odom_transform = tf_buffer_.lookupTransform(global_frame_, sensor_frame_, last_detection_, ros::Duration(0.5) );
-    std::cout << "Z";
+
     if (concatenated_pc->points.size() == 0 ){
       ROS_ERROR("Cluster empty");
       return;
@@ -259,13 +262,17 @@ void GPUExample::cluster(){
     gec.setHostCloud(concatenated_pc);
     gec.extract (cluster_indices_gpu);
     //octree_device->clear();
-    //std::cout << "INFO: stopped with the GPU version" << std::endl;
 
     geometry_msgs::PoseArray clusters_msg;
 
     std::vector<double> x_vector;
     std::vector<double> y_vector;
     std::vector<double> z_vector;
+
+    //TODO Test
+    //pcl::PointCloud<PointXYZI>::Ptr concatenated_xyzi(new pcl::PointCloud<PointXYZI>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr concatenated_xyzi;
+    pcl::copyPointCloud(*concatenated_xyzi, *concatenated_pc.get());
 
     double cluster_std;
 
@@ -277,13 +284,15 @@ void GPUExample::cluster(){
         geometry_msgs::Pose cluster_center;
         cluster_center.orientation.w = 1.0;
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
-            //cloud_cluster->points.push_back (main_cloud_.points[*pit]);
             cluster_center.position.x += concatenated_pc->points[*pit].x/it->indices.size();
             cluster_center.position.y += concatenated_pc->points[*pit].y/it->indices.size();
             cluster_center.position.z += concatenated_pc->points[*pit].z/it->indices.size();
             x_vector.push_back(concatenated_pc->points[*pit].x);
             y_vector.push_back(concatenated_pc->points[*pit].y);
             z_vector.push_back(concatenated_pc->points[*pit].z);
+            //assuming indexes of main_cloud and concatenated_pc match
+            //concatenated is already filtered
+            concatenated_xyzi->points[*pit].intensity = main_cloud_.points[*pit].intensity;
         }
 
         //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
@@ -309,7 +318,7 @@ void GPUExample::cluster(){
     publishBoundingBoxes(clusters_msg);
 
     if (output_publish_){
-        publishPointCloud<pcl::PointCloud <pcl::PointXYZ>>(*concatenated_pc);
+        publishPointCloud<pcl::PointCloud <pcl::PointXYZI>>(*concatenated_xyzi);
     }
     ROS_ERROR_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
