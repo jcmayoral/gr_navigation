@@ -5,7 +5,7 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
                            is_processing_(false), is_timer_enable_(true),
                            tf2_listener_(tf_buffer_), last_detection_(ros::Time(0)),
                            sensor_frame_("velodyne"), global_frame_("odom"),
-                           intensity_classifier_(0.01){
+                           distance_to_floor_(0.0){
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -93,7 +93,6 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     dynamic_std_ = config.dynamic_classifier;
     dynamic_std_z_ = config.dynamic_classifier_z;
     output_publish_ = config.publish_output;
-    intensity_classifier_ = config.intensity_classifier;
 
     if (config.mode == 1){
       remove_ground_ = false;//config.remove_ground = false;
@@ -161,7 +160,8 @@ void GPUExample::removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZI>
   do{
     segmentation_filter_.setInputCloud(pc);
     segmentation_filter_.segment(*filter_inliers, *filter_coefficients);
-    ROS_INFO_STREAM("Distance to floor " << filter_coefficients->values[3]/filter_coefficients->values[2]);
+    distance_to_floor_ = filter_coefficients->values[3]/filter_coefficients->values[2];
+    ROS_INFO_STREAM("Distance to floor " << distance_to_floor_);
       if (filter_inliers->indices.size () != 0){
           extraction_filter_.setInputCloud(pc);
           extraction_filter_.setIndices(filter_inliers);
@@ -313,13 +313,12 @@ void GPUExample::cluster(){
 
         cluster_std = var_x * var_y;// * calculateStd<double>(z_vector);
 
-        if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_ && var_i < intensity_classifier_){
+        if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_ && fabs(cluster_center.position.z) < distance_to_floor_){
         //if (cluster_std< dynamic_std_ && range_z  > dynamic_std_z_){
           clusters_msg.poses.push_back(cluster_center);
           auto range_x = getAbsoluteRange<double>(x_vector);
           auto range_y = getAbsoluteRange<double>(y_vector);
           auto range_z = getAbsoluteRange<double>(z_vector);
-          //auto range_i = getAbsoluteRange<double>(i_vector);
 
           addBoundingBox(cluster_center, range_x, range_y, range_z, var_i);
         }

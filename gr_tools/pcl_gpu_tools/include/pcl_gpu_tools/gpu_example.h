@@ -86,7 +86,7 @@ private:
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig>::CallbackType dyn_server_cb_;
   double dynamic_std_;
   double dynamic_std_z_;
-  double intensity_classifier_;
+  double distance_to_floor_;
 
   bool output_publish_;
   bool remove_ground_;
