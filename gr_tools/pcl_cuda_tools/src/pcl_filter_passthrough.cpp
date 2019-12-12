@@ -3,7 +3,7 @@
 
 using namespace pcl_gpu;
 
-double PCLFilterPassThrough::do_stuff (pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
+double PCLFilterPassThrough::do_stuff (pcl::PointCloud<PointType>  &input_cloud){
 
   int number_points = input_cloud.points.size();
   bool b[number_points];

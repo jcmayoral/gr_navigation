@@ -5,8 +5,8 @@
 //using namespace pcl;
 using namespace pcl_gpu;
 
-double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud){
-  float * x, *y, *z;
+double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<PointType>  &input_cloud){
+  float * x, *y, *z, *intensity;
   bool *b;
   int number_points = input_cloud.points.size();
   //boost::shared_ptr<pcl::PointCloud<pcl::PointXYZ>> pc_pointer;
@@ -15,6 +15,8 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
   x = static_cast<float*>(malloc(sizeof(float) * number_points));
   y = static_cast<float*>(malloc(sizeof(float) * number_points));
   z = static_cast<float*>(malloc(sizeof(float) * number_points));
+  intensity = static_cast<float*>(malloc(sizeof(float) * number_points));
+
   b = static_cast<bool*>(malloc(sizeof(bool) * number_points));
 
   int removed_points = 0;
@@ -23,6 +25,7 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
     x[i] = static_cast<float>(input_cloud.points[i].x);
     y[i] = static_cast<float>(input_cloud.points[i].y);
     z[i] = static_cast<float>(input_cloud.points[i].z);
+    intensity[i] = static_cast<float>(input_cloud.points[i].intensity);
   }
   memset(b, false, number_points);
   bool result = false;
@@ -62,11 +65,11 @@ double FilterPassThrough::do_stuff (std::string channel, pcl::PointCloud<pcl::Po
       continue;
     }
 
-    pcl::PointXYZ point;
+    PointType point;
     point.x = static_cast<float>(x[j]);
     point.y = static_cast<float>(y[j]);
     point.z = static_cast<float>(z[j]);
-
+    point.intensity = static_cast<float>(intensity[j]);
     input_cloud.points.push_back(point);
   }
 

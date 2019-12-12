@@ -11,7 +11,7 @@ extern "C"
   }
 
     __global__
-    void pcl_filter_passthrough_kernel(pcl::PointXYZ *d_point_cloud, bool* b, float min_limit, float max_limit, float filter_value, int size){
+    void pcl_filter_passthrough_kernel(PointType *d_point_cloud, bool* b, float min_limit, float max_limit, float filter_value, int size){
       int index = getGlobalIdx_1D_1D_2();
       if (index >= size){
         return;
@@ -27,14 +27,14 @@ extern "C"
 
     }
 
-    int pcl_apply_cuda_filter(pcl::PointCloud<pcl::PointXYZ> &point_cloud, bool* o_b,float min_limit, float max_limit, float filter_value, int size){
+    int pcl_apply_cuda_filter(pcl::PointCloud<PointType> &point_cloud, bool* o_b,float min_limit, float max_limit, float filter_value, int size){
       // initialize x array on the host
       bool *b;
-      pcl::PointXYZ * d_point_cloud;
+      PointType * d_point_cloud;
 
       cudaMallocManaged(&b, size*sizeof(bool));
-      cudaMalloc((void**)&d_point_cloud, point_cloud.points.size()*sizeof(pcl::PointXYZ) );
-      cudaMemcpy(d_point_cloud, point_cloud.points.data(), point_cloud.points.size()*sizeof(pcl::PointXYZ), cudaMemcpyHostToDevice);
+      cudaMalloc((void**)&d_point_cloud, point_cloud.points.size()*sizeof(PointType) );
+      cudaMemcpy(d_point_cloud, point_cloud.points.data(), point_cloud.points.size()*sizeof(PointType), cudaMemcpyHostToDevice);
       cudaMemcpy(b, o_b, size*sizeof(bool), cudaMemcpyHostToDevice);
 
       int ngrid;      // The launch configurator returned block size
@@ -55,7 +55,7 @@ extern "C"
       //cudaMemcpy(mask, b, size*sizeof(bool), cudaMemcpyDeviceToHost);
 
 
-      pcl::PointCloud<pcl::PointXYZ> new_point_cloud;
+      pcl::PointCloud<PointType> new_point_cloud;
       for(size_t i = 0; i < point_cloud.points.size(); i++){
         if(b[i]){
           new_point_cloud.push_back(point_cloud[i]);

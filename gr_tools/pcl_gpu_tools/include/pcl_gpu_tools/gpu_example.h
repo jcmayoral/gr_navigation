@@ -86,6 +86,8 @@ private:
   dynamic_reconfigure::Server<pcl_gpu_tools::GPUFilterConfig>::CallbackType dyn_server_cb_;
   double dynamic_std_;
   double dynamic_std_z_;
+  double intensity_classifier_;
+
   bool output_publish_;
   bool remove_ground_;
   bool passthrough_enable_;
@@ -108,7 +110,7 @@ public:
     void timer_cb(const ros::TimerEvent&);
     void cluster();
     void publishBoundingBoxes(const geometry_msgs::PoseArray& cluster_array);
-    void addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z);
+    void addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z, double var_i);
     void dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint32_t level);
     void removeGround(boost::shared_ptr <pcl::PointCloud<pcl::PointXYZI>> pc);
 };

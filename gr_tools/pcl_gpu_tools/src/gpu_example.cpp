@@ -4,7 +4,8 @@ GPUExample::GPUExample (): dynamic_std_(0.1), output_publish_(false),
                            remove_ground_(true), passthrough_enable_(true),
                            is_processing_(false), is_timer_enable_(true),
                            tf2_listener_(tf_buffer_), last_detection_(ros::Time(0)),
-                           sensor_frame_("velodyne"), global_frame_("odom"){
+                           sensor_frame_("velodyne"), global_frame_("odom"),
+                           intensity_classifier_(0.01){
     ros::NodeHandle nh("~");
     //gec.setMaxClusterSize (0);
 
@@ -92,6 +93,7 @@ void GPUExample::dyn_reconfigureCB(pcl_gpu_tools::GPUFilterConfig &config, uint3
     dynamic_std_ = config.dynamic_classifier;
     dynamic_std_z_ = config.dynamic_classifier_z;
     output_publish_ = config.publish_output;
+    intensity_classifier_ = config.intensity_classifier;
 
     if (config.mode == 1){
       remove_ground_ = false;//config.remove_ground = false;
@@ -123,8 +125,9 @@ void GPUExample::timer_cb(const ros::TimerEvent&){
 
 template <class T> void GPUExample::publishPointCloud(T t){
 
-    if(t.points.size() ==0 )
+    if(t.points.size() ==0 ){
       return;
+    } 
     sensor_msgs::PointCloud2 output_pointcloud_;
     pcl::toROSMsg(t, output_pointcloud_);
     output_pointcloud_.header.frame_id = sensor_frame_;
@@ -211,12 +214,11 @@ int GPUExample::run_filter(const boost::shared_ptr <pcl::PointCloud<pcl::PointXY
     return 1;
 }
 
-void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z){
+void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, double v_y, double v_z, double var_i){
   jsk_recognition_msgs::BoundingBox cluster_bb;
   //cluster_bb.header.stamp = ros::Time::now();
   geometry_msgs::Pose out;
   tf2::doTransform(center, out, to_odom_transform);
-  ROS_WARN("WORKS :)");
 
   cluster_bb.header.frame_id = global_frame_; //this should be a param
   cluster_bb.header.stamp = last_detection_;
@@ -228,6 +230,10 @@ void GPUExample::addBoundingBox(const geometry_msgs::Pose center, double v_x, do
   cluster_bb.dimensions.x = v_x;
   cluster_bb.dimensions.y = v_y;
   cluster_bb.dimensions.z = v_z;
+
+  cluster_bb.label = var_i*1000;
+  cluster_bb.value = var_i;
+
   bb.boxes.push_back(cluster_bb);
 }
 
@@ -242,26 +248,26 @@ void GPUExample::cluster(){
     //ROS_ERROR("cluster");
     boost::mutex::scoped_lock lock(mutex_);
     //Cluster implementation requires XYZ ... If you have a lot of time maybe worth it to modifyied it
-    std::cout << "HERE "<< std::endl;
-    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> concatenated_pc = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-    pcl::copyPointCloud(*concatenated_pc.get(),main_cloud_);
+    boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> pointcloud_xyz = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+    pcl::copyPointCloud(main_cloud_,*pointcloud_xyz.get());
 
 
     to_odom_transform = tf_buffer_.lookupTransform(global_frame_, sensor_frame_, last_detection_, ros::Duration(0.5) );
 
-    if (concatenated_pc->points.size() == 0 ){
+    if (pointcloud_xyz->points.size() == 0 ){
       ROS_ERROR("Cluster empty");
       return;
     }
-    ROS_INFO_STREAM("points "<< concatenated_pc->points.size());
-    concatenated_pc->width  = concatenated_pc->points.size();
-    cloud_device.upload(concatenated_pc->points);
+    //ROS_INFO_STREAM("points "<< pointcloud_xyz->points.size());
+    //concatenated_pc->width  = pointcloud_xyz->points.size();
+    cloud_device.upload(pointcloud_xyz->points);
     pcl::gpu::Octree::Ptr octree_device (new pcl::gpu::Octree);
     octree_device->setCloud(cloud_device);
     octree_device->build();
     std::vector<pcl::PointIndices> cluster_indices_gpu;
     gec.setSearchMethod (octree_device);
-    gec.setHostCloud(concatenated_pc);
+
+    gec.setHostCloud(pointcloud_xyz);
     gec.extract (cluster_indices_gpu);
     //octree_device->clear();
 
@@ -270,11 +276,13 @@ void GPUExample::cluster(){
     std::vector<double> x_vector;
     std::vector<double> y_vector;
     std::vector<double> z_vector;
+    std::vector<double> i_vector;
 
     //TODO Test
-    //pcl::PointCloud<PointXYZI>::Ptr concatenated_xyzi(new pcl::PointCloud<PointXYZI>);
-    pcl::PointCloud<pcl::PointXYZI>::Ptr concatenated_xyzi;
-    pcl::copyPointCloud(*concatenated_xyzi, *concatenated_pc.get());
+    pcl::PointCloud<PointXYZI> pointcloud_xyzi;//(new pcl::PointCloud<PointXYZI>);
+    //pcl::PointCloud<pcl::PointXYZI>::Ptr concatenated_xyzi;
+    pcl::copyPointCloud(*pointcloud_xyz.get(),pointcloud_xyzi);
+
 
     double cluster_std;
 
@@ -286,31 +294,34 @@ void GPUExample::cluster(){
         geometry_msgs::Pose cluster_center;
         cluster_center.orientation.w = 1.0;
         for (std::vector<int>::const_iterator pit = it->indices.begin (); pit != it->indices.end (); ++pit){
-            cluster_center.position.x += concatenated_pc->points[*pit].x/it->indices.size();
-            cluster_center.position.y += concatenated_pc->points[*pit].y/it->indices.size();
-            cluster_center.position.z += concatenated_pc->points[*pit].z/it->indices.size();
-            x_vector.push_back(concatenated_pc->points[*pit].x);
-            y_vector.push_back(concatenated_pc->points[*pit].y);
-            z_vector.push_back(concatenated_pc->points[*pit].z);
-            //assuming indexes of main_cloud and concatenated_pc match
+            cluster_center.position.x += main_cloud_.points[*pit].x/it->indices.size();
+            cluster_center.position.y += main_cloud_.points[*pit].y/it->indices.size();
+            cluster_center.position.z += main_cloud_.points[*pit].z/it->indices.size();
             //concatenated is already filtered
-            concatenated_xyzi->points[*pit].intensity = main_cloud_.points[*pit].intensity;
+            pointcloud_xyzi.points[*pit].intensity = main_cloud_.points[*pit].intensity;
+            x_vector.push_back(main_cloud_.points[*pit].x);
+            y_vector.push_back(main_cloud_.points[*pit].y);
+            z_vector.push_back(main_cloud_.points[*pit].z);
+            i_vector.push_back(main_cloud_.points[*pit].intensity);
         }
 
         //cluster_std = calculateStd<double>(x_vector)*calculateStd<double>(y_vector);
         double var_x = calculateVariance<double>(x_vector);
         double var_y = calculateVariance<double>(y_vector);
         double var_z = calculateVariance<double>(z_vector);
+        double var_i = calculateVariance<double>(z_vector);
 
         cluster_std = var_x * var_y;// * calculateStd<double>(z_vector);
-        if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_){
-        //std::cout << "VAR " << cluster_std << std::endl;
+
+        if (cluster_std< dynamic_std_ && var_z  > dynamic_std_z_ && var_i < intensity_classifier_){
         //if (cluster_std< dynamic_std_ && range_z  > dynamic_std_z_){
           clusters_msg.poses.push_back(cluster_center);
           auto range_x = getAbsoluteRange<double>(x_vector);
           auto range_y = getAbsoluteRange<double>(y_vector);
           auto range_z = getAbsoluteRange<double>(z_vector);
-          addBoundingBox(cluster_center, range_x, range_y, range_z);
+          //auto range_i = getAbsoluteRange<double>(i_vector);
+
+          addBoundingBox(cluster_center, range_x, range_y, range_z, var_i);
         }
     }
 
@@ -320,7 +331,7 @@ void GPUExample::cluster(){
     publishBoundingBoxes(clusters_msg);
 
     if (output_publish_){
-        publishPointCloud<pcl::PointCloud <pcl::PointXYZI>>(*concatenated_xyzi);
+        publishPointCloud<pcl::PointCloud <pcl::PointXYZI>>(pointcloud_xyzi);
     }
     ROS_ERROR_STREAM ("Clustering Time: " << (double)(clock() - tStart)/CLOCKS_PER_SEC);
 
