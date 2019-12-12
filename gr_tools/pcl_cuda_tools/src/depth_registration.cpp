@@ -34,10 +34,8 @@ double DepthRegistration::run(){
   }
   */
   int n = frame_.rows * frame_.cols;
-  std::cout << "size" << sizeof(x)/sizeof(*x) << n << std::endl;
 
   bool result = do_cuda_stuff(x, n);
-  std::cout << "RUN results"<< result *  0.001 << std::endl;
   return result * 0.001;
 
 }

@@ -12,7 +12,6 @@ extern "C"{
       //int idx = blockIdx.x * blockDim.x + threadIdx.x;
       //int index = blockIdx.x * blockDim.x + threadIdx.x;
       //int stride = blockDim.x * gridDim.x;
-      //printf("%d %d \n", gridDim.x, blockDim.x  );
       int index = get_globalIdx_1D_1D();
       t[x[index]] += 1;
     }
@@ -33,7 +32,7 @@ extern "C"{
       int nthreads = 512;
       dim3 threads (nthreads);
       int nblocks =  1 + ceil(size / nthreads);//size/ nthreads -1;
-      //printf("blocks....%d %d\n", nblocks, nblocks*nthreads);
+
       cudaMallocManaged(&t, nthreads*sizeof(int));
       t = static_cast<int*>(malloc(sizeof(int) * nthreads));
       tr = static_cast<int*>(malloc(sizeof(int) * nthreads));
@@ -59,7 +58,6 @@ extern "C"{
           max_index = i;
         }
       }
-      printf("result....%d %d\n", max_value, max_index);
 
       return max_index;
     }

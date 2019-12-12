@@ -6,7 +6,8 @@
 
 extern "C"
 {
-  int pcl_apply_cuda_filter(pcl::PointCloud<pcl::PointXYZ> &point_cloud, bool* o_b,float min_limit, float max_limit, float filter_value, int size);
+  typedef pcl::PointXYZI PointType;
+  int pcl_apply_cuda_filter(pcl::PointCloud<PointType> &point_cloud, bool* o_b,float min_limit, float max_limit, float filter_value, int size);
 }
 
 #endif

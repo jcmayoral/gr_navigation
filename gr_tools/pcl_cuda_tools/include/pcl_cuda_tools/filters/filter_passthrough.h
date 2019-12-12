@@ -12,7 +12,7 @@ namespace pcl_gpu{
   class FilterPassThrough
   {
     public:
-      //using PointType = pcl::PointXYZ;
+      typedef pcl::PointXYZI PointType;
       //using PointCloudHost = pcl::PointCloud<PointType>;
       //using PointCloudHostPtr = PointCloudHost::Ptr;
       //using PointCloudHostConstPtr = PointCloudHost::ConstPtr;
@@ -56,14 +56,14 @@ namespace pcl_gpu{
         return (maximum_value_);
       }
 
-      inline void setHostCloud ( pcl::PointCloud<pcl::PointXYZ>::Ptr host_cloud) {
+      inline void setHostCloud ( pcl::PointCloud<PointType>::Ptr host_cloud) {
         host_cloud_ = host_cloud;
       }
 
-      double do_stuff(std::string channel, pcl::PointCloud<pcl::PointXYZ>  &input_cloud);
+      double do_stuff(std::string channel, pcl::PointCloud<PointType>  &input_cloud);
 
     protected:
-       pcl::PointCloud<pcl::PointXYZ>::Ptr host_cloud_;
+       pcl::PointCloud<PointType>::Ptr host_cloud_;
 
       /** \brief The spatial cluster tolerance as a measure in the L2 Euclidean space. */
       double cluster_tolerance_;

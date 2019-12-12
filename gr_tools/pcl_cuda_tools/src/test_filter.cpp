@@ -3,10 +3,10 @@
 int main (int argc, char **argv){
   pcl_gpu::FilterPassThrough passthrough_filter_;
   //boost::shared_ptr <pcl::PointCloud<pcl::PointXYZ>> input(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl_gpu::FilterPassThrough::PointType>::Ptr input(new pcl::PointCloud<pcl_gpu::FilterPassThrough::PointType>);
 
   for (int i=0; i< 1024*1024; i++){
-    pcl::PointXYZ p;
+    pcl_gpu::FilterPassThrough::PointType p;
     p.x = 0.1;
     p.y = 0.1;
     p.z = 10.1;
