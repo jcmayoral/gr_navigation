@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-  <node pkg="gr_fdd" type="gr_fdd_node" name="gr_fdd" output="screen" respawn="true">
-  </node>
-  <node pkg="gr_fdd" type="cpu_monitor_py" name="cpu_py_publisher" output="screen" respawn="true">
-  </node>
-</launch>

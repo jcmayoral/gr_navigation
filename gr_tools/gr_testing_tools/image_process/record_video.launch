@@ -1,8 +1,0 @@
-<launch>
-  <node pkg="image_view" type="video_recorder" name="recorder" output="screen">
-    <!--remap from="/image" to="/darknet_ros/detection_image"/-->
-    <remap from="/image" to="/rtsp_camera_relay/image"/>
-    <param name="filename" value="/home/jose/Videos/grass_flir.avi"/>
-  </node>
-</launch>
-

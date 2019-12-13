@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-  <arg name="launch_prefix" default="gdb -ex run --args"/>
-  <node pkg="gr_fdd" type="gr_fdd_node" name="gr_fdd" output="screen" respawn="true" launch-prefix="$(arg launch_prefix)">
-  </node>
-</launch>
-
