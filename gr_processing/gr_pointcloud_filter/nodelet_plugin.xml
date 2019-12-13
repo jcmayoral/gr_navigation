@@ -1,7 +1,0 @@
-<library path="lib/libgr_pointcloud_filter">
-  <class name="gr_pointcloud_filter/MyNodeletClass" type="gr_pointcloud_filter::MyNodeletClass" base_class_type="nodelet::Nodelet">
-  <description>
-    gr_pointcloud_filter nodelet
-  </description>
-  </class>
-</library>

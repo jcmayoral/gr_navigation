@@ -1,1 +1,0 @@
-{'range_max': 3.0, 'meters': 25.0, 'pix_per_meter': 40, 'range_min': -3.0}
