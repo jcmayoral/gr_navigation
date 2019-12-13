@@ -8,7 +8,14 @@ namespace gr_depth_processing
 {
 
   void MyNodeletClass::onInit(){
+
+    //Local NodeHandle
+    ros::NodeHandle local_nh("~");
+    local_nh.getParam("global_frame", global_frame_);
+
     tf2_listener_= new  tf2_ros::TransformListener(tf_buffer_);
+
+    //Select filters
     filterImage = &cv_filter;
     //registerImage = &register_pointclouds;
     //registerImage = &register_ransac_pointclouds;
@@ -151,7 +158,7 @@ namespace gr_depth_processing
        continue;
       }
 
-      to_base_link_transform = tf_buffer_.lookupTransform("base_link", in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
+      to_base_link_transform = tf_buffer_.lookupTransform(global_frame_, in.header.frame_id, ros::Time(0), ros::Duration(1.0) );
       tf2::doTransform(in, out, to_base_link_transform);
       
       detected_objects_.header= out.header;

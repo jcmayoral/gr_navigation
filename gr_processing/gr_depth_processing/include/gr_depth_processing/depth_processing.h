@@ -86,6 +86,7 @@ namespace gr_depth_processing
 
       boost::recursive_mutex mutex;
       double max_range_;
+      std::string global_frame_;
   };
 
 };

@@ -1,5 +1,8 @@
 <launch>
+  <arg name="global_frame" default="base_link" />
+
   <node pkg="nodelet" type="nodelet" name="depth_processing_nodelet"  args="manager" output="screen">
+    <param name="global_frame" value="$(arg global_frame)" />
     <remap from="/camera/color/image_raw" to="/camera/color/image_raw"/>
     <remap from="/camera/color/camera_info" to="/camera/color/camera_info"/>
     <remap from="/camera/depth/image_rect_raw" to="/camera/depth/image_rect_raw"/>
