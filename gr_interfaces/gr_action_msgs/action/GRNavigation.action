@@ -1,7 +1,0 @@
-std_msgs/String start_node
----
-std_msgs/String completed_edge
-float64 executing_time
----
-float64 next_offset
-bool suceeded
