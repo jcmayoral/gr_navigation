@@ -66,9 +66,12 @@ namespace gr_map_utils{
 
         if(message_store_->queryNamed<navigation_msgs::TopologicalMap>(name, results_map)) {
             topological_map_.nodes.clear();
-            BOOST_FOREACH( boost::shared_ptr<  navigation_msgs::TopologicalMap> topological_map_,  results_map){
-                ROS_INFO_STREAM("Got by name: " << *topological_map_);
+            std::cout << results_map.size() << std::endl;
+            BOOST_FOREACH( boost::shared_ptr<  navigation_msgs::TopologicalMap> map,  results_map){
+               //ROS_INFO_STREAM("Got by name: " << *map);
+               topological_map_ = *map;
             }
+            ROS_INFO_STREAM(topological_map_);
             return true;
         }
 
@@ -164,6 +167,7 @@ namespace gr_map_utils{
             tf2::doTransform(in, out, to_map_transform);
             node_x = out.pose.position.x;
             node_y = out.pose.position.y;
+            ROS_INFO_STREAM(out.pose.position);
 
 
             if (node_x < min_x){
@@ -200,7 +204,6 @@ namespace gr_map_utils{
                 edges.emplace_back(it->name,goal);//This is just an example
             }
         }
-
 
         geometry_msgs::Pose origin;
         origin.position.x = min_x - map_offset_/2;
