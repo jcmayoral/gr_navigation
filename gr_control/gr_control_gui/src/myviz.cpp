@@ -252,7 +252,7 @@ void MyViz::visualizeMap(){
   std::vector<std::pair<float,float> > vector;
 
   map_utils_->calculateCenters(vector,  x_cells_, y_cells_, 1.0, 1.0);
-  std::cout << "cells " << x_cells_ << " , " << y_cells_ << std::endl;
+
   int id, index_1, index_2 = 0;
   int col;
 
@@ -341,7 +341,6 @@ void MyViz::visualizeMap(){
 
   map_publisher_.publish(marker_array_);
   publishRegion();
-  std::cout << "OK"<<std::endl;
 }
 
 void MyViz::deleteTopoMap(){
@@ -349,7 +348,6 @@ void MyViz::deleteTopoMap(){
       std::cout << "Map not detected" << std::endl;
       return;
     }
-    std::cout << "deleting "<< storing_id_ << std::endl;
   	message_store_->deleteID(storing_id_);
     std::cout << "deleted "<< storing_id_ << std::endl;
     storing_id_ = "";
@@ -367,37 +365,27 @@ void MyViz::saveMap(){
   topo_map.map_id = map_id;
 
   //TODO this is a hack for the python mongodb implementation
-  std::vector<std::string> fields;
-  fields.push_back("map_id");
-  fields.push_back("node");
+  //std::vector<std::string> fields;
+  //fields.push_back("map_id");
+  //fields.push_back("node");
 
   //std::vector<std::string> ids;
   //ids.push_back(map_id);
   //ids.push_back(map_id);
-
-  std::cout << "elements in nodemap " << node_map_.size() << std::endl;
-  std::cout << "rr " << robot_radius_/2.0 << std::endl;
 
   for (auto const & node : node_map_){
 
     topo_node.edges.clear();
     topo_node.verts.clear();
     topo_node.pose = node.second;
-    //ids[1] = node.first;
-    //ids[3] = node.first;
-    std::cout << node.first << std::endl;
     topo_node.name = node.first;
-    std::cout << vertex.x << vertex.y << std::endl;
 
     vertex.x = -robot_radius_/2.0;
     vertex.y = robot_radius_/2.0;
-    std::cout << vertex.x << vertex.y << std::endl;
 
     topo_node.verts.push_back(vertex);
     vertex.x = robot_radius_/2.0;
     vertex.y = robot_radius_/2.0;
-
-    std::cout << vertex.x << vertex.y << std::endl;
 
     topo_node.verts.push_back(vertex);
     vertex.x = robot_radius_/2;
@@ -422,10 +410,8 @@ void MyViz::saveMap(){
   }
 
  if (!storing_id_.empty()){
-   std::cout << "QUerying " << storing_id_ << std::endl;
    std::vector<boost::shared_ptr<navigation_msgs::TopologicalMap > >aaa;
    message_store_->queryID<navigation_msgs::TopologicalMap>(storing_id_,aaa);
-   std::cout << aaa[0]->map_id <<std::endl;
    message_store_->updateNamed(map_id, topo_map);
    std::cout<<"Map \""<<map_id<<"\" updated with id "<<storing_id_<<std::endl;
  }
