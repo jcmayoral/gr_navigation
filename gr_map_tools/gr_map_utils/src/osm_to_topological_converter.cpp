@@ -6,8 +6,8 @@ namespace gr_map_utils{
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         is_map_received_ = false;
-        static_topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
-        topological_map_pub_ = nh_.advertise<strands_navigation_msgs::TopologicalMap>("topological_map", 1, true);
+        static_topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
+        topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map", 1, true);
         topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("filtered_topological_map", 1, true); 
         osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2TopologicalMap::osm_map_cb, this);
         dyn_server_cb_ = boost::bind(&Osm2TopologicalMap::dyn_reconfigureCB, this, _1, _2);
@@ -70,7 +70,7 @@ namespace gr_map_utils{
         std::cout << static_topological_map_.nodes.size()<< std::endl;
         //std::unique_lock<std::mutex> lk(mutex_);
         int count = 0;
-        strands_navigation_msgs::TopologicalNode node;
+        navigation_msgs::TopologicalNode node;
         filtered_map_.markers.clear();
         topological_map_.nodes.clear();
         geometry_msgs::TransformStamped to_map_transform; // My frames are named "base_link" and "leap_motion"

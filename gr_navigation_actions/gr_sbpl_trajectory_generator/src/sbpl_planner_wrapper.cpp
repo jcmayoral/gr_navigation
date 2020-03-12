@@ -188,11 +188,11 @@ void GRSBPLPlanner::stop(){
 
 double GRSBPLPlanner::getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame){
   geometry_msgs::TransformStamped transform_stamped;
-  tf::Pose tf_pose;
+  //tf::Pose tf_pose;
   transform_stamped = tfBuffer.lookupTransform(frame, pose.header.frame_id, ros::Time(0), ros::Duration(1.0) );
   tf2::doTransform(pose, pose, transform_stamped);
-  tf::poseMsgToTF(pose.pose, tf_pose);
-  return tf::getYaw(tf_pose.getRotation());
+  //tf::poseMsgToTF(pose.pose, tf_pose);
+  return tf2::getYaw(pose.pose.orientation);
 }
 
 
@@ -200,7 +200,6 @@ double GRSBPLPlanner::getRotationInFrame(geometry_msgs::PoseStamped& pose, std::
 bool GRSBPLPlanner::executePath(){
   geometry_msgs::TransformStamped base_link_to_map;
 
-  tf::Pose pose;
   double yaw1, yaw2;
   geometry_msgs::PoseStamped current_pose;
 

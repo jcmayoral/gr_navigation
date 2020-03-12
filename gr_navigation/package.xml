@@ -15,7 +15,8 @@
   <exec_depend>gr_sbpl_trajectory_generator</exec_depend>
   <exec_depend>gr_topological_navigation</exec_depend>
   <exec_depend>safety_core</exec_depend>
-  <exec_depend>safety_msg</exec_depend>
+  <exec_depend>safety_msgs</exec_depend>
+  <exec_depend>navigation_msgs</exec_depend>
 
   <export>
     <metapackage/>

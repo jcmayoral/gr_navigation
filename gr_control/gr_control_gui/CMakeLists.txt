@@ -4,7 +4,7 @@ project(gr_control_gui)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS rviz roscpp visualization_msgs
-                    geometry_msgs mongodb_store strands_navigation_msgs
+                    geometry_msgs mongodb_store navigation_msgs
                     tf2_geometry_msgs std_msgs gr_map_utils)
 
 include_directories(${catkin_INCLUDE_DIRS})
@@ -18,7 +18,7 @@ catkin_package(
       visualization_msgs
       geometry_msgs
       mongodb_store
-      strands_navigation_msgs
+      navigation_msgs
       tf2_geometry_msgs
       std_msgs
       gr_map_utils

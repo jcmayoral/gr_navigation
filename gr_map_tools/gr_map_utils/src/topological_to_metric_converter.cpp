@@ -59,14 +59,14 @@ namespace gr_map_utils{
 
     bool Topological2MetricMap::getMapFromDatabase(){
         ROS_INFO("Trying getting map from database");
-        std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalMap> > results_map;
-        std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
+        std::vector< boost::shared_ptr<navigation_msgs::TopologicalMap> > results_map;
+        std::vector< boost::shared_ptr<navigation_msgs::TopologicalNode> > results_node;
 
         std::string name("wish_map_move_base");
 
-        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalMap>(name,"map", results_map)) {
+        if(message_store_->queryNamed<navigation_msgs::TopologicalMap>(name, results_map)) {
             topological_map_.nodes.clear();
-            BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalMap> topological_map_,  results_map){
+            BOOST_FOREACH( boost::shared_ptr<  navigation_msgs::TopologicalMap> topological_map_,  results_map){
                 ROS_INFO_STREAM("Got by name: " << *topological_map_);
             }
             return true;
@@ -74,13 +74,13 @@ namespace gr_map_utils{
 
 
 
-        std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results;
+        std::vector< boost::shared_ptr<navigation_msgs::TopologicalNode> > results;
         //On this version the map is stored by NAME Not anymore nodes stored
         ROS_WARN("QUERY NODES");
-        if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>(name,"map", results_node, false)) {
+        if(message_store_->queryNamed<navigation_msgs::TopologicalNode>(name, results_node, false)) {
             topological_map_.nodes.clear();
-            strands_navigation_msgs::TopologicalNode node;
-            BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> node,  results_node){
+            navigation_msgs::TopologicalNode node;
+            BOOST_FOREACH( boost::shared_ptr<navigation_msgs::TopologicalNode> node,  results_node){
                 ROS_DEBUG_STREAM("Got by name: " << *node);
                 topological_map_.nodes.push_back(*node);
             }
@@ -115,8 +115,8 @@ namespace gr_map_utils{
     bool Topological2MetricMap::getMapFromTopic(){
 
         ROS_INFO("Wait map from topic.. timeout to 3 seconds");
-        boost::shared_ptr<strands_navigation_msgs::TopologicalMap const> map;
-        map =  ros::topic::waitForMessage<strands_navigation_msgs::TopologicalMap>("topological_map", ros::Duration(3));
+        boost::shared_ptr<navigation_msgs::TopologicalMap const> map;
+        map =  ros::topic::waitForMessage<navigation_msgs::TopologicalMap>("topological_map", ros::Duration(3));
         if (map != NULL){
             topological_map_ = *map;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
@@ -154,7 +154,7 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped out;
         geometry_msgs::PoseStamped in;
 
-        for (std::vector<strands_navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
+        for (std::vector<navigation_msgs::TopologicalNode>::iterator it = topological_map_.nodes.begin(); it!= topological_map_.nodes.end(); ++it){
             //std::cout << "node name "<< it->name << std::endl;
             in.header.frame_id = "map";//todo topological map should include frame_id
             in.pose.position.x = it->pose.position.x;
@@ -186,7 +186,7 @@ namespace gr_map_utils{
             node_centers.emplace_back(node_x, node_y);
             nodes_coordinates[it->name] = CellCoordinates(node_x,node_y);
 
-            for (std::vector<strands_navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){
+            for (std::vector<navigation_msgs::Edge>::iterator edges_it = it->edges.begin(); edges_it!= it->edges.end(); ++edges_it){
                 //Since some node names has several "_" the beginning of the array must be replaced or erased with null values
                 //Assuming edges convention name as edge_id_1  " _ " edge_id_2
 

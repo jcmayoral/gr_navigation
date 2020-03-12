@@ -368,36 +368,23 @@ void MyViz::deleteTopoMap(std::string map_id){
 
 void MyViz::saveMap(){
 
-  strands_navigation_msgs::TopologicalMap topo_map;
-  strands_navigation_msgs::TopologicalNode topo_node;
-  strands_navigation_msgs::Vertex vertex;
+  navigation_msgs::TopologicalMap topo_map;
+  navigation_msgs::TopologicalNode topo_node;
+  navigation_msgs::Vertex vertex;
 
-  strands_navigation_msgs::Edge edge;
+  navigation_msgs::Edge edge;
 
   //std::string map_id("trash_map_5");
   std::string map_id("wish_map_move_base");
   deleteTopoMap(map_id);
-  topo_map.map = map_id;
-  topo_map.name =  map_id;
-  topo_map.pointset = map_id;
-
-
-  topo_node.map = map_id;
-  topo_node.name = map_id;
-  topo_node.pointset = map_id;
-  topo_node.localise_by_topic = map_id;
+  topo_map.map_id = map_id;
 
   //TODO this is a hack for the python mongodb implementation
-  // Just work on Jose's mongodb_store repository
   std::vector<std::string> fields;
-  fields.push_back("map");
+  fields.push_back("map_id");
   fields.push_back("node");
-  fields.push_back("pointset");
-  fields.push_back("name");
 
   std::vector<std::string> ids;
-  ids.push_back(map_id);
-  ids.push_back(map_id);
   ids.push_back(map_id);
   ids.push_back(map_id);
 
@@ -432,7 +419,7 @@ void MyViz::saveMap(){
       }
     }
 
-    std::string result(message_store_->insertNamed( fields, ids, topo_node));
+    std::string result(message_store_->insertNamed(map_id, topo_node));
     //std::string result(message_store_->insertNamed("pointset", map_id, topo_node));
     topo_map.nodes.push_back(topo_node);
   }

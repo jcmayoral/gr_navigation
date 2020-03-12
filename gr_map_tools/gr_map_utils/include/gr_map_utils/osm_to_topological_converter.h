@@ -5,7 +5,7 @@
 #include <mutex>
 #include <vector>
 
-#include <strands_navigation_msgs/TopologicalMap.h>
+#include <navigation_msgs/TopologicalMap.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <ros/ros.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -30,8 +30,8 @@ namespace gr_map_utils{
         private:
             visualization_msgs::MarkerArray osm_map_;
             visualization_msgs::MarkerArray filtered_map_;
-            strands_navigation_msgs::TopologicalMap static_topological_map_;
-            strands_navigation_msgs::TopologicalMap topological_map_;
+            navigation_msgs::TopologicalMap static_topological_map_;
+            navigation_msgs::TopologicalMap topological_map_;
             ros::Publisher topological_map_pub_;
             ros::Publisher static_topological_map_pub_;
             ros::Publisher topological_marker_pub_;

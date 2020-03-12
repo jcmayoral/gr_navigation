@@ -7,7 +7,7 @@
 #include <math.h>
 #include <dynamic_reconfigure/server.h>
 
-#include <strands_navigation_msgs/TopologicalMap.h>
+#include <navigation_msgs/TopologicalMap.h>
 #include <geometry_msgs/Pose.h>
 #include <geographic_msgs/GetGeographicMap.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -37,7 +37,7 @@ namespace gr_map_utils{
             void dyn_reconfigureCB(TopologicalMapConverterConfig &config, uint32_t level);
 
         private:
-            strands_navigation_msgs::TopologicalMap topological_map_;
+            navigation_msgs::TopologicalMap topological_map_;
             nav_msgs::OccupancyGrid created_map_;        
             ros::Subscriber topological_map_sub_;
             ros::Publisher map_pub_;

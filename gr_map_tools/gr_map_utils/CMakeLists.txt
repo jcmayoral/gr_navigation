@@ -17,7 +17,7 @@ find_package(catkin REQUIRED
         std_msgs
         visualization_msgs
         geographic_msgs
-        strands_navigation_msgs
+        navigation_msgs
         message_generation
         tf2
         tf2_ros
@@ -66,7 +66,7 @@ catkin_package(
         sensor_msgs
         visualization_msgs
         geographic_msgs
-        strands_navigation_msgs
+        navigation_msgs
         tf2
         tf2_ros
         geodesy
@@ -75,12 +75,6 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_library(gr_map_utils src/tf_frame_publisher.cpp)
-
-add_executable(multi_map_server src/multi_map_server_node.cpp)
-target_link_libraries(multi_map_server
-    ${catkin_LIBRARIES}
-    yaml-cpp
-)
 
 add_executable(osm_map_converter src/osm_to_topological_node.cpp src/osm_to_topological_converter.cpp src/tf_frame_publisher.cpp)
 add_dependencies(osm_map_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
@@ -97,7 +91,7 @@ target_link_libraries(topological_map_converter
 )
 
 ## Install executables and/or libraries
-install(TARGETS multi_map_server osm_map_converter topological_map_converter
+install(TARGETS osm_map_converter topological_map_converter
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
