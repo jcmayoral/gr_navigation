@@ -7,15 +7,21 @@ import networkx as nx
 import numpy as np
 import tf
 import matplotlib.pyplot as plt
-from strands_navigation_msgs.srv import GetTopologicalMapRequest, GetTopologicalMap
-from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
+
+#TODO
+#from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+
+#Removing strands and rasberry dependencies
+from mongodb_store.message_store import MessageStoreProxy
+from navigation_msgs.msg import TopologicalMap
 
 from std_msgs.msg import String, Bool
 from gr_topological_navigation.states.move_base_state import command_robot_to_node, move_base, sbpl_action_mode
 
 class TopologicalPlanner(SimpleActionState):
     def __init__(self, gui=False, pointset="riseholme_bidirectional_sim"):
+        self.msg_store = MessageStoreProxy(collection="topological_maps")
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         self.current_node = None
         current_edge_subscriber = rospy.Subscriber("/current_node", String, self.current_node_callback, queue_size=2)
@@ -53,10 +59,13 @@ class TopologicalPlanner(SimpleActionState):
         self.generate_full_coverage_plan()
 
     def get_map(self):
-        get_topological_map = rospy.ServiceProxy("/topological_map_publisher/get_topological_map", GetTopologicalMap)
-        msg = GetTopologicalMapRequest()
-        msg.pointset = self.pointset
-        map = get_topological_map(msg)
+        #get_topological_map = rospy.ServiceProxy("/topological_map_publisher/get_topological_map", GetTopologicalMap)
+        #msg = GetTopologicalMapRequest()
+        #msg.pointset = self.pointset
+        #map = get_topological_map(msg)
+        query = self.msg_store.query_named("wish_map_move_base", TopologicalMap._type)
+        map = query[0]
+        print query[1]
         self.reset_graph(map)
 
     #Getting FB form topological navigation
@@ -93,7 +102,7 @@ class TopologicalPlanner(SimpleActionState):
         self.networkx_graph = nx.Graph()
         self.nodes_poses = dict()
 
-        for n in map.map.nodes:
+        for n in map.nodes:
             #assuming 2d map just yaw matters
             quaternion = (n.pose.orientation.x,
                           n.pose.orientation.y,

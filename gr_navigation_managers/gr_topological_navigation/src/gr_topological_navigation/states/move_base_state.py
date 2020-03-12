@@ -1,7 +1,7 @@
 import actionlib
 import rospy
 import tf
-from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
+#from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 
@@ -18,10 +18,10 @@ def command_robot_to_node(node_id, no_orientation=True):
     rospy.loginfo("Action Server Found")
 
     rospy.loginfo("Commanding robot to %s", node_id)
-    navgoal = GotoNodeGoal()
-    navgoal.target = node_id
-    navgoal.no_orientation = no_orientation
-    action_client.send_goal(navgoal)
+    #navgoal = GotoNodeGoal()
+    #navgoal.target = node_id
+    #navgoal.no_orientation = no_orientation
+    #action_client.send_goal(navgoal)
     action_client.wait_for_result()
     rospy.loginfo("Is node %s reached? %r", node_id,  action_client.get_result())
     return action_client.get_result()
