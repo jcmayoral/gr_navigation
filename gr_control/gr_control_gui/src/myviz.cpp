@@ -35,7 +35,8 @@ using namespace gr_control_gui;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
-  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0), current_row_(0), terrain_x_(1.0), terrain_y_(1.0)
+  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0), current_row_(0), terrain_x_(1.0), terrain_y_(1.0),
+    storing_id_("")
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
   region_publisher_ = nh_.advertise<visualization_msgs::Marker>("region", 1 );
@@ -61,6 +62,8 @@ MyViz::MyViz( QWidget* parent )
   column_spinbox->setValue(0);
 
   QPushButton* save_topological_map = new QPushButton ("Store Map");
+  QPushButton* delete_topological_map = new QPushButton ("Delete Map");
+
   QPushButton* execute_map = new QPushButton ("Execute Map");
 
   QGridLayout* controls_layout = new QGridLayout();
@@ -72,6 +75,7 @@ MyViz::MyViz( QWidget* parent )
   controls_layout->addWidget( column_spinbox, 2, 1 );
   controls_layout->addWidget( save_topological_map, 3, 0 );
   controls_layout->addWidget( execute_map, 3, 1 );
+  controls_layout->addWidget( delete_topological_map, 3, 2 );
 
   // Construct and lay out render panel.
   render_panel_ = new rviz::RenderPanel();
@@ -87,6 +91,8 @@ MyViz::MyViz( QWidget* parent )
   connect( height_slider, SIGNAL( valueChanged( int )), this, SLOT( setTerrainX(  int)));
   connect( execute_map, SIGNAL( released( )), this, SLOT( executeTopoMap( )));
   connect( save_topological_map, SIGNAL( released( )), this, SLOT( saveMap( )));
+  connect( delete_topological_map, SIGNAL( released( )), this, SLOT( deleteTopoMap( )));
+
   connect( column_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setDesiredRow(int)));
 
   // Next we initialize the main RViz classes.
@@ -119,11 +125,9 @@ MyViz::MyViz( QWidget* parent )
   ROS_ASSERT( robot_display != NULL );
   //robot_display->subProp( "Marker Topic" )->setValue("region");
 
-
-
   // Initialize the slider values.
-  height_slider->setValue( 10.0 );
-  width_slider->setValue( 10.0 );
+  height_slider->setValue( 2.0 );
+  width_slider->setValue( 2.0 );
 
   manager_->setFixedFrame("map");
   manager_->initialize();
@@ -189,13 +193,13 @@ void MyViz::publishRegion(){
 void MyViz::setTerrainY( int value){
   terrain_y_ = value;
   y_cells_ = ceil(value/1);
-  //visualizeMap();
+  visualizeMap();
 }
 
 void MyViz::setTerrainX( int value ){
   terrain_x_ = value;
   x_cells_ = ceil(value/1);
-  //visualizeMap();
+  visualizeMap();
 }
 
 void MyViz::visualizeMap(){
@@ -254,14 +258,12 @@ void MyViz::visualizeMap(){
 
   int min_index = (current_row_*y_cells_);
   int max_index = (current_row_*y_cells_) + y_cells_;
-  std::cout << "indices  " << min_index << " , " << max_index << std::endl;
   double yaw =(current_row_%2) ? -1.57 : 1.57;
 
 
   for( auto id = min_index; id< max_index; ++id){
     //Storing Nodes
     col = id/y_cells_;
-    std::cout << "COOOOOOOOOOOL " << col << std::endl;
     temporal_marker.id = id;
     temporal_marker.pose.position.x = vector[id].first;
     temporal_marker.pose.position.y = vector[id].second;
@@ -339,44 +341,29 @@ void MyViz::visualizeMap(){
 
   map_publisher_.publish(marker_array_);
   publishRegion();
+  std::cout << "OK"<<std::endl;
 }
 
-void MyViz::deleteTopoMap(std::string map_id){
-
-
-    std::string id("remove_collection");
-  	message_store_->deleteID(id+"--"+map_id);
-   /*
-   std::vector< boost::shared_ptr<strands_navigation_msgs::TopologicalNode> > results_node;
-
-   std::vector<std::string> fields;
-   fields.push_back("map");
-   fields.push_back("pointset");
-
-   std::vector<std::string> ids;
-   ids.push_back(map_id);
-   ids.push_back(map_id);
-
-   if(message_store_->queryNamed<strands_navigation_msgs::TopologicalNode>(map_id, "pointset", results_node, false)) {
-            strands_navigation_msgs::TopologicalNode node;
-            BOOST_FOREACH( boost::shared_ptr<  strands_navigation_msgs::TopologicalNode> node,  results_node){
-                ROS_DEBUG_STREAM("Got by name: " << *node);
-            }
-  }
-  */
+void MyViz::deleteTopoMap(){
+    if (storing_id_.empty()){
+      std::cout << "Map not detected" << std::endl;
+      return;
+    }
+    std::cout << "deleting "<< storing_id_ << std::endl;
+  	message_store_->deleteID(storing_id_);
+    std::cout << "deleted "<< storing_id_ << std::endl;
+    storing_id_ = "";
 }
 
 void MyViz::saveMap(){
-
   navigation_msgs::TopologicalMap topo_map;
   navigation_msgs::TopologicalNode topo_node;
   navigation_msgs::Vertex vertex;
 
   navigation_msgs::Edge edge;
-
   //std::string map_id("trash_map_5");
   std::string map_id("wish_map_move_base");
-  deleteTopoMap(map_id);
+  //deleteTopoMap();
   topo_map.map_id = map_id;
 
   //TODO this is a hack for the python mongodb implementation
@@ -384,23 +371,33 @@ void MyViz::saveMap(){
   fields.push_back("map_id");
   fields.push_back("node");
 
-  std::vector<std::string> ids;
-  ids.push_back(map_id);
-  ids.push_back(map_id);
+  //std::vector<std::string> ids;
+  //ids.push_back(map_id);
+  //ids.push_back(map_id);
+
+  std::cout << "elements in nodemap " << node_map_.size() << std::endl;
+  std::cout << "rr " << robot_radius_/2.0 << std::endl;
 
   for (auto const & node : node_map_){
+
     topo_node.edges.clear();
     topo_node.verts.clear();
     topo_node.pose = node.second;
-    ids[1] = node.first;
-    ids[3] = node.first;
+    //ids[1] = node.first;
+    //ids[3] = node.first;
+    std::cout << node.first << std::endl;
     topo_node.name = node.first;
+    std::cout << vertex.x << vertex.y << std::endl;
 
-    vertex.x = -robot_radius_/2;
-    vertex.y = robot_radius_/2;
+    vertex.x = -robot_radius_/2.0;
+    vertex.y = robot_radius_/2.0;
+    std::cout << vertex.x << vertex.y << std::endl;
+
     topo_node.verts.push_back(vertex);
-    vertex.x = robot_radius_/2;
-    vertex.y = robot_radius_/2;
+    vertex.x = robot_radius_/2.0;
+    vertex.y = robot_radius_/2.0;
+
+    std::cout << vertex.x << vertex.y << std::endl;
 
     topo_node.verts.push_back(vertex);
     vertex.x = robot_radius_/2;
@@ -418,20 +415,30 @@ void MyViz::saveMap(){
         topo_node.edges.push_back(edge);
       }
     }
-
-    std::string result(message_store_->insertNamed(map_id, topo_node));
+   
+    //std::string result(message_store_->insertNamed(map_id, topo_node));
     //std::string result(message_store_->insertNamed("pointset", map_id, topo_node));
     topo_map.nodes.push_back(topo_node);
   }
 
-
+ if (!storing_id_.empty()){
+   std::cout << "QUerying " << storing_id_ << std::endl;
+   std::vector<boost::shared_ptr<navigation_msgs::TopologicalMap > >aaa;
+   message_store_->queryID<navigation_msgs::TopologicalMap>(storing_id_,aaa);
+   std::cout << aaa[0]->map_id <<std::endl;
+   message_store_->updateNamed(map_id, topo_map);
+   std::cout<<"Map \""<<map_id<<"\" updated with id "<<storing_id_<<std::endl;
+ }
+ else{
+   storing_id_ = message_store_->insertNamed(map_id, topo_map);
+   std::cout<<"Map \""<<map_id<<"\" inserted with id "<<storing_id_<<std::endl;
+ }
   //std::string result(message_store_->insertNamed( field, name, topo_map));
   //ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
 }
 
 void MyViz::setDesiredRow(int row){
   current_row_ = row;
-  ROS_INFO_STREAM("Desired row");
   visualizeMap();
 }
 

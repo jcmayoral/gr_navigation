@@ -82,7 +82,7 @@ namespace gr_control_gui{
       void executeTopoMap();
       void visualizeMap();
       void saveMap();
-      void deleteTopoMap(std::string map_id);
+      void deleteTopoMap();
 
       void publishRegion();
 
@@ -107,6 +107,8 @@ namespace gr_control_gui{
 
       NodeMap node_map_;
       std::vector<Edges> edges_;
+
+      std::string storing_id_;
   };
 };
   // END_TUTORIAL
