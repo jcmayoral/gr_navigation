@@ -380,12 +380,12 @@ void MyViz::saveMap(){
     topo_node.pose = node.second;
     topo_node.name = node.first;
 
-    vertex.x = -robot_radius_/2.0;
-    vertex.y = robot_radius_/2.0;
+    vertex.x = -robot_radius_/2;
+    vertex.y = robot_radius_/2;
 
     topo_node.verts.push_back(vertex);
-    vertex.x = robot_radius_/2.0;
-    vertex.y = robot_radius_/2.0;
+    vertex.x = robot_radius_/2;
+    vertex.y = robot_radius_/2;
 
     topo_node.verts.push_back(vertex);
     vertex.x = robot_radius_/2;
