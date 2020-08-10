@@ -134,7 +134,7 @@ class TopologicalPlanner(SimpleActionState):
             rospy.logerr("HELP")
             print "A Star",  nx.astar_path(self.networkx_graph, source=self.current_node, target="end_node")
             #self.topological_plan = list(nx.edge_dfs(self.networkx_graph, orientation='original'))
-            self.topological_plan = nx.astar_path(self.networkx_graph, source= self.current_node, target="end_node")
+            self.topological_plan = nx.astar_path(self.networkx_graph, source= self.current_node, target="end_nodeend
             return
         """
         #print "A Star",  nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
