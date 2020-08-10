@@ -36,7 +36,7 @@ using namespace gr_control_gui;
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
   : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0), current_row_(0), terrain_x_(1.0), terrain_y_(1.0),
-    storing_id_("")
+    storing_id_(""), max_numberrows_(1)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
   region_publisher_ = nh_.advertise<visualization_msgs::Marker>("region", 1 );
@@ -247,11 +247,11 @@ void MyViz::visualizeMap(){
 
   //Create New Nodes
   temporal_marker.action = visualization_msgs::Marker::ADD;
-  temporal_marker.scale.x = robot_radius_/3;//divided by three just o see edges
-  temporal_marker.scale.y = robot_radius_/3;
-  temporal_marker.scale.z = 0.05;
-  temporal_marker.color.r = 1.0;
-  temporal_marker.color.a = 1.0;
+  temporal_marker.scale.x = robot_radius_;//divided by three just o see edges
+  temporal_marker.scale.y = robot_radius_;
+  temporal_marker.scale.z = 0.1;
+  temporal_marker.color.g = 0.3;
+  temporal_marker.color.a = 0.5;
 
   temporal_marker.pose.orientation.w = 1.0;
 
@@ -266,7 +266,7 @@ void MyViz::visualizeMap(){
   temporal_edges.action = visualization_msgs::Marker::ADD;
   temporal_edges.scale.x = 0.1;
   temporal_edges.scale.y = 0.1;
-  temporal_edges.scale.z = 0.5;
+  temporal_edges.scale.z = 1.5;
   temporal_edges.color.r = 1.0;
   temporal_edges.color.g = 1.0;
   temporal_edges.color.a = 1.0;
@@ -284,6 +284,7 @@ void MyViz::visualizeMap(){
   int max_index = (current_row_*y_cells_) + y_cells_;
   double yaw =(current_row_%2) ? -1.57 : 1.57;
 
+  std::cout << "start " << min_index << " end " << max_index << std::endl;
 
   for( auto id = min_index; id< max_index; ++id){
     //Storing Nodes
@@ -356,7 +357,7 @@ void MyViz::visualizeMap(){
     //Edges ids
 
     //birectional
-    std::cout << id_str << next_id_str << std::endl;
+    //std::cout << id_str << next_id_str << std::endl;
     edges_.emplace_back(id_str, next_id_str);
     edges_.emplace_back(next_id_str,id_str);
 
@@ -383,7 +384,6 @@ void MyViz::saveMap(){
   navigation_msgs::Vertex vertex;
 
   navigation_msgs::Edge edge;
-  //std::string map_id("trash_map_5");
   std::string map_id("wish_map_move_base");
   //deleteTopoMap();
   topo_map.map_id = map_id;
@@ -428,8 +428,6 @@ void MyViz::saveMap(){
       }
     }
    
-    //std::string result(message_store_->insertNamed(map_id, topo_node));
-    //std::string result(message_store_->insertNamed("pointset", map_id, topo_node));
     topo_map.nodes.push_back(topo_node);
   }
 
@@ -443,19 +441,42 @@ void MyViz::saveMap(){
    storing_id_ = message_store_->insertNamed(map_id, topo_map);
    std::cout<<"Map \""<<map_id<<"\" inserted with id "<<storing_id_<<std::endl;
  }
-  //std::string result(message_store_->insertNamed( field, name, topo_map));
-  //ROS_INFO_STREAM("Map inserted at collection " << message_store_->getCollectionName());
+ max_numberrows_ = 2*terrain_x_/robot_radius_;
+ std::cout << "Number of Rows "<< max_numberrows_ << std::endl;
 }
 
 void MyViz::setDesiredRow(int row){
-  current_row_ = row;
-  visualizeMap();
+  current_row_ = std::min(max_numberrows_, row);
+
+  if (row < max_numberrows_){
+    visualizeMap();
+  }
 }
 
 void MyViz::executeTopoMap(){
-  reset_publisher_.publish(std_msgs::Time());
+  //std::thread worker_thread();
+  t1 = new std::thread(&MyViz::executeCycle, this, 0);
+  t1->detach();
+}
+
+
+
+void MyViz::executeCycle(int cycle){
   gr_map_utils::UpdateMap req;
+  boost::shared_ptr<std_msgs::Empty const> msg_pointer;
+  
+  current_row_ = cycle;
+  visualizeMap();
+
+  reset_publisher_.publish(std_msgs::Time());
   if(update_client_.call(req)){
     ROS_INFO("Client Succeded");
   }
+  std::cout << "Wait til finish" << std::endl;
+  msg_pointer =  ros::topic::waitForMessage<std_msgs::Empty>("/end_motion");
+
+  if (cycle < max_numberrows_){
+    executeCycle(cycle + 1);
+  }
+  ROS_INFO("EXECUTION FINISHED");
 }
