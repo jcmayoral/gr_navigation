@@ -69,6 +69,7 @@ MyViz::MyViz( QWidget* parent )
   QGridLayout* controls_layout = new QGridLayout();
   controls_layout->addWidget( width_label, 0, 0 );
   controls_layout->addWidget( width_slider, 0, 1 );
+
   controls_layout->addWidget( height_label, 1, 0 );
   controls_layout->addWidget( height_slider, 1, 1 );
   controls_layout->addWidget( column_label, 2, 0 );
@@ -76,6 +77,18 @@ MyViz::MyViz( QWidget* parent )
   controls_layout->addWidget( save_topological_map, 3, 0 );
   controls_layout->addWidget( execute_map, 3, 1 );
   controls_layout->addWidget( delete_topological_map, 3, 2 );
+
+
+  QLabel* time_to_go_label = new QLabel("Expected Time To Next Goal");
+  time_to_go = new QLabel("0");
+  QFont f( "Arial", 30, QFont::Bold);
+  time_to_go->setFont(f);
+  //time_to_go->setFixedHeight(50);
+  //time_to_go->setFixedWidth(50);
+
+  controls_layout->addWidget( time_to_go_label, 4, 0 );
+  controls_layout->addWidget( time_to_go, 4, 1 );
+
 
   // Construct and lay out render panel.
   render_panel_ = new rviz::RenderPanel();
@@ -129,7 +142,7 @@ MyViz::MyViz( QWidget* parent )
   robot_path = manager_->createDisplay( "rviz/Path", "robot_path", true );
   ROS_ASSERT( robot_path != NULL );
   robot_path->subProp( "Topic" )->setValue("gr_sbpl_trajectory_generator_node/plan");
-  robot_path->subProp( "Pose Style" )->setValue(2);
+  //robot_path->subProp( "Pose Style" )->setValue(2);
 
 
   // Initialize the slider values.
@@ -140,7 +153,11 @@ MyViz::MyViz( QWidget* parent )
   manager_->initialize();
   manager_->startUpdate();
   update_client_ = nh_.serviceClient<gr_map_utils::UpdateMap>("update_metric_map");
+  time_to_go_sub_ = nh_.subscribe("/gr_sbpl_trajectory_generator_node/time_to_go", 1, &MyViz::timetogoCB, this);
+}
 
+void MyViz::timetogoCB(const std_msgs::Float32ConstPtr time2go){
+  time_to_go -> setText(QString::number(time2go->data));
 }
 
 // Destructor.

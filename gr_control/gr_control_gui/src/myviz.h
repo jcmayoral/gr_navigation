@@ -54,6 +54,7 @@
 #include <mongodb_store/message_store.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <std_msgs/Time.h>
+#include <std_msgs/Float32.h>
 #include <boost/foreach.hpp>
 
 #include <gr_map_utils/UpdateMap.h>
@@ -85,6 +86,7 @@ namespace gr_control_gui{
       void deleteTopoMap();
 
       void publishRegion();
+      void timetogoCB(const std_msgs::Float32ConstPtr time2go);
 
     private:
       rviz::VisualizationManager* manager_;
@@ -109,6 +111,9 @@ namespace gr_control_gui{
       std::vector<Edges> edges_;
 
       std::string storing_id_;
+
+      QLabel* time_to_go;
+      ros::Subscriber time_to_go_sub_;
   };
 };
   // END_TUTORIAL
