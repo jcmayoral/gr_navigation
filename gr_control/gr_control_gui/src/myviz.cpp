@@ -125,6 +125,13 @@ MyViz::MyViz( QWidget* parent )
   ROS_ASSERT( robot_display != NULL );
   //robot_display->subProp( "Marker Topic" )->setValue("region");
 
+  rviz::Display* robot_path;
+  robot_path = manager_->createDisplay( "rviz/Path", "robot_path", true );
+  ROS_ASSERT( robot_path != NULL );
+  robot_path->subProp( "Topic" )->setValue("gr_sbpl_trajectory_generator_node/plan");
+  robot_path->subProp( "Pose Style" )->setValue(2);
+
+
   // Initialize the slider values.
   height_slider->setValue( 2.0 );
   width_slider->setValue( 2.0 );

@@ -1,6 +1,6 @@
 <package>
   <name>gr_control_gui</name>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <description>
      Based on the librviz_tutorial from William Woodall. This package allows an interaction to the topological map.
   </description>
@@ -19,7 +19,8 @@
   <build_depend>tf2_geometry_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>gr_map_utils</build_depend>
- 
+  <build_depend>nav_msgs</build_depend>
+
   <run_depend>libqt5-core</run_depend>
   <run_depend>libqt5-gui</run_depend>
   <run_depend>libqt5-widgets</run_depend>
@@ -32,5 +33,6 @@
   <run_depend>tf2_geometry_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>gr_map_utils</run_depend>
+  <run_depend>nav_msgs</run_depend>
 
 </package>

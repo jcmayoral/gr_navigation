@@ -5,7 +5,7 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS rviz roscpp visualization_msgs
                     geometry_msgs mongodb_store navigation_msgs
-                    tf2_geometry_msgs std_msgs gr_map_utils)
+                    tf2_geometry_msgs std_msgs gr_map_utils nav_msgs)
 
 include_directories(${catkin_INCLUDE_DIRS})
 
@@ -22,6 +22,7 @@ catkin_package(
       tf2_geometry_msgs
       std_msgs
       gr_map_utils
+      nav_msgs
 )
 
 link_directories(${catkin_LIBRARY_DIRS})
