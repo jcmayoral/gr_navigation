@@ -20,7 +20,7 @@ from std_msgs.msg import String, Bool
 from gr_topological_navigation.states.move_base_state import command_robot_to_node, move_base, sbpl_action_mode
 
 class TopologicalPlanner(SimpleActionState):
-    def __init__(self, gui=False, pointset="riseholme_bidirectional_sim"):
+    def __init__(self, gui=False, pointset="riseholme_bidirectional_sim", nav_action="sbpl_action"):
         self.msg_store = MessageStoreProxy(collection="topological_maps")
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         self.current_node = None
@@ -42,7 +42,7 @@ class TopologicalPlanner(SimpleActionState):
         self.visited_edges = list()
 
         #Smach State Constructor
-        SimpleActionState.__init__(self, "sbpl_action", MoveBaseAction,
+        SimpleActionState.__init__(self, nav_action, MoveBaseAction,
                          outcomes=['NODE_REACHED','ERROR_NAVIGATION'], goal_cb = self.goal_cb,
                          result_cb = self.result_cb,
                          input_keys=['next_transition', 'nodes_to_go','execution_requested'],

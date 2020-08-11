@@ -12,10 +12,17 @@ from gr_topological_navigation.states.functions import update_cb
 from gr_topological_navigation.states.manager import Manager
 from gr_topological_navigation.states.topological_planner import TopologicalPlanner
 from std_msgs.msg import Time
-
+import sys
+import argparse
 
 if __name__ == '__main__':
     rospy.init_node("full_coverage_plan")
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-nav_action", "--nav_action", required=True, help="navigation action server name")
+
+    argv = ap.parse_args()
+    print (argv.nav_action)
 
     sm = smach.StateMachine(['succeeded','aborted','preempted','END_SM'])
     sm.userdata.sm_counter = 0
@@ -43,7 +50,7 @@ if __name__ == '__main__':
                                 'shared_string':'bag_family',
                                 'restart_requested_out':'restart_requested',
                                 'stop_requested_out':'stop_requested'})
-        smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(pointset= "wish_map_move_base"),
+        smach.StateMachine.add('TRIGGER_MOVE', TopologicalPlanner(pointset= "wish_map_move_base", nav_action=argv.nav_action),
               transitions={'NODE_REACHED':'SETUP', 'ERROR_NAVIGATION': 'END_SM'},
               remapping={'restart_requested_out':'restart_requested',
                              'stop_requested_out':'stop_requested',
