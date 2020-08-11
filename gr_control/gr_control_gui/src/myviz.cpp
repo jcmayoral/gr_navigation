@@ -143,7 +143,22 @@ MyViz::MyViz( QWidget* parent )
   ROS_ASSERT( robot_path != NULL );
   robot_path->subProp( "Topic" )->setValue("gr_sbpl_trajectory_generator_node/plan");
   //robot_path->subProp( "Pose Style" )->setValue(2);
+  
+  rviz::Display* map;
+  map = manager_->createDisplay( "rviz/Map", "safety_map", true );
+  ROS_ASSERT( map != NULL );
+  map->subProp( "Topic" )->setValue("/grid_map_visualization/safety_costmap");
 
+  rviz::Display* pc;
+  pc = manager_->createDisplay( "rviz/PointCloud2", "velodyne_pc", true );
+  ROS_ASSERT( pc != NULL );
+  pc->subProp( "Topic" )->setValue("/velodyne_points");
+
+
+  rviz::Display* dect;
+  dect = manager_->createDisplay( "jsk_rviz_plugin/BoundingBoxArrexitay", "dect_bb", true );
+  ROS_ASSERT( dect != NULL );
+  dect->subProp( "Topic" )->setValue("/detection/bounding_boxes");
 
   // Initialize the slider values.
   height_slider->setValue( 2.0 );
