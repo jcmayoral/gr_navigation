@@ -36,7 +36,7 @@ using namespace gr_control_gui;
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
   : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0), current_row_(0), terrain_x_(1.0), terrain_y_(1.0),
-    storing_id_(""), max_numberrows_(1)
+    storing_id_(""), id_maxnumberrows_(1)
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
   region_publisher_ = nh_.advertise<visualization_msgs::Marker>("region", 1 );
@@ -163,6 +163,11 @@ void MyViz::timetogoCB(const std_msgs::Float32ConstPtr time2go){
 // Destructor.
 MyViz::~MyViz()
 {
+  deleteTopoMap();
+  time_to_go_sub_.shutdown();
+  map_publisher_.shutdown();
+  region_publisher_.shutdown();
+  reset_publisher_.shutdown();
   delete manager_;
 }
 
@@ -238,7 +243,7 @@ void MyViz::visualizeMap(){
   temporal_marker.header.frame_id="map";
   temporal_marker.header.stamp = ros::Time::now();
   temporal_marker.ns = "nodes"; //TODO maybe add segmentation layers
-  temporal_marker.type = visualization_msgs::Marker::CYLINDER;
+  temporal_marker.type = visualization_msgs::Marker::CUBE;
 
   //DELETE PREVIOUS
   temporal_marker.action = visualization_msgs::Marker::DELETEALL;
@@ -247,8 +252,8 @@ void MyViz::visualizeMap(){
 
   //Create New Nodes
   temporal_marker.action = visualization_msgs::Marker::ADD;
-  temporal_marker.scale.x = robot_radius_;//divided by three just o see edges
-  temporal_marker.scale.y = robot_radius_;
+  temporal_marker.scale.x = robot_radius_/5;//divided by three just o see edges
+  temporal_marker.scale.y = robot_radius_/5;
   temporal_marker.scale.z = 0.1;
   temporal_marker.color.g = 0.3;
   temporal_marker.color.a = 0.5;
@@ -339,6 +344,7 @@ void MyViz::visualizeMap(){
     }
     //end of nasty hack
     node_map_[id_str] = temporal_marker.pose;
+    ROS_ERROR_STREAM("NODE NAME " << id_str);
 
     if (id == max_index-1){
       ROS_ERROR("AAAAAA");
@@ -441,14 +447,14 @@ void MyViz::saveMap(){
    storing_id_ = message_store_->insertNamed(map_id, topo_map);
    std::cout<<"Map \""<<map_id<<"\" inserted with id "<<storing_id_<<std::endl;
  }
- max_numberrows_ = 2*terrain_x_/robot_radius_;
- std::cout << "Number of Rows "<< max_numberrows_ << std::endl;
+ id_maxnumberrows_ = (2*terrain_x_/robot_radius_)-1;
+ std::cout << "Max Rows Idx "<< id_maxnumberrows_ << std::endl;
 }
 
 void MyViz::setDesiredRow(int row){
-  current_row_ = std::min(max_numberrows_, row);
+  current_row_ = std::min(id_maxnumberrows_, row);
 
-  if (row < max_numberrows_){
+  if (row < id_maxnumberrows_){
     visualizeMap();
   }
 }
@@ -464,18 +470,21 @@ void MyViz::executeTopoMap(){
 void MyViz::executeCycle(int cycle){
   gr_map_utils::UpdateMap req;
   boost::shared_ptr<std_msgs::Empty const> msg_pointer;
-  
   current_row_ = cycle;
+  ROS_INFO_STREAM("current row "<< cycle);
+  deleteTopoMap();
+  ros::Duration(1.0).sleep();
   visualizeMap();
-
+  saveMap();
   reset_publisher_.publish(std_msgs::Time());
+  ros::Duration(1.0).sleep();
   if(update_client_.call(req)){
     ROS_INFO("Client Succeded");
   }
   std::cout << "Wait til finish" << std::endl;
   msg_pointer =  ros::topic::waitForMessage<std_msgs::Empty>("/end_motion");
 
-  if (cycle < max_numberrows_){
+  if (cycle < id_maxnumberrows_){
     executeCycle(cycle + 1);
   }
   ROS_INFO("EXECUTION FINISHED");

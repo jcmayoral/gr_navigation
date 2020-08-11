@@ -116,7 +116,7 @@ namespace gr_control_gui{
 
       QLabel* time_to_go;
       ros::Subscriber time_to_go_sub_;
-      int max_numberrows_;
+      int id_maxnumberrows_;
 
       std::thread* t1;
   };
