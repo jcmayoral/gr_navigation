@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   move_base_msgs
   tf2_ros
+  tf2_geometry_msgs
 )
 
 # Find SBPL from sbpl_lattice_planner
@@ -134,7 +135,7 @@ catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}
   LIBRARIES gr_sbpl_trajectory_generator
   CATKIN_DEPENDS roscpp std_msgs nav_msgs costmap_2d geometry_msgs nav_msgs 
-                  actionlib actionlib_msgs move_base_msgs tf2_ros
+                  actionlib actionlib_msgs move_base_msgs tf2_ros tf2_geometry_msgs
   DEPENDS SBPL
 )
 

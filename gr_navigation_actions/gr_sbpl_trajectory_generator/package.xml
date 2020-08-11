@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gr_sbpl_trajectory_generator</name>
-  <version>0.5.0</version>
+  <version>0.5.1</version>
   <description>sbpl wrapper for agricultural proposes based on https://github.com/tu-darmstadt-ros-pkg/sbpl_lattice_planner.. 
                this version is intended to be move_base architecture independent
   </description>
@@ -22,6 +22,7 @@
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>
   <build_depend>tf2_ros</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
 
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
@@ -33,6 +34,7 @@
   <exec_depend>actionlib</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
 
   <export>
   </export>

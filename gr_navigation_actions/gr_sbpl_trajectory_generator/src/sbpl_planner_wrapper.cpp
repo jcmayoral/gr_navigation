@@ -225,7 +225,7 @@ bool GRSBPLPlanner::executePath(){
     //Difference between expected and actual position on time t (P Controller)
     cmd_vel.linear.x = plan_[0].pose.position.x;
 
-    if (cmd_vel.linear.x > position_tolerance_ || cmd_vel.angular.y > position_tolerance_){
+    if (cmd_vel.linear.x > position_tolerance_ || cmd_vel.linear.y > position_tolerance_){
       stop();
       return false;
     }
