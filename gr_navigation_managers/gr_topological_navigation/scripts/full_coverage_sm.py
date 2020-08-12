@@ -19,7 +19,7 @@ if __name__ == '__main__':
     rospy.init_node("full_coverage_plan")
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("-nav_action", "--nav_action", required=True, help="navigation action server name")
+    ap.add_argument("-nav_action", "--nav_action", default="sbpl_action", required=False, help="navigation action server name")
 
     argv = ap.parse_args()
     print (argv.nav_action)
