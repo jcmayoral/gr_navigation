@@ -12,6 +12,8 @@ class SimpleCropNavController:
         self.twist = Twist()
         self.twist.linear.x = desired_speed
         self.listener = tf.TransformListener()
+        self.max_motions = 20
+        self.current_motions = 10
 
         self.startpose = [0,0]
         self.endpose = [0,0]
@@ -42,6 +44,9 @@ class SimpleCropNavController:
         self.currentpose[1] = msg.pose.pose.position.y
         self.start = True
 
+    def is_finished(self):
+        return self.current_motions < self.max_motions
+
     def publish(self):
         self.pub.publish(self.twist)
 
@@ -56,3 +61,4 @@ class SimpleCropNavController:
         self.twist.linear.x = -self.twist.linear.x
         self.forward = not self.forward
         print ("chnage direction forward ", self.forward)
+        self.current_motions = self.current_motions + 1
