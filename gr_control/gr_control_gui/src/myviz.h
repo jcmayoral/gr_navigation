@@ -90,6 +90,8 @@ namespace gr_control_gui{
       void publishRegion();
       void timetogoCB(const std_msgs::Float32ConstPtr time2go);
       void executeCycle(int cycle);
+      bool existsMap();
+
     private:
       rviz::VisualizationManager* manager_;
       rviz::RenderPanel* render_panel_;

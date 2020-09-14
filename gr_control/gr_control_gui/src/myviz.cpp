@@ -35,8 +35,8 @@ using namespace gr_control_gui;
 // BEGIN_TUTORIAL
 // Constructor for MyViz.  This does most of the work of the class.
 MyViz::MyViz( QWidget* parent )
-  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0), current_row_(0), terrain_x_(1.0), terrain_y_(1.0),
-    storing_id_(""), id_maxnumberrows_(1)
+  : QWidget( parent ), marker_array_(), nh_(), robot_radius_(2.0), current_row_(1), terrain_x_(1.0), terrain_y_(1.0),
+    storing_id_(""), id_maxnumberrows_(1), x_cells_{1}, y_cells_{1}
 {
   map_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("temporal_topological_map", 1 );
   region_publisher_ = nh_.advertise<visualization_msgs::Marker>("region", 1 );
@@ -156,13 +156,18 @@ MyViz::MyViz( QWidget* parent )
 
 
   rviz::Display* dect;
-  dect = manager_->createDisplay( "jsk_rviz_plugin/BoundingBoxArrexitay", "dect_bb", true );
+  dect = manager_->createDisplay( "jsk_rviz_plugin/BoundingBoxArray", "dect_bb", true );
   ROS_ASSERT( dect != NULL );
   dect->subProp( "Topic" )->setValue("/detection/bounding_boxes");
 
   // Initialize the slider values.
   height_slider->setValue( 2.0 );
   width_slider->setValue( 2.0 );
+
+  if (existsMap()){
+    ROS_ERROR_STREAM("This will overwrite the last map -> TODO add a function to load this map");
+    saveMap();
+  }  
 
   manager_->setFixedFrame("map");
   manager_->initialize();
@@ -178,7 +183,7 @@ void MyViz::timetogoCB(const std_msgs::Float32ConstPtr time2go){
 // Destructor.
 MyViz::~MyViz()
 {
-  deleteTopoMap();
+  //deleteTopoMap();
   time_to_go_sub_.shutdown();
   map_publisher_.shutdown();
   region_publisher_.shutdown();
@@ -389,6 +394,20 @@ void MyViz::visualizeMap(){
   publishRegion();
 }
 
+bool MyViz::existsMap(){
+  std::ifstream myfile ("/tmp/lastmap_id.txt");
+  std::string line;
+  if (myfile.is_open())
+  {
+    std::getline (myfile,line);
+    std::cout << line << '\n';
+    storing_id_ = line;
+    myfile.close();
+    return true;
+  }
+  return false;
+}
+
 void MyViz::deleteTopoMap(){
     if (storing_id_.empty()){
       std::cout << "Map not detected" << std::endl;
@@ -462,6 +481,10 @@ void MyViz::saveMap(){
    storing_id_ = message_store_->insertNamed(map_id, topo_map);
    std::cout<<"Map \""<<map_id<<"\" inserted with id "<<storing_id_<<std::endl;
  }
+ std::ofstream out("/tmp/lastmap_id.txt");
+ out << storing_id_;
+ out.close();
+//
  id_maxnumberrows_ = (2*terrain_x_/robot_radius_)-1;
  std::cout << "Max Rows Idx "<< id_maxnumberrows_ << std::endl;
 }
