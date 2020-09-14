@@ -57,7 +57,7 @@ class BagRecorder(smach.State):
     def writeToBag(self,topic, msgs):
         self.lock.acquire()
         if not self.is_finished and self.is_bag_started:
-            rospy.loginfo(topic)
+            #rospy.loginfo(topic)
             self.bag.write(topic, msgs)
         self.lock.release()
 
