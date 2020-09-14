@@ -4,10 +4,10 @@ import threading
 import rospy
 
 class BagRecorder(smach.State):
-    def __init__(self, record_topics=dict()):
+    def __init__(self, record_topics=dict(), desired_path="/home/jose/collection_data/topological_navigation/", smach = True):
         self.is_finished = False
         self.is_bag_started = False
-        self.path = "/home/jose/collection_data/topological_navigation/"
+        self.path = desired_path
         self.lock = threading.Lock()
 
         for topic, type in record_topics.iteritems():
@@ -15,7 +15,9 @@ class BagRecorder(smach.State):
             rospy.Subscriber(topic, type, self.mainCB, topic, queue_size=300)
 
         self.startBag()
-        smach.State.__init__(self,
+
+        if smach:
+            smach.State.__init__(self,
                              outcomes=['RECORD_STARTED','END_RECORD'],
                              input_keys=['counter_in', 'shared_string', 'restart_requested','stop_requested'],
                              output_keys=['counter_out', 'restart_requested_out', 'stop_requested_out'])
@@ -27,9 +29,10 @@ class BagRecorder(smach.State):
         self.is_bag_started= True
         rospy.sleep(2)
 
-    def restart(self, root_name, bag_id):
+    def restart(self, root_name, bag_id, close_required = True):
         rospy.sleep(0.5)
-        self.close()
+        if close_required:
+            self.close()
         self.is_finished = True # Filter error of cb when file is already closed
         self.bag = rosbag.Bag(self.path + root_name + bag_id +'.bag', 'w')
         rospy.logwarn("Creating new Bag file")
