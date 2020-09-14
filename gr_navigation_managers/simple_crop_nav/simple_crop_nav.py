@@ -1,10 +1,18 @@
 import rospy
 import gr_topological_navigation.states.utils as utils
 from geometry_msgs.msg import Twist, PoseStamped
+from sensor_msgs.msg import PointCloud2
+from std_msgs.msg import Float32, Bool
+from tf2_msgs.msg import TFMessage
 from nav_msgs.msg import Odometry
+from grid_map_msgs.msg import GridMap
 import tf
 import sys
 import math
+
+list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" : TFMessage,
+                "nav_vel" : Twist, "/safe_score": Float32,
+                "/safe_nav_vel": Twist, "/lock_all" : Bool , "/grid_map": GridMap}
 
 class SimpleCropNavController:
     def __init__(self, desired_speed = 1.0):
@@ -24,7 +32,8 @@ class SimpleCropNavController:
         #rospy.Timer(rospy.Duration(10), self.change_direction)
         rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
         self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
-        self.rb = utils.BagRecorder(desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/data/",smach=False)
+        self.rb = utils.BagRecorder(record_topics = list_topics,
+                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/data/",smach=False)
 
         if self.forward:
             self.rb.startBag()
