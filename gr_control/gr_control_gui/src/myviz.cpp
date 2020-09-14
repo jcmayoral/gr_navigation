@@ -328,6 +328,7 @@ void MyViz::visualizeMap(){
     std::string next_id_str("error");
 
     id_str ="node_" + std::to_string(id);
+    std::cout << id_str << " NODE STRING " << std::endl;
     next_id_str ="node_" + std::to_string(id+1);
 
     //Nasty Hack
@@ -364,10 +365,10 @@ void MyViz::visualizeMap(){
     }
     //end of nasty hack
     node_map_[id_str] = temporal_marker.pose;
-    ROS_ERROR_STREAM("NODE NAME " << id_str);
+    ROS_ERROR_STREAM("FINAL NODE NAME " << id_str);
 
     if (id == max_index-1){
-      ROS_ERROR("AAAAAA");
+      //skip edges of last node of the row
       continue;
     }
 
@@ -495,12 +496,16 @@ void MyViz::setDesiredRow(int row){
   if (row < id_maxnumberrows_){
     visualizeMap();
   }
+  else{
+    ROS_ERROR("ERROR");
+  }
 }
 
 void MyViz::executeTopoMap(){
   //std::thread worker_thread();
   t1 = new std::thread(&MyViz::executeCycle, this, 0);
   t1->detach();
+  ROS_INFO("MOTION EXECUTION FINISHED");
 }
 
 
@@ -510,7 +515,7 @@ void MyViz::executeCycle(int cycle){
   boost::shared_ptr<std_msgs::Empty const> msg_pointer;
   current_row_ = cycle;
   ROS_INFO_STREAM("current row "<< cycle);
-  deleteTopoMap();
+  //deleteTopoMap();
   ros::Duration(1.0).sleep();
   visualizeMap();
   saveMap();
@@ -523,7 +528,7 @@ void MyViz::executeCycle(int cycle){
   msg_pointer =  ros::topic::waitForMessage<std_msgs::Empty>("/end_motion");
 
   if (cycle < id_maxnumberrows_){
+    ROS_INFO("ROW FINISHED");
     executeCycle(cycle + 1);
   }
-  ROS_INFO("EXECUTION FINISHED");
 }
