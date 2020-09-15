@@ -106,7 +106,7 @@ class SimpleCropNavController:
 
         self.setPoses()
 
-        if self.forward:
+        if self.forward and self.is_running():
             self.rb.startBag()
 
         if not self.forward:
@@ -120,4 +120,5 @@ class SimpleCropNavController:
 
     def emergency_stop(self):
         self.rb.close()
-        self.initializeTests()
+        self.current_motions = self.max_motions +1
+        #self.initializeTests()
