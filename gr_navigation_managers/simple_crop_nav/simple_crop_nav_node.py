@@ -1,23 +1,24 @@
 #!/usr/bin/python
 from simple_crop_nav import SimpleCropNavController
 import rospy
+import sys
+import os
 
 if __name__ == "__main__":
     rospy.init_node("simple_crop_nav_controller")
-    #rospy.Subscriber("/Tablet/voice", VoiceMessage, start_cb)
-    #while not start_test:
-    #    rospy.sleep(0.1)
 
-    #msg = None
+    if len(sys.argv) != 2:
+        print "please provide just folder name as extra args"
+        sys.exit()
 
-    #while msg is None:
-    #    msg = rospy.wait_for_message("/Tablet/voice", VoiceMessage, timeout=None)
-    #    parse_command(msg.texts)
-
-    #print "NEXT STage"
+    folder_name = sys.argv[1]
+    try:
+        os.mkdir(folder_name)
+    except OSError:
+        print ("Creation of the directory failed")
 
     rospy.logerr("start test")
-    controller = SimpleCropNavController()
+    controller = SimpleCropNavController(folder=folder_name)
 
     while not rospy.is_shutdown() and controller.is_running():
         rospy.sleep(1.0)

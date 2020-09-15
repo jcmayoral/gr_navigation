@@ -17,7 +17,7 @@ list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" :
                 "/safe_nav_vel": Twist, "/lock_all" : Bool , "/grid_map": GridMap}
 
 class SimpleCropNavController:
-    def __init__(self, desired_speed = 1.0):
+    def __init__(self, desired_speed = 1.0, folder = "data"):
         self.twist = Twist()
         self.twist.linear.x = desired_speed
         self.listener = tf.TransformListener()
@@ -27,7 +27,7 @@ class SimpleCropNavController:
         rospy.Subscriber("/Tablet/voice", VoiceMessage, self.voice_cb)
         self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
         self.rb = utils.BagRecorder(record_topics = list_topics,
-                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/data/",
+                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/"+ folder +"/",
                                     smach=False, start=False)
 
 
