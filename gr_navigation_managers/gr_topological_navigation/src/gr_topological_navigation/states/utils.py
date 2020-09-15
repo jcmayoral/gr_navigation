@@ -4,7 +4,7 @@ import threading
 import rospy
 
 class BagRecorder(smach.State):
-    def __init__(self, record_topics=dict(), desired_path="/home/jose/collection_data/topological_navigation/", smach = True):
+    def __init__(self, record_topics=dict(), desired_path="/home/jose/collection_data/topological_navigation/", smach = True, start=True):
         self.is_finished = False
         self.is_bag_started = False
         self.path = desired_path
@@ -14,16 +14,18 @@ class BagRecorder(smach.State):
             rospy.loginfo("Loading ," + topic)
             rospy.Subscriber(topic, type, self.mainCB, topic, queue_size=300)
 
-        self.startBag()
+        if start:
+            self.startBag()
 
         if smach:
             smach.State.__init__(self,
                              outcomes=['RECORD_STARTED','END_RECORD'],
                              input_keys=['counter_in', 'shared_string', 'restart_requested','stop_requested'],
                              output_keys=['counter_out', 'restart_requested_out', 'stop_requested_out'])
-        rospy.loginfo("Initializing Bag Recorder")
+        rospy.loginfo("Initialized Bag Recorder")
 
     def startBag(self):
+        print "Starting bag"
         self.bag = rosbag.Bag(self.path + 'starter.bag', 'w')
         self.is_finished = False
         self.is_bag_started= True
