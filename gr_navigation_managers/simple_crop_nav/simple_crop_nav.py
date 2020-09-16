@@ -20,6 +20,7 @@ class SimpleCropNavController:
     def __init__(self, desired_speed = 1.0, folder = "data"):
         self.twist = Twist()
         self.twist.linear.x = desired_speed
+        self.is_next_required = False
         self.listener = tf.TransformListener()
         self.initialize_test()
 
@@ -55,8 +56,17 @@ class SimpleCropNavController:
         if command == "STOP_TEST":
             self.emergency_stop()
 
+        if command == "NEXT_TEST":
+            self.is_next_required = True
+
         self.command = command
         #self.setPose
+
+    def swapPoses(self):
+        tmp = self.startpose
+        self.startpose = self.endpose
+        self.endpose = tmp
+        self.endpose[0] = -self.endpose[0]
 
     def setPoses(self):
         try:
@@ -94,8 +104,12 @@ class SimpleCropNavController:
         self.pub.publish(self.twist)
         #print math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2))
 
-        if math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)) < 0.5:
+        if self.is_next_required:
             self.change_direction()
+        else:
+            if math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)) < 0.5:
+                self.change_direction()
+
 
     def change_direction(self):
 
@@ -104,7 +118,12 @@ class SimpleCropNavController:
         print ("chnage direction forward ", self.forward)
         self.current_motions = self.current_motions + 1
 
-        self.setPoses()
+        if not self.is_next_required:
+            self.setPoses()
+        else:
+            self.swapPoses()
+
+        self.is_next_required = False
 
         if self.forward and self.is_running():
             self.rb.startBag()

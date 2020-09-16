@@ -7,5 +7,7 @@ def parse_command(commands):
             return "START_TEST"
         if "stop" in c:
             return "STOP_TEST"
+        if "next" in c:
+            return "NEXT_TEST"
 
     return None
