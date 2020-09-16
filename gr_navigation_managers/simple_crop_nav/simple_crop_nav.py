@@ -8,13 +8,16 @@ from nav_msgs.msg import Odometry
 from grid_map_msgs.msg import GridMap
 from command_parser import parse_command
 from jsk_gui_msgs.msg import VoiceMessage
+from safety_msgs.msg import FoundObjectsArray
 import tf
 import sys
 import math
 
 list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" : TFMessage,
-                "nav_vel" : Twist, "/safe_score": Float32,
-                "/safe_nav_vel": Twist, "/lock_all" : Bool , "/grid_map": GridMap}
+                "/nav_vel" : Twist, "/safe_score": Float32,
+                "/safe_nav_vel": Twist, "/lock_all" : Bool , "/grid_map": GridMap,
+                "/pointcloud_lidar_processing/found_object" : FoundObjectsArray
+}
 
 class SimpleCropNavController:
     def __init__(self, desired_speed = 1.0, folder = "data"):
