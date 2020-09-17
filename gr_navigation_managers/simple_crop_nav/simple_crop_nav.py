@@ -2,7 +2,8 @@ import rospy
 import gr_topological_navigation.states.utils as utils
 from geometry_msgs.msg import Twist, PoseStamped
 from sensor_msgs.msg import PointCloud2
-from std_msgs.msg import Float32, Bool
+from std_msgs.msg import Float32,
++from std_msgs.msg import String
 from tf2_msgs.msg import TFMessage
 from nav_msgs.msg import Odometry
 from grid_map_msgs.msg import GridMap
@@ -20,19 +21,20 @@ list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" :
 }
 
 class SimpleCropNavController:
-    def __init__(self, desired_speed = 1.0, folder = "data"):
+    def __init__(self, desired_speed = 0.5, folder = "data"):
         self.twist = Twist()
         self.twist.linear.x = desired_speed
         self.is_next_required = False
         self.listener = tf.TransformListener()
         self.initialize_test()
-
-        rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
-        rospy.Subscriber("/Tablet/voice", VoiceMessage, self.voice_cb)
-        self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
         self.rb = utils.BagRecorder(record_topics = list_topics,
                                     desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/"+ folder +"/",
                                     smach=False, start=False)
+
+        rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
+        rospy.Subscriber("/Tablet/voice", VoiceMessage, self.voice_cb)
+        rospy.Subscriber("fake_voice_command", String, self.voice_cb2)
+        self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
 
 
         rospy.Timer(rospy.Duration(0.1), self.publish)
@@ -65,6 +67,22 @@ class SimpleCropNavController:
         self.command = command
         #self.setPose
 
+    def voice_cb2(self,msg):
+        command = parse_command(msg.data, False)
+        print "command to execute ", command
+        if command == "START_TEST":
+            self.initialize_test()
+            self.setPoses()
+            self.rb.startBag()
+        if command == "STOP_TEST":
+            self.emergency_stop()
+
+        if command == "NEXT_TEST":
+            self.is_next_required = True
+
+        self.command = command
+
+
     def swapPoses(self):
         tmp = self.startpose
         self.startpose = self.endpose
@@ -82,9 +100,9 @@ class SimpleCropNavController:
             endpose.header.frame_id = "base_link"
             endpose.pose.orientation.w = 1.0
             if self.forward:
-                endpose.pose.position.x = 10.0
+                endpose.pose.position.x = 25.0
             else:
-                endpose.pose.position.x = -10.0
+                endpose.pose.position.x = -25.0
             p_end = self.listener.transformPose("odom", endpose)
             self.endpose = [p_end.pose.position.x, p_end.pose.position.y]
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):

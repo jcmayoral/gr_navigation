@@ -11,3 +11,13 @@ def parse_command(commands):
             return "NEXT_TEST"
 
     return None
+
+def parse_command(command, False):
+    if "start" in command:
+        return "START_TEST"
+    if "stop" in command:
+        return "STOP_TEST"
+    if "next" in command:
+        return "NEXT_TEST"
+
+    return None
