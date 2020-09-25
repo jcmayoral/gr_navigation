@@ -20,6 +20,6 @@ if __name__ == "__main__":
     rospy.logerr("start test")
     controller = SimpleCropNavController(folder=folder_name)
 
-    while not rospy.is_shutdown() and controller.is_running():
+    while not rospy.is_shutdown():# and controller.is_running():
         rospy.sleep(1.0)
     #rospy.loginfo("FINISHED")

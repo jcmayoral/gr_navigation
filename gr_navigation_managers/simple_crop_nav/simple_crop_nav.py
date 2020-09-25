@@ -2,8 +2,8 @@ import rospy
 import gr_topological_navigation.states.utils as utils
 from geometry_msgs.msg import Twist, PoseStamped
 from sensor_msgs.msg import PointCloud2
-from std_msgs.msg import Float32,
-+from std_msgs.msg import String
+from std_msgs.msg import Float32, Bool
+from std_msgs.msg import String
 from tf2_msgs.msg import TFMessage
 from nav_msgs.msg import Odometry
 from grid_map_msgs.msg import GridMap
@@ -13,6 +13,9 @@ from safety_msgs.msg import FoundObjectsArray
 import tf
 import sys
 import math
+
+import actionlib
+from gr_action_msgs.msg import SingleRowExecutionAction, SingleRowExecutionFeedback, SingleRowExecutionResult
 
 list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" : TFMessage,
                 "/nav_vel" : Twist, "/safe_score": Float32,
@@ -25,6 +28,7 @@ class SimpleCropNavController:
         self.twist = Twist()
         self.twist.linear.x = desired_speed
         self.is_next_required = False
+        self.distance = 10.0
         self.listener = tf.TransformListener()
         self.initialize_test()
         self.rb = utils.BagRecorder(record_topics = list_topics,
@@ -36,6 +40,12 @@ class SimpleCropNavController:
         rospy.Subscriber("fake_voice_command", String, self.voice_cb2)
         self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
 
+
+        self.action_trigger = False
+        self.ac_fb = SingleRowExecutionFeedback()
+        self.ac_result = SingleRowExecutionResult()
+        self._as = actionlib.SimpleActionServer("execute_single_row", SingleRowExecutionAction, execute_cb=self.execute_cb, auto_start = False)
+        self._as.start()
 
         rospy.Timer(rospy.Duration(0.1), self.publish)
         #rospy.spin()
@@ -66,6 +76,23 @@ class SimpleCropNavController:
 
         self.command = command
         #self.setPose
+
+    def execute_cb(self,goal):
+        if self._as.is_preempt_requested():
+            rospy.loginfo('Preempted')
+            self._as.set_preempted()
+            #self.emergency_stop()
+
+        self.rb = utils.BagRecorder(record_topics = list_topics,
+                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/"+ goal.row_id.data +"/",
+                                    smach=False, start=False)
+        self.distance = goal.cmd_distance
+        self.voice_cb2(goal.command)
+        self.action_trigger = False
+        while self.is_running():
+            rospy.sleep(0.1)
+
+        self._as.set_succeeded(self.ac_result)
 
     def voice_cb2(self,msg):
         command = parse_command(msg.data, False)
@@ -100,9 +127,9 @@ class SimpleCropNavController:
             endpose.header.frame_id = "base_link"
             endpose.pose.orientation.w = 1.0
             if self.forward:
-                endpose.pose.position.x = 25.0
+                endpose.pose.position.x = self.distance
             else:
-                endpose.pose.position.x = -25.0
+                endpose.pose.position.x = -self.distance
             p_end = self.listener.transformPose("odom", endpose)
             self.endpose = [p_end.pose.position.x, p_end.pose.position.y]
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
@@ -119,7 +146,7 @@ class SimpleCropNavController:
 
     def publish(self, event):
         if self.command is None:
-            print "waiting for voice command"
+            #print "waiting for voice command"
             return
 
         self.pub.publish(self.twist)
@@ -138,6 +165,10 @@ class SimpleCropNavController:
         self.forward = not self.forward
         print ("chnage direction forward ", self.forward)
         self.current_motions = self.current_motions + 1
+
+        if self.action_trigger:
+            self.ac_fb.sequence = self.current_motions
+            self._as.publish_feedback(self.ac_fb)
 
         if not self.is_next_required:
             self.setPoses()
@@ -161,4 +192,5 @@ class SimpleCropNavController:
     def emergency_stop(self):
         self.rb.close()
         self.current_motions = self.max_motions +1
+        #self.as.set_aborted(self.ac_result)
         #self.initializeTests()
