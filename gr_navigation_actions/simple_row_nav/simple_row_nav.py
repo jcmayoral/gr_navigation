@@ -32,7 +32,7 @@ class SimpleCropNavController:
         self.listener = tf.TransformListener()
         self.initialize_test()
         self.rb = utils.BagRecorder(record_topics = list_topics,
-                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/"+ folder +"/",
+                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_crop_nav/"+ folder +"/",
                                     smach=False, start=False)
 
         rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
@@ -84,7 +84,7 @@ class SimpleCropNavController:
             #self.emergency_stop()
 
         self.rb = utils.BagRecorder(record_topics = list_topics,
-                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_managers/simple_crop_nav/"+ goal.row_id.data +"/",
+                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_crop_nav/"+ goal.row_id.data +"/",
                                     smach=False, start=False)
         self.distance = goal.cmd_distance
         self.voice_cb2(goal.command)
@@ -167,12 +167,14 @@ class SimpleCropNavController:
         self.current_motions = self.current_motions + 1
 
         if self.action_trigger:
+            rospy.logwarn("Publish fb")
             self.ac_fb.sequence = self.current_motions
             self._as.publish_feedback(self.ac_fb)
 
         if not self.is_next_required:
             self.setPoses()
         else:
+            rospy.logerr("TODO Add turn around functionality")
             self.swapPoses()
 
         self.is_next_required = False
