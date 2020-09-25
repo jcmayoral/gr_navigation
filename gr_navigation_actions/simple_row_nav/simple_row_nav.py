@@ -17,6 +17,7 @@ import math
 
 import actionlib
 from gr_action_msgs.msg import SingleRowExecutionAction, SingleRowExecutionFeedback, SingleRowExecutionResult
+from gr_action_msgs.srv import GetMetrics, GetMetricsResponse, GetMetricsRequest
 
 list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" : TFMessage,
                 "/nav_vel" : Twist, "/safe_score": Float32,
@@ -42,6 +43,8 @@ class SimpleRowNavController:
         rospy.Subscriber("fake_voice_command", String, self.voice_cb2)
         self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
 
+
+        self._asclient = rospy.ServiceProxy('get_metrics', GetMetrics)
 
         self.action_trigger = False
         self.ac_fb = SingleRowExecutionFeedback()
@@ -92,18 +95,25 @@ class SimpleRowNavController:
         except OSError:
             print ("Creation of the directory failed")
 
+        self.ac_fb = SingleRowExecutionFeedback()
+        self.ac_result = SingleRowExecutionResult()
+        self.action_trigger = True
 
         self.rb = utils.BagRecorder(record_topics = list_topics,
                                     desired_path = folder_name,
                                     smach=False, start=False)
         self.distance = goal.cmd_distance
         self.voice_cb2(goal.command)
-        self.action_trigger = True
         while self.is_running():
             rospy.sleep(0.1)
 
 
         self.command = None
+
+        srvmessage = GetMetricsRequest()
+        srvmessage.file_name = "srvtest.txt"
+        resp = self._asclient(srvmessage)
+        self.ac_result.metrics = resp.metrics
         self._as.set_succeeded(self.ac_result)
 
     def voice_cb2(self,msg):
@@ -130,8 +140,8 @@ class SimpleRowNavController:
 
     def setPoses(self):
         try:
-            self.listener.waitForTransform('/odom', '/base_link', rospy.Time(), rospy.Duration(2.0))
-            (trans,rot) = self.listener.lookupTransform('/odom', '/base_link', rospy.Time())
+            self.listener.waitForTransform('/odom', '/base_link', rospy.Time(0), rospy.Duration(2.0))
+            (trans,rot) = self.listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
             #print type(trans),rot
             self.startpose = [trans[0], trans[1]]
             #print self.startpose
@@ -167,6 +177,7 @@ class SimpleRowNavController:
         if self.is_next_required:
             self.change_direction()
         else:
+            print math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2))
             if math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)) < 0.5:
                 self.change_direction()
 
