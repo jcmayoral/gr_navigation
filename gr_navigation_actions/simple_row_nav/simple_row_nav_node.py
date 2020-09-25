@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from simple_crop_nav import SimpleCropNavController
+from simple_row_nav import SimpleRowNavController
 import rospy
 import sys
 import os
@@ -18,7 +18,7 @@ if __name__ == "__main__":
         print ("Creation of the directory failed")
 
     rospy.logerr("start test")
-    controller = SimpleCropNavController(folder=folder_name)
+    controller = SimpleRowNavController(folder=folder_name)
 
     while not rospy.is_shutdown():# and controller.is_running():
         rospy.sleep(1.0)

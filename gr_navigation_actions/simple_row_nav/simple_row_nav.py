@@ -12,6 +12,7 @@ from jsk_gui_msgs.msg import VoiceMessage
 from safety_msgs.msg import FoundObjectsArray
 import tf
 import sys
+import os
 import math
 
 import actionlib
@@ -23,16 +24,17 @@ list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" :
                 "/pointcloud_lidar_processing/found_object" : FoundObjectsArray
 }
 
-class SimpleCropNavController:
+class SimpleRowNavController:
     def __init__(self, desired_speed = 0.5, folder = "data"):
         self.twist = Twist()
         self.twist.linear.x = desired_speed
         self.is_next_required = False
         self.distance = 10.0
+        self.repetitions = 20
         self.listener = tf.TransformListener()
         self.initialize_test()
         self.rb = utils.BagRecorder(record_topics = list_topics,
-                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_crop_nav/"+ folder +"/",
+                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_row_nav/"+ folder +"/",
                                     smach=False, start=False)
 
         rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
@@ -51,7 +53,6 @@ class SimpleCropNavController:
         #rospy.spin()
 
     def initialize_test(self):
-        self.max_motions = 20
         self.current_motions = 0
 
         self.startpose = [0,0]
@@ -82,16 +83,27 @@ class SimpleCropNavController:
             rospy.loginfo('Preempted')
             self._as.set_preempted()
             #self.emergency_stop()
+        self.repetitions =  goal.repetitions
+        rospy.logerr( " Repeat %s times" % str(self.repetitions))
+        folder_name = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_row_nav/"+ goal.row_id.data +"/"
+
+        try:
+            os.mkdir(folder_name)
+        except OSError:
+            print ("Creation of the directory failed")
+
 
         self.rb = utils.BagRecorder(record_topics = list_topics,
-                                    desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_crop_nav/"+ goal.row_id.data +"/",
+                                    desired_path = folder_name,
                                     smach=False, start=False)
         self.distance = goal.cmd_distance
         self.voice_cb2(goal.command)
-        self.action_trigger = False
+        self.action_trigger = True
         while self.is_running():
             rospy.sleep(0.1)
 
+
+        self.command = None
         self._as.set_succeeded(self.ac_result)
 
     def voice_cb2(self,msg):
@@ -142,11 +154,11 @@ class SimpleCropNavController:
         self.start = True
 
     def is_running(self):
-        return self.current_motions < self.max_motions
+        return self.current_motions < self.repetitions
 
     def publish(self, event):
         if self.command is None:
-            #print "waiting for voice command"
+            rospy.logwarn_throttle(4, "waiting for voice command")
             return
 
         self.pub.publish(self.twist)
@@ -163,7 +175,7 @@ class SimpleCropNavController:
 
         self.twist.linear.x = -self.twist.linear.x
         self.forward = not self.forward
-        print ("chnage direction forward ", self.forward)
+        print ("change direction forward ", self.forward)
         self.current_motions = self.current_motions + 1
 
         if self.action_trigger:
@@ -193,6 +205,6 @@ class SimpleCropNavController:
 
     def emergency_stop(self):
         self.rb.close()
-        self.current_motions = self.max_motions +1
+        self.current_motions = self.repetitions +1
         #self.as.set_aborted(self.ac_result)
         #self.initializeTests()
