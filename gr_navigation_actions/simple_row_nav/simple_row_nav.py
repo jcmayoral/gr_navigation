@@ -68,7 +68,7 @@ class SimpleRowNavController:
     def voice_cb(self,msg):
         command = parse_command(msg.texts)
         print "command to execute ", command
-        if command == "START_TEST":
+        if command == "START_TfEST":
             self.initialize_test()
             self.setPoses()
             self.rb.startBag()
@@ -98,6 +98,8 @@ class SimpleRowNavController:
         self.ac_fb = SingleRowExecutionFeedback()
         self.ac_result = SingleRowExecutionResult()
         self.action_trigger = True
+
+        self.twist.linear.x = goal.linearspeed
 
         self.rb = utils.BagRecorder(record_topics = list_topics,
                                     desired_path = folder_name,
