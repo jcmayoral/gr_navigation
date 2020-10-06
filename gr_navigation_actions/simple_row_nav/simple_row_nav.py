@@ -29,6 +29,7 @@ class SimpleRowNavController:
     def __init__(self, desired_speed = 0.5, folder = "data"):
         self.twist = Twist()
         self.twist.linear.x = desired_speed
+        self.desired_speed = desired_speed
         self.is_next_required = False
         self.distance = 10.0
         self.repetitions = 20
@@ -36,7 +37,7 @@ class SimpleRowNavController:
         self.initialize_test()
         self.rb = utils.BagRecorder(record_topics = list_topics,
                                     desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_row_nav/"+ folder +"/",
-                                    smach=False, start=False)
+                                    enable_smach=False, start=False)
 
         rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
         rospy.Subscriber("/Tablet/voice", VoiceMessage, self.voice_cb)
@@ -100,10 +101,11 @@ class SimpleRowNavController:
         self.action_trigger = True
 
         self.twist.linear.x = goal.linearspeed
+        self.desired_speed = goal.linearspeed
 
         self.rb = utils.BagRecorder(record_topics = list_topics,
                                     desired_path = folder_name,
-                                    smach=False, start=False)
+                                    enable_smach=False, start=False)
         self.distance = goal.cmd_distance
         self.voice_cb2(goal.command)
         while self.is_running():
@@ -179,16 +181,21 @@ class SimpleRowNavController:
         if self.is_next_required:
             self.change_direction()
         else:
-            print math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2))
+            rospy.loginfo_throttle(5,math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)))
             if math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)) < 0.5:
                 self.change_direction()
 
 
     def change_direction(self):
 
-        self.twist.linear.x = -self.twist.linear.x
+        #self.twist.linear.x = -self.twist.linear.x
         self.forward = not self.forward
         print ("change direction forward ", self.forward)
+        if self.forward:
+            self.twist.linear.x = self.desired_speed
+        else:
+            self.twist.linear.x = -0.25
+
         self.current_motions = self.current_motions + 1
 
         if self.action_trigger:
