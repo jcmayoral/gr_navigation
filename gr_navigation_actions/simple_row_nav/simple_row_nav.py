@@ -14,6 +14,7 @@ import tf
 import sys
 import os
 import math
+import time
 
 import actionlib
 from gr_action_msgs.msg import SingleRowExecutionAction, SingleRowExecutionFeedback, SingleRowExecutionResult
@@ -26,7 +27,7 @@ list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" :
 }
 
 class SimpleRowNavController:
-    def __init__(self, desired_speed = 0.5, folder = "data"):
+    def __init__(self, desired_speed = 0.5, folder = "data", init_bag=False):
         self.twist = Twist()
         self.twist.linear.x = desired_speed
         self.desired_speed = desired_speed
@@ -35,7 +36,13 @@ class SimpleRowNavController:
         self.repetitions = 20
         self.listener = tf.TransformListener()
         self.initialize_test()
-        self.rb = utils.BagRecorder(record_topics = list_topics,
+        self.init_bag = init_bag
+        self.max_execution_time=30
+        self.start_time = time.time()
+        self.is_not_aborted = True
+
+        if self.init_bag:
+            self.rb = utils.BagRecorder(record_topics = list_topics,
                                     desired_path = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_row_nav/"+ folder +"/",
                                     enable_smach=False, start=False)
 
@@ -72,7 +79,8 @@ class SimpleRowNavController:
         if command == "START_TfEST":
             self.initialize_test()
             self.setPoses()
-            self.rb.startBag()
+            if self.init_bag:
+                self.rb.startBag()
         if command == "STOP_TEST":
             self.emergency_stop()
 
@@ -88,6 +96,7 @@ class SimpleRowNavController:
             self._as.set_preempted()
             #self.emergency_stop()
         self.repetitions =  goal.repetitions
+        self.is_not_aborted = True
         rospy.logerr( " Repeat %s times" % str(self.repetitions))
         folder_name = "/home/jose/ros_ws/src/gr_navigation/gr_navigation_actions/simple_row_nav/"+ goal.row_id.data +"/"
 
@@ -103,7 +112,10 @@ class SimpleRowNavController:
         self.twist.linear.x = goal.linearspeed
         self.desired_speed = goal.linearspeed
 
-        self.rb = utils.BagRecorder(record_topics = list_topics,
+        self.start_time = time.time()
+
+        if self.init_bag:
+            self.rb = utils.BagRecorder(record_topics = list_topics,
                                     desired_path = folder_name,
                                     enable_smach=False, start=False)
         self.distance = goal.cmd_distance
@@ -118,6 +130,11 @@ class SimpleRowNavController:
         srvmessage.file_name = "srvtest.txt"
         resp = self._asclient(srvmessage)
         self.ac_result.metrics = resp.metrics
+        print ("Transcurred time " + str(time.time() - self.start_time) )
+        if self.is_not_aborted:
+            self.ac_result.message.data = "Success"
+        else:
+            self.ac_result.message.data = "Aborted"
         self._as.set_succeeded(self.ac_result)
 
     def voice_cb2(self,msg):
@@ -126,7 +143,8 @@ class SimpleRowNavController:
         if command == "START_TEST":
             self.initialize_test()
             self.setPoses()
-            self.rb.startBag()
+            if self.init_bag:
+                self.rb.startBag()
         if command == "STOP_TEST":
             self.emergency_stop()
 
@@ -168,7 +186,13 @@ class SimpleRowNavController:
         self.start = True
 
     def is_running(self):
-        return self.current_motions < self.repetitions
+        return self.current_motions < self.repetitions and self.check_time()
+
+    def check_time(self):
+        current_time = time.time()
+        self.is_not_aborted = (current_time - self.start_time) < self.max_execution_time
+        rospy.loginfo_throttle(5, "Transcurred time " + str(current_time - self.start_time) + "MAX" + str(self.max_execution_time))
+        return self.is_not_aborted
 
     def publish(self, event):
         if self.command is None:
@@ -182,7 +206,8 @@ class SimpleRowNavController:
             self.change_direction()
         else:
             rospy.loginfo_throttle(5,math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)))
-            if math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)) < 0.5:
+            rospy.loginfo_throttle(5,max(3.0, self.desired_speed*3))
+            if math.sqrt(math.pow(self.endpose[0] - self.currentpose[0],2) + math.pow(self.endpose[1] - self.currentpose[1],2)) < max(3.0,self.desired_speed*3):
                 self.change_direction()
 
 
@@ -210,21 +235,26 @@ class SimpleRowNavController:
             self.swapPoses()
 
         self.is_next_required = False
+        self.start_time = time.time()
 
-        if self.forward and self.is_running():
+        if self.forward and self.is_running() and self.init_bag:
             self.rb.startBag()
 
         if not self.forward:
-            self.rb.close()
+            if self.init_bag:
+                self.rb.close()
         else:
             if self.is_running():
                 rospy.loginfo("TEST "+ str(self.current_motions))
-                self.rb.restart("test", str(self.current_motions), close_required = False)
+                if self.init_bag:
+                    self.rb.restart("test", str(self.current_motions), close_required = False)
             else:
-                self.rb.close()
+                if self.init_bag:
+                    self.rb.close()
 
     def emergency_stop(self):
-        self.rb.close()
+        if self.init_bag:
+            self.rb.close()
         self.current_motions = self.repetitions +1
         #self.as.set_aborted(self.ac_result)
         #self.initializeTests()
