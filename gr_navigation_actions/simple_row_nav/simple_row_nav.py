@@ -114,7 +114,7 @@ class SimpleRowNavController:
         self.twist.linear.x = goal.linearspeed
         self.desired_speed = goal.linearspeed
 
-        self.max_execution_time = 2*self.repetitions*(self.distance/goal.linearspeed)
+        self.max_execution_time = 2*self.repetitions*((self.distance/goal.linearspeed)+(0.5*self.distance))
         rospy.logerr("MAX Execution Time " + str(self.max_execution_time))
 
         self.start_time = time.time()
@@ -169,7 +169,7 @@ class SimpleRowNavController:
             self.listener.waitForTransform('/odom', '/base_link', rospy.Time(0), rospy.Duration(2.0))
             (trans,rot) = self.listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
             #print type(trans),rot
-            self.startpose = [trans[0], trans[1]]
+            self.startpose = [0,0]#trans[0], trans[1]]
             #print self.startpose
             endpose = PoseStamped()
             endpose.header.frame_id = "base_link"
@@ -205,7 +205,7 @@ class SimpleRowNavController:
             #Line equation A = 1 B = 0 C = 0
             n = 1*self.currentpose[0] + 0* self.currentpose[1] + 0
             d = np.sqrt(np.power(1,2)+ np.power(0,2))
-            print n/d
+            #print n/d
 
             self.twist.linear.y = -self.currentpose[1]#n/d
             self.twist.angular.z = -self.currentpose[2]
@@ -243,7 +243,7 @@ class SimpleRowNavController:
         if self.forward:
             self.twist.linear.x = self.desired_speed
         else:
-            self.twist.linear.x = -1.2
+            self.twist.linear.x = -0.5
 
         self.current_motions = self.current_motions + 1
 
@@ -261,6 +261,7 @@ class SimpleRowNavController:
         self.is_next_required = False
         #self.start_time = time.time()
 
+        #FROM HERE ROSBAG STUFF
         if self.forward and self.is_running() and self.init_bag:
             self.rb.startBag()
 
