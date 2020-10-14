@@ -37,6 +37,7 @@ class SimpleRowNavController:
         self.repetitions = 2
         self.listener = tf.TransformListener()
         self.initialize_test()
+        self.set_start_pose()
         self.init_bag = init_bag
         self.max_execution_time=30
         self.start_time = time.time()
@@ -77,7 +78,7 @@ class SimpleRowNavController:
     def voice_cb(self,msg):
         command = parse_command(msg.texts)
         print "command to execute ", command
-        if command == "START_TfEST":
+        if command == "START_TEST":
             self.initialize_test()
             self.setPoses()
             if self.init_bag:
@@ -164,22 +165,45 @@ class SimpleRowNavController:
         self.endpose = tmp
         self.endpose[0] = -self.endpose[0]
 
+    def set_start_pose(self):
+        try:
+            self.listener.waitForTransform('/odom', '/base_link', rospy.Time(0), rospy.Duration(2.0))
+            (trans,rot) = self.listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
+            self.initPose = [trans[0], trans[1]]
+
+            endpose = PoseStamped()
+            endpose.header.frame_id = "base_link"
+            endpose.pose.orientation.w = 1.0
+            endpose.pose.position.x = self.distance
+            p_end = self.listener.transformPose("odom", endpose)
+            self.pendPose = [p_end.pose.position.x, p_end.pose.position.y]
+
+            print "START: " , self.initPose
+            print "END: " , self.pendPose
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            sys.exit()#continue
+
+
     def setPoses(self):
         try:
             self.listener.waitForTransform('/odom', '/base_link', rospy.Time(0), rospy.Duration(2.0))
             (trans,rot) = self.listener.lookupTransform('/odom', '/base_link', rospy.Time(0))
             #print type(trans),rot
-            self.startpose = [0,0]#trans[0], trans[1]]
             #print self.startpose
-            endpose = PoseStamped()
-            endpose.header.frame_id = "base_link"
-            endpose.pose.orientation.w = 1.0
             if self.forward:
-                endpose.pose.position.x = self.distance
+                self.startpose = self.initPose#trans[0], trans[1]]
+                #endpose.pose.position.x = self.distance
+                self.endpose = self.pendPose
+                #self.endpose = [self.distance + self.initPose[0],self.initPose[1]]
             else:
-                endpose.pose.position.x = -self.distance
-            p_end = self.listener.transformPose("odom", endpose)
-            self.endpose = [p_end.pose.position.x, p_end.pose.position.y]
+                self.startpose = [trans[0],trans[1]]#trans[0], trans[1]]
+                #endpose.pose.position.x = 0
+                self.endpose = self.initPose
+                #endpose.pose.position.x = self.startpose[1]-self.distance
+            #p_end = self.listener.transformPose("odom", endpose)
+            #self.endpose = [p_end.pose.position.x, p_end.pose.position.y]
+            print "START: " , self.startpose
+            print "END: " , self.endpose
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             sys.exit()#continue
 
@@ -254,6 +278,7 @@ class SimpleRowNavController:
 
         if not self.is_next_required:
             self.setPoses()
+            rospy.logerr("Does this solve the issue????")
         else:
             rospy.logerr("TODO Add turn around functionality")
             self.swapPoses()
