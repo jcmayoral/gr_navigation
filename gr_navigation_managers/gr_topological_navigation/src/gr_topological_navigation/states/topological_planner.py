@@ -20,7 +20,7 @@ from std_msgs.msg import String, Bool
 from gr_topological_navigation.states.move_base_state import command_robot_to_node, move_base, sbpl_action_mode
 
 class TopologicalPlanner(SimpleActionState):
-    def __init__(self, gui=False, pointset="riseholme_bidirectional_sim", nav_action="sbpl_action"):
+    def __init__(self, gui=False, pointset="hello_world", nav_action="sbpl_action"):
         self.msg_store = MessageStoreProxy(collection="topological_maps")
         current_edge_subscriber = rospy.Subscriber("/current_edge", String, self.current_edge_callback, queue_size=2)
         self.current_node = None
@@ -166,10 +166,11 @@ class TopologicalPlanner(SimpleActionState):
         #for example analyzing path before proceed....
         # possible at move_base_flex
         angle = np.fabs(self.get_orientation(next_edge))
-        while angle == 0 or  angle == 180:
-            rospy.logwarn("skipping region")
+        while angle == 0 or  angle == 180 or "end" not in next_edge:
+            rospy.logwarn("skipping region: "+next_edge)
+            rospy.logerr("Please fix this to make a proper solution")
             if len(self.topological_plan) == 0:
-                rospy.logerr("Topological plan size is zero returning last edge")
+                rospy.logerr("Topological plan size is zero returning last edge" + next_edge)
                 return next_edge
             next_edge = self.topological_plan.pop(0)
 
