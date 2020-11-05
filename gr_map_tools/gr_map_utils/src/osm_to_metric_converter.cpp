@@ -199,12 +199,19 @@ namespace gr_map_utils{
         //Signature of function
         //GridMapRosConverter::toOccupancyGrid(const grid_map::GridMap& gridMap,const std::string& layer, float dataMin, float dataMax,nav_msgs::OccupancyGrid& occupancyGrid);
         //TODO set proper dataMin/dataMax values
-
+        // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
             ROS_INFO("BEFORE");
             nav_msgs::OccupancyGrid grid;
+            float ox,oy;
+            gr_tf_publisher_->getTf(ox,oy);
+            grid_map::Position center;
+            center(0) = ox;
+            center(1) = oy;
+            gridmap_.setPosition(center);
+
             GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 1.0,grid);
-            ROS_INFO("After");
+            ROS_INFO_STREAM("MAP INfO " << grid.info);
             gridmap_pub_.publish(grid);
         }
     }
