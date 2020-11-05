@@ -57,6 +57,7 @@ namespace gr_map_utils{
             
             //Reuse gridmap to meteric
             grid_map::GridMap gridmap_;
+            bool is_ready_;
 
     };
 }

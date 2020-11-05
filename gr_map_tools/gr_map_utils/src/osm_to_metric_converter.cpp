@@ -3,12 +3,13 @@
 using namespace grid_map;
 
 namespace gr_map_utils{
-
-
-    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}){
-        
+    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
         //TO BE TESTED
         gridmap_.setFrameId("map");
+        //TODO Create a setup Gridmap function
+        gridmap_.setGeometry(Length(100, 100), 0.05);
+        gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
+
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
 
         
@@ -36,6 +37,8 @@ namespace gr_map_utils{
         ROS_INFO("updating Map");
         //Update values
         distance_to_origin_ = config.distance_to_origin;
+
+        //TODO
         gridmap_.setGeometry(Length(config.distance_to_origin, config.distance_to_origin), 0.05);
         gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
 
@@ -174,7 +177,10 @@ namespace gr_map_utils{
                 }
             }
         }
-                std::cout << static_topological_map_.nodes.size()<< std::endl;
+
+        std::cout << "Number of nodes" << static_topological_map_.nodes.size()<< std::endl;
+        //TO BE TESTED
+        is_ready_ = true;
     }
 
     void Osm2MetricMap::osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map){
@@ -190,7 +196,17 @@ namespace gr_map_utils{
         
 
         //TO BE TESTED
-        //gridmap_pub_.publish(gridmap_);
+        //Signature of function
+        //GridMapRosConverter::toOccupancyGrid(const grid_map::GridMap& gridMap,const std::string& layer, float dataMin, float dataMax,nav_msgs::OccupancyGrid& occupancyGrid);
+        //TODO set proper dataMin/dataMax values
+
+        if (is_ready_){
+            ROS_INFO("BEFORE");
+            nav_msgs::OccupancyGrid grid;
+            GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 1.0,grid);
+            ROS_INFO("After");
+            gridmap_pub_.publish(grid);
+        }
     }
 
 }
