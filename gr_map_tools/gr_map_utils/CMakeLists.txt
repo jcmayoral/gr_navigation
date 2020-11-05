@@ -22,6 +22,8 @@ find_package(catkin REQUIRED
         tf2
         tf2_ros
         geodesy
+        grid_map_ros
+        grid_map_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -70,15 +72,17 @@ catkin_package(
         tf2
         tf2_ros
         geodesy
+        grid_map_ros
+        grid_map_msgs
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS}   ${EIGEN3_INCLUDE_DIR})
 
 add_library(gr_map_utils src/tf_frame_publisher.cpp)
 
-add_executable(osm_map_converter src/osm_to_topological_node.cpp src/osm_to_topological_converter.cpp src/tf_frame_publisher.cpp)
-add_dependencies(osm_map_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
-target_link_libraries(osm_map_converter
+add_executable(osm_to_topological src/osm_to_topological_node.cpp src/osm_to_topological_converter.cpp src/tf_frame_publisher.cpp)
+add_dependencies(osm_to_topological ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
+target_link_libraries(osm_to_topological
     ${catkin_LIBRARIES}
 )
 
@@ -90,8 +94,16 @@ target_link_libraries(topological_map_converter
     ${catkin_LIBRARIES}
 )
 
+add_executable(osm_metric_converter src/osm_to_metric_node.cpp src/osm_to_metric_converter.cpp src/tf_frame_publisher.cpp)
+add_dependencies(osm_metric_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
+target_link_libraries(osm_metric_converter
+    ${catkin_LIBRARIES}
+)
+
+
+
 ## Install executables and/or libraries
-install(TARGETS osm_map_converter topological_map_converter
+install(TARGETS osm_to_topological topological_map_converter osm_metric_converter
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

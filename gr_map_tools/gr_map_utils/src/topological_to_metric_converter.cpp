@@ -9,11 +9,11 @@ namespace gr_map_utils{
                                                                     map_resolution_(0.1){
         ROS_INFO("Initiliazing Node Topological2MetricMap Node");
         gr_tf_publisher_ = new TfFramePublisher();
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"filtered_topological_maps");
         map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
         //Not implemented yet
-        map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
+        //map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
         timer_publisher_ = nh_.createTimer(ros::Duration(0.1), &Topological2MetricMap::timer_cb, this);
         dyn_server_cb_ = boost::bind(&Topological2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);

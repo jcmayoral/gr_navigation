@@ -1,24 +1,33 @@
-#include <gr_map_utils/osm_to_topological_converter.h>
+#include <gr_map_utils/osm_to_metric_converter.h>
+
+using namespace grid_map;
 
 namespace gr_map_utils{
 
-    Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_){
+
+    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}){
+        
+        //TO BE TESTED
+        gridmap_.setFrameId("map");
+        gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
+
+        
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         is_map_received_ = false;
         static_topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map", 1, true);
         topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("filtered_topological_map", 1, true); 
-        osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2TopologicalMap::osm_map_cb, this);
-        dyn_server_cb_ = boost::bind(&Osm2TopologicalMap::dyn_reconfigureCB, this, _1, _2);
+        osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2MetricMap::osm_map_cb, this);
+        dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
     }
 
-    Osm2TopologicalMap::~Osm2TopologicalMap(){
+    Osm2MetricMap::~Osm2MetricMap(){
 
     }
 
-    void Osm2TopologicalMap::dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level){
+    void Osm2MetricMap::dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level){
         ROS_INFO("aaaa");
         if (!is_map_received_){
             ROS_WARN("Map not received");
@@ -27,39 +36,43 @@ namespace gr_map_utils{
         ROS_INFO("updating Map");
         //Update values
         distance_to_origin_ = config.distance_to_origin;
+        gridmap_.setGeometry(Length(config.distance_to_origin, config.distance_to_origin), 0.05);
+        gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
+
+
         transformMap();
     }
 
 
-    bool Osm2TopologicalMap::storeMap(){
+    bool Osm2MetricMap::storeMap(){
         std::string name("testing_topological_map");
         std::string id(message_store_->insertNamed(name, topological_map_));
         message_store_->updateID(id, topological_map_);
         return true;
     }
 
-    bool Osm2TopologicalMap::getMapFromDatabase(){
+    bool Osm2MetricMap::getMapFromDatabase(){
         return false;
     }
 
-    bool Osm2TopologicalMap::getMapFromTopic(){
+    bool Osm2MetricMap::getMapFromTopic(){
         std::unique_lock<std::mutex> lk(mutex_);
         boost::shared_ptr<visualization_msgs::MarkerArray const> osm_map;
         osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>("visualization_marker_array", ros::Duration(3.0));
         if (osm_map != NULL){
             osm_map_ = *osm_map;
-            ROS_INFO("OSM Map gotten from topic");
+            ROS_INFO("OSM Map gotten");
             return true;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
         }
         return false;
     }
 
-    bool Osm2TopologicalMap::getMapFromService(){
+    bool Osm2MetricMap::getMapFromService(){
         return false;
     }
 
-    void Osm2TopologicalMap::transformMap(){
+    void Osm2MetricMap::transformMap(){
         //Ensure World frame exists
         gr_tf_publisher_->publishTfTransform();
         static_topological_map_.nodes.clear();
@@ -164,16 +177,20 @@ namespace gr_map_utils{
                 std::cout << static_topological_map_.nodes.size()<< std::endl;
     }
 
-    void Osm2TopologicalMap::osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map){
+    void Osm2MetricMap::osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map){
         osm_map_ = *map;
     }
 
-    void Osm2TopologicalMap::publishMaps(){
+    void Osm2MetricMap::publishMaps(){
         //std::cout << "NODES " << topological_map_.nodes.size() << std::endl;
         topological_marker_pub_.publish(filtered_map_);
         topological_map_pub_.publish(topological_map_);
         static_topological_map_pub_.publish(static_topological_map_);
         gr_tf_publisher_->publishTfTransform();
+        
+
+        //TO BE TESTED
+        //gridmap_pub_.publish(gridmap_);
     }
 
 }
