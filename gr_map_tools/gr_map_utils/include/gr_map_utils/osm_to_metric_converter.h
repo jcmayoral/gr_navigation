@@ -34,6 +34,7 @@ namespace gr_map_utils{
 
             void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
             void dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level);
+            void fillPolygon(std::vector<double>x, std::vector<double> y);
         private:
             visualization_msgs::MarkerArray osm_map_;
             visualization_msgs::MarkerArray filtered_map_;

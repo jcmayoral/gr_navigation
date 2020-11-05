@@ -28,6 +28,29 @@ namespace gr_map_utils{
 
     }
 
+    //TODO make_pair (Remember project just a proof of concept (Meeting 2020))
+    void Osm2MetricMap::fillPolygon(std::vector<double>x, std::vector<double> y){
+        grid_map::Polygon polygon;
+        polygon.setFrameId(gridmap_.getFrameId());
+        //Load footprint as a list of pair x y
+        //add each tuple as a vertex
+        std::cout << "SIZE "<< x.size() << std::endl;
+
+        std::vector<std::pair<double, double>> target;
+        target.reserve(x.size());
+        std::transform(x.begin(), x.end(), y.begin(), std::back_inserter(target),
+               [](double a, double b) { return std::make_pair(a, b); });
+
+        for (auto& m : target){
+            std::cout << m.first << ":::: "<< m.second << std::endl;
+            polygon.addVertex(grid_map::Position(m.first, m.second));
+        }
+        //assign values in the gridmap
+        for (grid_map::PolygonIterator iterator(gridmap_,polygon); !iterator.isPastEnd(); ++iterator) {
+            gridmap_.at("example", *iterator) = 255;
+        }
+    }
+
     void Osm2MetricMap::dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level){
         ROS_INFO("aaaa");
         if (!is_map_received_){
@@ -37,11 +60,6 @@ namespace gr_map_utils{
         ROS_INFO("updating Map");
         //Update values
         distance_to_origin_ = config.distance_to_origin;
-
-        //TODO
-        gridmap_.setGeometry(Length(config.distance_to_origin, config.distance_to_origin), 0.05);
-        gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
-
 
         transformMap();
     }
@@ -81,9 +99,8 @@ namespace gr_map_utils{
         static_topological_map_.nodes.clear();
         topological_map_.nodes.clear();
         filtered_map_.markers.clear();
-        
-
-        std::cout << static_topological_map_.nodes.size()<< std::endl;
+    
+        //std::cout << static_topological_map_.nodes.size()<< std::endl;
         //std::unique_lock<std::mutex> lk(mutex_);
         int count = 0;
         navigation_msgs::TopologicalNode node;
@@ -95,8 +112,27 @@ namespace gr_map_utils{
 
         std::string needle = "buildings_osm";
         std::string hack = "others_osm";
+        std::string boundshack = "bounds_osm";
+
+
+        std::vector<double> x;
+        std::vector<double> y;
+
+        std::vector<std::vector<double>> testx;
+        std::vector<std::vector<double>> testy;
+
+        std::vector<double> boundaries_x;
+        std::vector<double> boundaries_y;
+
 
         for (std::vector<visualization_msgs::Marker>::iterator it = osm_map_.markers.begin(); it != osm_map_.markers.end(); ++it){
+            if (it->type != 4 && it->type != 5){//Just go for lines
+                ROS_DEBUG_STREAM("IGNORE "<< it->type);
+                continue;
+            }
+
+            x.clear();
+            y.clear();
             visualization_msgs::Marker marker(*it);
 
             hack =  &marker.ns[0u];
@@ -125,6 +161,7 @@ namespace gr_map_utils{
             if(gr_tf_publisher_->getEuclideanDistanceToOrigin(marker.pose.position.x , marker.pose.position.y) < distance_to_origin_){
                 marker.header.frame_id = "map";
                 filtered_map_.markers.emplace_back(marker);
+
                     
                 if (std::strcmp(needle.c_str(), hack.c_str()) == 0){// if building then pass to static map
                     static_topological_map_.nodes.emplace_back(node);
@@ -135,9 +172,22 @@ namespace gr_map_utils{
                     topological_map_.nodes.emplace_back(node);
                 }
 
+                x.clear();
+                y.clear();
 
                 for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
                     //osm server has some issues with frames some points come on world frame so quick fix(distance to origin > 10000) is implemented but must be changed
+                    
+                    if (std::strcmp(hack.c_str(), boundshack.c_str()) == 0){
+                        //TYpe 4 Line Strip
+                        ROS_INFO_STREAM("needle" << hack << " type "<< it->type);
+                        std::cout << it_point->x << " ::: " << it_point->y <<std::endl;
+                        //FOR BOUNDARIES
+                        boundaries_x.push_back(it_point->x);
+                        boundaries_y.push_back(it_point->y);
+                        continue;
+                    }
+
                      if (gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x , it_point->y) > 10000){//world coordinate detected
                         in.pose.position.x = it_point->x;
                         in.pose.position.y = it_point->y;
@@ -149,6 +199,8 @@ namespace gr_map_utils{
 
                     if (static_map){//add point to static
                         static_topological_map_.nodes.emplace_back(node);
+                        x.push_back(it_point->x);
+                        y.push_back(it_point->y);
                     }
                     else //add point to global
                         topological_map_.nodes.emplace_back(node);
@@ -175,8 +227,44 @@ namespace gr_map_utils{
                         first_point.y = second_point.y;
                     }
                 }
+
+                if (x.size()>1){
+                    testx.push_back(x);
+                    testy.push_back(y);
+                }
             }
         }
+
+        auto minx = *std::min_element(std::begin(boundaries_x), std::end(boundaries_x));
+        auto maxx = *std::max_element(std::begin(boundaries_x), std::end(boundaries_x));
+        auto miny = *std::min_element(std::begin(boundaries_y), std::end(boundaries_y));
+        auto maxy = *std::max_element(std::begin(boundaries_y), std::end(boundaries_y));
+
+        std::cout << "RANGE X" << maxx - minx << std::endl;
+        std::cout << "RANGE Y" << maxy - miny << std::endl;
+
+        gridmap_.setGeometry(Length(std::fabs(maxx-minx),std::fabs(maxy - miny)), 0.05);
+        //boundaries
+
+        float ox,oy;
+        gr_tf_publisher_->getTf(ox,oy);
+        //ox += minx;
+        //oy += miny;
+        grid_map::Position center;
+        center(0) = ox;
+        center(1) = oy;
+        gridmap_.setPosition(center);
+
+
+        auto ia = testx.begin();
+        auto ib = testy.begin();
+        
+        for (;ia!=testx.end();ia++,ib++){
+            //std::cout << "filling something:: " << ia->size() << std::endl; 
+            fillPolygon(*ia,*ib);
+        }
+
+
 
         std::cout << "Number of nodes" << static_topological_map_.nodes.size()<< std::endl;
         //TO BE TESTED
@@ -201,17 +289,9 @@ namespace gr_map_utils{
         //TODO set proper dataMin/dataMax values
         // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
-            ROS_INFO("BEFORE");
             nav_msgs::OccupancyGrid grid;
-            float ox,oy;
-            gr_tf_publisher_->getTf(ox,oy);
-            grid_map::Position center;
-            center(0) = ox;
-            center(1) = oy;
-            gridmap_.setPosition(center);
-
-            GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 1.0,grid);
-            ROS_INFO_STREAM("MAP INfO " << grid.info);
+            GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 255.0,grid);
+            //ROS_INFO_STREAM("MAP INfO " << grid.info);
             gridmap_pub_.publish(grid);
         }
     }
