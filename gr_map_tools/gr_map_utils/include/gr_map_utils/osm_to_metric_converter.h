@@ -37,12 +37,7 @@ namespace gr_map_utils{
             void fillPolygon(std::vector<double>x, std::vector<double> y);
         private:
             visualization_msgs::MarkerArray osm_map_;
-            visualization_msgs::MarkerArray filtered_map_;
-            navigation_msgs::TopologicalMap static_topological_map_;
-            navigation_msgs::TopologicalMap topological_map_;
             ros::Publisher topological_map_pub_;
-            ros::Publisher static_topological_map_pub_;
-            ros::Publisher topological_marker_pub_;
 
             //TO BE TESTED 
             ros::Publisher gridmap_pub_;
@@ -58,6 +53,8 @@ namespace gr_map_utils{
             
             //Reuse gridmap to meteric
             grid_map::GridMap gridmap_;
+            nav_msgs::OccupancyGrid grid_;
+
             bool is_ready_;
 
     };
