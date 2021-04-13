@@ -12,7 +12,6 @@ namespace gr_map_utils{
 
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
 
-        
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         is_map_received_ = false;
@@ -105,7 +104,6 @@ namespace gr_map_utils{
         std::string hack = "others_osm";
         std::string boundshack = "bounds_osm";
 
-
         std::vector<double> x;
         std::vector<double> y;
 
@@ -114,7 +112,6 @@ namespace gr_map_utils{
 
         std::vector<double> boundaries_x;
         std::vector<double> boundaries_y;
-
 
         for (std::vector<visualization_msgs::Marker>::iterator it = osm_map_.markers.begin(); it != osm_map_.markers.end(); ++it){
             if (it->type != 4 && it->type != 5){//Just go for lines
@@ -127,11 +124,10 @@ namespace gr_map_utils{
             visualization_msgs::Marker marker(*it);
             ROS_ERROR_STREAM("ERROR->(()) TO FILTER MAP :::-> " << marker);
 
-
             hack =  &marker.ns[0u];
-                
-            if (gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
-            //if (true){
+
+            if (true){
+            //gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
                 in.header.frame_id = "world";
                 in.pose.position.x = it->pose.position.x;
                 in.pose.position.y = it->pose.position.y;
@@ -142,23 +138,23 @@ namespace gr_map_utils{
                 marker.header = out.header;
                 marker.pose = out.pose; //visualization_msgs "OSM Map"
             }
-     
-            bool marker_of_interest = false;            
 
-            //MarkerArray            
+            bool marker_of_interest = false;
+
+            //MarkerArray
             if (std::strcmp(needle.c_str(), hack.c_str()) == 0){// if building then pass to static map
                 marker_of_interest = true;
                 //std::cout << it->points.size() << std::endl;
             }
- 
- 
+
             x.clear();
             y.clear();
 
             for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
                 //osm server has some issues with frames some points come on world frame so quick fix(distance to origin > 10000) is implemented but must be changed
-           
-                if (gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
+
+                if (true){
+                //gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
                     in.header.frame_id = "world";
                     in.pose.position.x = it_point->x;
                     in.pose.position.y = it_point->y;
@@ -192,12 +188,11 @@ namespace gr_map_utils{
                 testy.push_back(y);
             }
         }
-        
 
         auto ba = boundaries_x.begin();
         auto bb = boundaries_y.begin();
-        
-        for (;ba!=boundaries_x.end();ba++,bb++){ 
+
+        for (;ba!=boundaries_x.end();ba++,bb++){
             std::cout << "BOUNDARIES "<< *ba << " :::: " << *bb << std::endl;
         }
 
@@ -224,9 +219,9 @@ namespace gr_map_utils{
         //Filling Polygons
         auto ia = testx.begin();
         auto ib = testy.begin();
-        
+
         for (;ia!=testx.end();ia++,ib++){
-            //std::cout << "filling something:: " << ia->size() << std::endl; 
+            //std::cout << "filling something:: " << ia->size() << std::endl;
             fillPolygon(*ia,*ib);
         }
         is_ready_ = true;
