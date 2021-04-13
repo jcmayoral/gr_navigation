@@ -130,8 +130,8 @@ namespace gr_map_utils{
 
             hack =  &marker.ns[0u];
 
-            if (true){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
-            //if (true){
+            if (true){
+            //gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
                 in.header.frame_id = "world";
                 in.pose.position.x = it->pose.position.x;
                 in.pose.position.y = it->pose.position.y;
@@ -158,7 +158,8 @@ namespace gr_map_utils{
             for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
                 //osm server has some issues with frames some points come on world frame so quick fix(distance to origin > 10000) is implemented but must be changed
 
-                if (true){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
+                if (true){
+                //gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
                     in.header.frame_id = "world";
                     in.pose.position.x = it_point->x;
                     in.pose.position.y = it_point->y;
@@ -237,14 +238,13 @@ namespace gr_map_utils{
     }
 
     void Osm2MetricMap::publishMaps(){
-      gr_tf_publisher_->publishTfTransform();
+        gr_tf_publisher_->publishTfTransform();
         //TO BE TESTED
         //Signature of function
         //GridMapRosConverter::toOccupancyGrid(const grid_map::GridMap& gridMap,const std::string& layer, float dataMin, float dataMax,nav_msgs::OccupancyGrid& occupancyGrid);
         //TODO set proper dataMin/dataMax values
         // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
-            std::cout << "HERE"<<std::endl;
             GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 255.0,grid_);
             //ROS_INFO_STREAM("MAP INfO " << grid.info);
             gridmap_pub_.publish(grid_);
