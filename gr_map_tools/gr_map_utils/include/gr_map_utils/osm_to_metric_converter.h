@@ -23,7 +23,8 @@ namespace gr_map_utils{
 
     class Osm2MetricMap : public MapConverterInterface{
         public:
-            Osm2MetricMap(ros::NodeHandle nh,std::string topic="/visualization_marker_array");
+            Osm2MetricMap(ros::NodeHandle nh,std::string topic="/visualization_marker_array", std::string map_topic="/map", std::string needle = "buildings_osm",
+              bool initialize_tf=false);
             ~Osm2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();
@@ -56,6 +57,8 @@ namespace gr_map_utils{
             nav_msgs::OccupancyGrid grid_;
 
             bool is_ready_;
+            std::string in_topic_;
+            std::string needle_;
 
     };
 }

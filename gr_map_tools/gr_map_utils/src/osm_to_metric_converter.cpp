@@ -3,17 +3,19 @@
 using namespace grid_map;
 
 namespace gr_map_utils{
-    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh,std::string topic): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
+    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh,std::string topic,std::string map_topic, std::string needle, bool initialize_tf):
+        nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false), needle_(needle){
         //TO BE TESTED
+        in_topic_ = topic;
         gridmap_.setFrameId("map");
         //TODO Create a setup Gridmap function
         gridmap_.setGeometry(Length(100, 100), 0.05);
         gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
 
-        gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
+        gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
 
 
-        gr_tf_publisher_ = new TfFramePublisher();
+        gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps222");
         is_map_received_ = false;
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
@@ -32,7 +34,7 @@ namespace gr_map_utils{
         polygon.setFrameId(gridmap_.getFrameId());
         //Load footprint as a list of pair x y
         //add each tuple as a vertex
-        std::cout << "SIZE "<< x.size() << std::endl;
+        //std::cout << "SIZE "<< x.size() << std::endl;
 
         std::vector<std::pair<double, double>> target;
         target.reserve(x.size());
@@ -40,7 +42,7 @@ namespace gr_map_utils{
                [](double a, double b) { return std::make_pair(a, b); });
 
         for (auto& m : target){
-            std::cout << m.first << ":::: "<< m.second << std::endl;
+            //std::cout << m.first << ":::: "<< m.second << std::endl;
             polygon.addVertex(grid_map::Position(m.first, m.second));
         }
         //assign values in the gridmap
@@ -77,11 +79,14 @@ namespace gr_map_utils{
 
     bool Osm2MetricMap::getMapFromTopic(){
         std::unique_lock<std::mutex> lk(mutex_);
+        std::cout << "IN TOPIC "<< in_topic_ << std::endl;
+
         boost::shared_ptr<visualization_msgs::MarkerArray const> osm_map;
-        osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>("visualization_marker_array", ros::Duration(3.0));
+        osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>(in_topic_, ros::Duration(10.0));
+
         if (osm_map != NULL){
             osm_map_ = *osm_map;
-            ROS_INFO("OSM Map gotten");
+            ROS_INFO_STREAM("OSM Map gotten topic " << in_topic_);
             return true;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
         }
@@ -101,10 +106,8 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped in;
         in.pose.orientation.w = 1.0;
 
-        std::string needle = "buildings_osm";
         std::string hack = "others_osm";
         std::string boundshack = "bounds_osm";
-
 
         std::vector<double> x;
         std::vector<double> y;
@@ -125,7 +128,7 @@ namespace gr_map_utils{
             x.clear();
             y.clear();
             visualization_msgs::Marker marker(*it);
-            ROS_ERROR_STREAM("ERROR->(()) TO FILTER MAP :::-> " << marker);
+            //ROS_ERROR_STREAM("ERROR->(()) TO FILTER MAP :::-> " << marker);
 
 
             hack =  &marker.ns[0u];
@@ -136,7 +139,6 @@ namespace gr_map_utils{
                 in.pose.position.x = it->pose.position.x;
                 in.pose.position.y = it->pose.position.y;
                 in.pose.orientation.w =1.0;
-                ROS_WARN_STREAM(in);
                 to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
                 tf2::doTransform(in, out, to_map_transform);
                 marker.header = out.header;
@@ -146,7 +148,7 @@ namespace gr_map_utils{
             bool marker_of_interest = false;
 
             //MarkerArray
-            if (std::strcmp(needle.c_str(), hack.c_str()) == 0){// if building then pass to static map
+            if (std::strcmp(needle_.c_str(), hack.c_str()) == 0){// if building then pass to static map
                 marker_of_interest = true;
                 //std::cout << it->points.size() << std::endl;
             }
@@ -164,7 +166,6 @@ namespace gr_map_utils{
                     in.pose.position.y = it_point->y;
                     to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
                     tf2::doTransform(in, out, to_map_transform);
-                    ROS_ERROR("WHYYYYYYYYYYYYYYYY");
                     it_point->x = out.pose.position.x;
                     it_point->y = out.pose.position.y;
                 }
@@ -194,28 +195,42 @@ namespace gr_map_utils{
         }
 
 
-        auto ba = boundaries_x.begin();
-        auto bb = boundaries_y.begin();
+        std::cout << "boundaries " << in_topic_ << std::endl;
+        std::cout << boundaries_x.size() << std::endl;
 
-        for (;ba!=boundaries_x.end();ba++,bb++){
-            std::cout << "BOUNDARIES "<< *ba << " :::: " << *bb << std::endl;
+        float ox,oy, minx, miny;
+        if (boundaries_x.size() > 1){
+
+          auto ba = boundaries_x.begin();
+          auto bb = boundaries_y.begin();
+
+          /*
+          for (;ba!=boundaries_x.end();ba++,bb++){
+              std::cout << "BOUNDARIES "<< *ba << " :::: " << *bb << std::endl;
+          }
+          */
+
+          minx = *std::min_element(std::begin(boundaries_x), std::end(boundaries_x));
+          auto maxx = *std::max_element(std::begin(boundaries_x), std::end(boundaries_x));
+          miny = *std::min_element(std::begin(boundaries_y), std::end(boundaries_y));
+          auto maxy = *std::max_element(std::begin(boundaries_y), std::end(boundaries_y));
+
+          //std::cout << "RANGE X" << maxx - minx << std::endl;
+          //std::cout << "RANGE Y" << maxy - miny << std::endl;
+
+          gridmap_.setGeometry(Length(std::fabs(maxx-minx),std::fabs(maxy - miny)), 0.05);
+          //boundaries
+
+          gr_tf_publisher_->getTf(ox,oy);
+          ox = (maxx-minx)/2;
+          oy = (maxy-miny)/2;
         }
-
-        auto minx = *std::min_element(std::begin(boundaries_x), std::end(boundaries_x));
-        auto maxx = *std::max_element(std::begin(boundaries_x), std::end(boundaries_x));
-        auto miny = *std::min_element(std::begin(boundaries_y), std::end(boundaries_y));
-        auto maxy = *std::max_element(std::begin(boundaries_y), std::end(boundaries_y));
-
-        std::cout << "RANGE X" << maxx - minx << std::endl;
-        std::cout << "RANGE Y" << maxy - miny << std::endl;
-
-        gridmap_.setGeometry(Length(std::fabs(maxx-minx),std::fabs(maxy - miny)), 0.05);
-        //boundaries
-
-        float ox,oy;
-        gr_tf_publisher_->getTf(ox,oy);
-        ox = (maxx-minx)/2;
-        oy = (maxy-miny)/2;
+        else{
+          ox = 0;
+          oy = 0;
+          minx = 1.0;
+          miny = 1.0;
+        }
         grid_map::Position center;
         center(0) = ox+minx;
         center(1) = oy+miny;
