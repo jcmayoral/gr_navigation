@@ -214,11 +214,11 @@ namespace gr_map_utils{
 
         float ox,oy;
         gr_tf_publisher_->getTf(ox,oy);
-        //ox -= (maxx-minx)/2;
-        //oy -= (maxy-miny)/2;
+        ox = (maxx-minx)/2;
+        oy = (maxy-miny)/2;
         grid_map::Position center;
-        center(0) = 0;//ox;
-        center(1) = 0;//oy;
+        center(0) = ox+minx;
+        center(1) = oy+miny;
         gridmap_.setPosition(center);
 
         //Filling Polygons
@@ -244,7 +244,6 @@ namespace gr_map_utils{
         //TODO set proper dataMin/dataMax values
         // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
-            std::cout << "HERE"<<std::endl;
             GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 255.0,grid_);
             //ROS_INFO_STREAM("MAP INfO " << grid.info);
             gridmap_pub_.publish(grid_);
