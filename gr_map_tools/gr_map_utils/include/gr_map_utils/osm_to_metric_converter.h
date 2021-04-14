@@ -20,10 +20,10 @@
 
 
 namespace gr_map_utils{
-    
+
     class Osm2MetricMap : public MapConverterInterface{
         public:
-            Osm2MetricMap(ros::NodeHandle nh);
+            Osm2MetricMap(ros::NodeHandle nh,std::string topic="/visualization_marker_array");
             ~Osm2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();
@@ -39,7 +39,7 @@ namespace gr_map_utils{
             visualization_msgs::MarkerArray osm_map_;
             ros::Publisher topological_map_pub_;
 
-            //TO BE TESTED 
+            //TO BE TESTED
             ros::Publisher gridmap_pub_;
 
             ros::Subscriber osm_map_sub_;
@@ -50,7 +50,7 @@ namespace gr_map_utils{
             float distance_to_origin_;
             dynamic_reconfigure::Server<OSMMapConverterConfig> dyn_server_;
             dynamic_reconfigure::Server<OSMMapConverterConfig>::CallbackType dyn_server_cb_;
-            
+
             //Reuse gridmap to meteric
             grid_map::GridMap gridmap_;
             nav_msgs::OccupancyGrid grid_;

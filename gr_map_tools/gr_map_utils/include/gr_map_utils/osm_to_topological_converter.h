@@ -16,7 +16,7 @@ namespace gr_map_utils{
 
     class Osm2TopologicalMap : public MapConverterInterface{
         public:
-            Osm2TopologicalMap(ros::NodeHandle nh, std::string topic="/visualization_marker_array");
+            Osm2TopologicalMap(ros::NodeHandle nh);
             ~Osm2TopologicalMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();
