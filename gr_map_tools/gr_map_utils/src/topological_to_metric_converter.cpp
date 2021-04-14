@@ -1,16 +1,16 @@
 #include <gr_map_utils/topological_to_metric_converter.h>
 
 namespace gr_map_utils{
-    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh): nh_(nh), tf2_listener_(tf_buffer_),
+    Topological2MetricMap::Topological2MetricMap(ros::NodeHandle nh, bool initialize_tf): nh_(nh), tf2_listener_(tf_buffer_),
                                                                     mark_nodes_(false), mark_edges_(false),
                                                                     nodes_value_(127), edges_value_(127),
                                                                     inverted_costmap_(true), map_yaw_(0.0),
                                                                     map_offset_(2.0), cells_neighbors_(3),
                                                                     map_resolution_(0.1){
         ROS_INFO("Initiliazing Node Topological2MetricMap Node");
-        gr_tf_publisher_ = new TfFramePublisher();
+        gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"filtered_topological_maps");
-        map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
+        map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map_2", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
         //Not implemented yet
         //map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
@@ -119,7 +119,7 @@ namespace gr_map_utils{
 
         ROS_INFO("Wait map from topic.. timeout to 3 seconds");
         boost::shared_ptr<navigation_msgs::TopologicalMap const> map;
-        map =  ros::topic::waitForMessage<navigation_msgs::TopologicalMap>("topological_map", ros::Duration(3));
+        map =  ros::topic::waitForMessage<navigation_msgs::TopologicalMap>("temporal_topological_map");//, ros::Duration(3));
         if (map != NULL){
             topological_map_ = *map;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
@@ -135,6 +135,7 @@ namespace gr_map_utils{
 
 
     void Topological2MetricMap::transformMap(){
+      ROS_INFO("in transform map");
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
         created_map_.header.frame_id = "map"; //TODO this should be a param
@@ -325,6 +326,8 @@ namespace gr_map_utils{
     }
 
     void Topological2MetricMap::timer_cb(const ros::TimerEvent& event){
+        std::cout << "timer in" << std::endl;
         publishMaps();
+        std::cout << "timer out " << std::endl;
     }
 }

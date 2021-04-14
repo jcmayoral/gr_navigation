@@ -14,9 +14,9 @@ namespace gr_map_utils{
 
 
         gr_tf_publisher_ = new TfFramePublisher();
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps222");
         is_map_received_ = false;
-        topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map", 1, true);
+        topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
         osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2MetricMap::osm_map_cb, this);
         dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);

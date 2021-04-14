@@ -2,14 +2,14 @@
 
 namespace gr_map_utils{
 
-    Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_){
+    Osm2TopologicalMap::Osm2TopologicalMap(ros::NodeHandle nh, std::string topic): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_){
         gr_tf_publisher_ = new TfFramePublisher();
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         is_map_received_ = false;
         static_topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("static_topological_map", 1, true);
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map", 1, true);
-        topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("filtered_topological_map", 1, true); 
-        osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2TopologicalMap::osm_map_cb, this);
+        topological_marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("filtered_topological_map", 1, true);
+        osm_map_sub_ = nh_.subscribe(topic,10, &Osm2TopologicalMap::osm_map_cb, this);
         dyn_server_cb_ = boost::bind(&Osm2TopologicalMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
     }
@@ -65,7 +65,7 @@ namespace gr_map_utils{
         static_topological_map_.nodes.clear();
         topological_map_.nodes.clear();
         filtered_map_.markers.clear();
-        
+
 
         std::cout << static_topological_map_.nodes.size()<< std::endl;
         //std::unique_lock<std::mutex> lk(mutex_);
@@ -104,12 +104,12 @@ namespace gr_map_utils{
             bool static_map = false;
             geometry_msgs::Point first_point, second_point;
             bool init = false;
-            
+
             //find relevant point which are close to the origin
             if(gr_tf_publisher_->getEuclideanDistanceToOrigin(marker.pose.position.x , marker.pose.position.y) < distance_to_origin_){
                 marker.header.frame_id = "map";
                 filtered_map_.markers.emplace_back(marker);
-                    
+
                 if (std::strcmp(needle.c_str(), hack.c_str()) == 0){// if building then pass to static map
                     static_topological_map_.nodes.emplace_back(node);
                     static_map = true;
@@ -136,7 +136,7 @@ namespace gr_map_utils{
                     }
                     else //add point to global
                         topological_map_.nodes.emplace_back(node);
-                    
+
                     if(!init){//first point
                         first_point.x = node.pose.position.x;
                         first_point.y = node.pose.position.y;

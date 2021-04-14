@@ -11,7 +11,7 @@
 namespace gr_map_utils{
     class TfFramePublisher{
         public:
-            TfFramePublisher();
+            TfFramePublisher(bool init=true);
             ~TfFramePublisher();
             void publishTfTransform();
             void transformGPSToProjection(sensor_msgs::NavSatFix gps_msg, float& x, float& y);
@@ -38,5 +38,6 @@ namespace gr_map_utils{
             geometry_msgs::TransformStamped static_transformStamped_;
             float origin_x_;
             float origin_y_;
+            bool initialize_;
     };
 }

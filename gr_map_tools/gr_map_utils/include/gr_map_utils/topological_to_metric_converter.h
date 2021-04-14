@@ -24,7 +24,7 @@ namespace gr_map_utils{
 
     class Topological2MetricMap : public MapConverterInterface{
         public:
-            Topological2MetricMap(ros::NodeHandle nh);
+            Topological2MetricMap(ros::NodeHandle nh, bool initialize_tf =true);
             ~Topological2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();
@@ -38,7 +38,7 @@ namespace gr_map_utils{
 
         private:
             navigation_msgs::TopologicalMap topological_map_;
-            nav_msgs::OccupancyGrid created_map_;        
+            nav_msgs::OccupancyGrid created_map_;
             ros::Subscriber topological_map_sub_;
             ros::Publisher map_pub_;
             ros::Publisher metadata_pub_;
