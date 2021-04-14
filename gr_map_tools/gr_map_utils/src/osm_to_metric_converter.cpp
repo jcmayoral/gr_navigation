@@ -209,11 +209,11 @@ namespace gr_map_utils{
 
         float ox,oy;
         gr_tf_publisher_->getTf(ox,oy);
-        //ox -= (maxx-minx)/2;
-        //oy -= (maxy-miny)/2;
+        ox = (maxx-minx)/2;
+        oy = (maxy-miny)/2;
         grid_map::Position center;
-        center(0) = 0;//ox;
-        center(1) = 0;//oy;
+        center(0) = ox+minx;
+        center(1) = oy+miny;
         gridmap_.setPosition(center);
 
         //Filling Polygons
