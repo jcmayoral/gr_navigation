@@ -15,13 +15,13 @@ A sample of a hybrid map.
 Open Street Map to Metric map in Polytunnel.
 ![OSM Sample 13.04.21](/doc/osm_example.png)
 
-Semantic representation. Place Polytunnel.
-Colors: Purple (containers), Blue(workspace), Pink(Robot current row)
-![OSM Sample 15.04.21](/doc/semantic_map.png)
-
 Navigation over hybrid map (topologic + metric map).
 ![Hybrid Navigation 01.04.19](/doc/hybrid_map_navigation.png)
 ![Hybrid Navigation 12.04.19](/doc/hybrid_map_navigation_2.png)
+
+### Semantic Map 
+Semantic representation. Place Polytunnel.Colors: Purple (containers), Blue(workspace), Pink(Robot current row)
+![OSM Sample 15.04.21](/doc/semantic_map.png)
 
 ## Proximity Monitor
 ![Proximity Monitor 01.04.19](/doc/proximity_monitor.png)
