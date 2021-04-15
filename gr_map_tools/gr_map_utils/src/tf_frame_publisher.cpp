@@ -34,7 +34,7 @@ namespace gr_map_utils{
 
     void TfFramePublisher::publishTfTransform(){
         if (!initialize_){
-          std::cout << "skip publishing" << std::endl;
+          //std::cout << "skip publishing" << std::endl;
           return;
         }
         static_transformStamped_.header.stamp = ros::Time::now();

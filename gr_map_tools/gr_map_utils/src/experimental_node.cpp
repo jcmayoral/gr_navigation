@@ -6,7 +6,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "osm_to_metric_experimental");
     ros::NodeHandle nh;
     Osm2MetricMap map_converter(nh, "/visualization_marker_array", "map","buildings_osm", true);
-    Osm2MetricMap map_converter_2(nh, "/temporal_topological_map","map2", "edges", false);
+    Osm2MetricMap map_converter_2(nh, "/temporal_topological_map","map2", "edges", false, "line");
 
     ros::Rate loop_rate(10);
 
