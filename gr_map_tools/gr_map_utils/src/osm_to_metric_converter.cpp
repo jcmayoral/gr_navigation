@@ -14,10 +14,12 @@ namespace gr_map_utils{
         //TO BE TESTED
         in_topic_ = config["topic"].as<std::string>();
         std::string map_topic = config["map_topic"].as<std::string>();
+        auto size_x = config["size_x"].as<float>();
+        auto size_y = config["size_y"].as<float>();
 
         gridmap_.setFrameId(map_frame_);
         //TODO Create a setup Gridmap function
-        gridmap_.setGeometry(Length(100, 100), 10);
+        gridmap_.setGeometry(Length(size_x, size_y), 1);
         gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
 
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
@@ -63,14 +65,9 @@ namespace gr_map_utils{
 
           for (auto& m : target){
             auto index = &m - &target[0];
-            std::cout << "INDEX "<< index << " of " << target.size() << std::endl;
-            std::cout << target.size() << std::endl;
-            std::cout << target[0].first<< target[0].second << std::endl;
-            std::cout << target[1].first<< target[1].second << std::endl;
             startPose(0) = target[0].first;
             startPose(1) = target[0].second;
             gridmap_.getIndex(startPose, start);
-
 
             endPose(0) = m.first;
             endPose(1) = m.second;
@@ -79,7 +76,7 @@ namespace gr_map_utils{
             for (grid_map::LineIterator iterator(gridmap_, start, end);
                 !iterator.isPastEnd(); ++iterator) {
               //std::cout << "polygon " << in_topic_ << std::endl;
-              gridmap_.at("example", *iterator) = 127;
+              gridmap_.at("example", *iterator) = 64;
             }
           }
           return;
@@ -96,7 +93,7 @@ namespace gr_map_utils{
 
         for (grid_map::PolygonIterator iterator(gridmap_,polygon); !iterator.isPastEnd(); ++iterator) {
             std::cout << "polygon " << in_topic_ << std::endl;
-            gridmap_.at("example", *iterator) = 255;
+            gridmap_.at("example", *iterator) = 64;
         }
     }
 
@@ -182,7 +179,7 @@ namespace gr_map_utils{
 
             if (it->header.frame_id.compare(map_frame_)!=0){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
             //if (true){
-                in.header.frame_id = "world";
+                in.header.frame_id = it->header.frame_id;
                 in.pose.position.x = it->pose.position.x;
                 in.pose.position.y = it->pose.position.y;
                 in.pose.orientation.w =1.0;
@@ -266,7 +263,7 @@ namespace gr_map_utils{
           //std::cout << "RANGE X" << maxx - minx << std::endl;
           //std::cout << "RANGE Y" << maxy - miny << std::endl;
 
-          gridmap_.setGeometry(Length(std::fabs(maxx-minx),std::fabs(maxy - miny)), 0.05);
+          //gridmap_.setGeometry(Length(std::fabs(maxx-minx),std::fabs(maxy - miny)), 0.05);
           //boundaries
 
           gr_tf_publisher_->getTf(ox,oy);
@@ -277,9 +274,9 @@ namespace gr_map_utils{
           std::cout << "else " << in_topic_ << std::endl;
           ox = 0;
           oy = 0;
-          minx = 1.0;
-          miny = 1.0;
-          gridmap_.setGeometry(Length(200,200), 0.5);
+          minx = 0.0;
+          miny = 0.0;
+          //gridmap_.setGeometry(Length(200,200), 2.5);
         }
         grid_map::Position center;
         center(0) = ox+minx;

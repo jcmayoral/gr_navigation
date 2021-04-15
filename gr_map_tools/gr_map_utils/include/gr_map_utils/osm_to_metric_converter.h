@@ -23,6 +23,8 @@
 
 
 namespace gr_map_utils{
+    static grid_map::GridMap OSMGRIDMAP{};
+
 
     class Osm2MetricMap : public MapConverterInterface{
         public:
@@ -34,6 +36,15 @@ namespace gr_map_utils{
             virtual bool getMapFromDatabase();
             virtual void transformMap();
             virtual void publishMaps();
+
+
+            grid_map::Matrix getGridMapLayer(std::string layer){
+              return gridmap_.get(layer);
+            }
+
+            void addLayer(std::string layer, grid_map::Matrix data){
+              gridmap_.add(layer, data);
+            }
 
             void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
             void dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level);

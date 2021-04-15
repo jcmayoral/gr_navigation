@@ -23,6 +23,10 @@ int main(int argc, char **argv)
     map_converter.transformMap();
     map_converter_2.transformMap();
 
+    auto layer = map_converter.getGridMapLayer("example");
+
+    //map_converter_2.addLayer("example", layer);
+
     //map_converter.storeMap();
 
     while (ros::ok()){
