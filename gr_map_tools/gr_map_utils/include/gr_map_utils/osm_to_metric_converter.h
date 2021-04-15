@@ -18,12 +18,17 @@
 #include <grid_map_msgs/GridMap.h>
 #include <nav_msgs/OccupancyGrid.h>
 
+//YAML
+#include <yaml-cpp/yaml.h>
+
 
 namespace gr_map_utils{
-    
+
+    static grid_map::GridMap OSMGRIDMAP{};
+
     class Osm2MetricMap : public MapConverterInterface{
         public:
-            Osm2MetricMap(ros::NodeHandle nh);
+            Osm2MetricMap(ros::NodeHandle nh,std::string config_file="config/default_osm.yaml");
             ~Osm2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();
@@ -32,6 +37,7 @@ namespace gr_map_utils{
             virtual void transformMap();
             virtual void publishMaps();
 
+            void addOSMRegions();
             void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
             void dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level);
             void fillPolygon(std::vector<double>x, std::vector<double> y);
@@ -39,7 +45,7 @@ namespace gr_map_utils{
             visualization_msgs::MarkerArray osm_map_;
             ros::Publisher topological_map_pub_;
 
-            //TO BE TESTED 
+            //TO BE TESTED
             ros::Publisher gridmap_pub_;
 
             ros::Subscriber osm_map_sub_;
@@ -50,12 +56,16 @@ namespace gr_map_utils{
             float distance_to_origin_;
             dynamic_reconfigure::Server<OSMMapConverterConfig> dyn_server_;
             dynamic_reconfigure::Server<OSMMapConverterConfig>::CallbackType dyn_server_cb_;
-            
+
             //Reuse gridmap to meteric
             grid_map::GridMap gridmap_;
             nav_msgs::OccupancyGrid grid_;
 
             bool is_ready_;
+            std::string in_topic_;
+            std::string needle_;
+            std::string type_;
+            std::string map_frame_;
 
     };
 }

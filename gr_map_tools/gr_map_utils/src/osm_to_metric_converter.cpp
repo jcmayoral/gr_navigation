@@ -3,20 +3,73 @@
 using namespace grid_map;
 
 namespace gr_map_utils{
-    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh): nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
+
+    void Osm2MetricMap::addOSMRegions(){
+      YAML::Node config = YAML::LoadFile("config/workspace.yaml");
+      float minx = config["minx"].as<float>();
+      float miny = config["miny"].as<float>();
+      float maxx = config["maxx"].as<float>();
+      float maxy = config["maxy"].as<float>();
+
+
+      std::vector<std::pair<float, float>> coordinates;
+      coordinates.push_back(std::make_pair(minx, miny));
+      coordinates.push_back(std::make_pair(maxx, miny));
+      coordinates.push_back(std::make_pair(maxx, maxy));
+      coordinates.push_back(std::make_pair(minx, maxy));
+      coordinates.push_back(std::make_pair(minx, miny));
+
+      grid_map::Polygon polygon;
+      polygon.setFrameId(OSMGRIDMAP.getFrameId());
+      //std::cout << "aqui " << in_topic_ << std::endl;
+
+      //assign values in the gridmap
+      for (auto& m : coordinates){
+          //std::cout << "vertex" << std::endl;
+          polygon.addVertex(grid_map::Position(m.first, m.second));
+      }
+
+      for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
+          //std::cout << "polygon " << in_topic_ << std::endl;
+          OSMGRIDMAP.at("example", *iterator) = 65;
+      }
+    }
+
+    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file):
+        nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
+        std::cout << "Config file " << config_file << std::endl;
+        YAML::Node config = YAML::LoadFile(config_file);
+        needle_ = config["needle"].as<std::string>();
+        type_ = config["type"].as<std::string>();
+        map_frame_ = config["map_frame"].as<std::string>();
+
         //TO BE TESTED
-        gridmap_.setFrameId("map");
-        //TODO Create a setup Gridmap function
-        gridmap_.setGeometry(Length(100, 100), 0.05);
-        gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
+        in_topic_ = config["topic"].as<std::string>();
+        std::string map_topic = config["map_topic"].as<std::string>();
+        auto size_x = config["size_x"].as<float>();
+        auto size_y = config["size_y"].as<float>();
 
-        gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
+        if (!OSMGRIDMAP.exists("example")){
+            ROS_ERROR("ADDING LAYER example");
+            OSMGRIDMAP.setFrameId(map_frame_);
+            //TODO Create a setup Gridmap function
+            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 1);
+            OSMGRIDMAP.add("example", Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
+        }
 
-        gr_tf_publisher_ = new TfFramePublisher();
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
+        gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
+
+        YAML::Node tf_node = config["TF"];
+
+        bool initialize_tf = (bool) tf_node["enable_tf"].as<int>();
+        std::string origin_frame = tf_node["origin_frame"].as<std::string>();
+        std::string output_frame = tf_node["output_frame"].as<std::string>();
+
+        gr_tf_publisher_ = new TfFramePublisher(initialize_tf, origin_frame, output_frame);
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps222");
         is_map_received_ = false;
-        topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map", 1, true);
-        osm_map_sub_ = nh_.subscribe("visualization_marker_array",10, &Osm2MetricMap::osm_map_cb, this);
+        topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
+        osm_map_sub_ = nh_.subscribe(in_topic_,10, &Osm2MetricMap::osm_map_cb, this);
         dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
     }
@@ -27,24 +80,55 @@ namespace gr_map_utils{
 
     //TODO make_pair (Remember project just a proof of concept (Meeting 2020))
     void Osm2MetricMap::fillPolygon(std::vector<double>x, std::vector<double> y){
-        grid_map::Polygon polygon;
-        polygon.setFrameId(gridmap_.getFrameId());
         //Load footprint as a list of pair x y
         //add each tuple as a vertex
-        std::cout << "SIZE "<< x.size() << std::endl;
+        //std::cout << "SIZE "<< x.size() << std::endl;
 
         std::vector<std::pair<double, double>> target;
         target.reserve(x.size());
         std::transform(x.begin(), x.end(), y.begin(), std::back_inserter(target),
                [](double a, double b) { return std::make_pair(a, b); });
 
+        //std::cout << "receiving " << x.size() << " , " << y.size() <<std::endl;
+
+        if (type_.compare("line") ==0){
+          grid_map::Index start;
+          grid_map::Position startPose;
+          grid_map::Index end;
+          grid_map::Position endPose;
+
+          for (auto& m : target){
+            auto index = &m - &target[0];
+            startPose(0) = target[0].first;
+            startPose(1) = target[0].second;
+            OSMGRIDMAP.getIndex(startPose, start);
+
+            endPose(0) = m.first;
+            endPose(1) = m.second;
+            OSMGRIDMAP.getIndex(endPose, end);
+
+            for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end);
+                !iterator.isPastEnd(); ++iterator) {
+              OSMGRIDMAP.at("example", *iterator) = 255;
+            }
+          }
+          return;
+        }
+
+        //POLYGON
+        grid_map::Polygon polygon;
+        polygon.setFrameId(OSMGRIDMAP.getFrameId());
+        //std::cout << "aqui " << in_topic_ << std::endl;
+
+        //assign values in the gridmap
         for (auto& m : target){
-            std::cout << m.first << ":::: "<< m.second << std::endl;
+            //std::cout << "vertex" << std::endl;
             polygon.addVertex(grid_map::Position(m.first, m.second));
         }
-        //assign values in the gridmap
-        for (grid_map::PolygonIterator iterator(gridmap_,polygon); !iterator.isPastEnd(); ++iterator) {
-            gridmap_.at("example", *iterator) = 255;
+
+        for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
+            //std::cout << "polygon " << in_topic_ << std::endl;
+            OSMGRIDMAP.at("example", *iterator) = 127;
         }
     }
 
@@ -77,10 +161,11 @@ namespace gr_map_utils{
     bool Osm2MetricMap::getMapFromTopic(){
         std::unique_lock<std::mutex> lk(mutex_);
         boost::shared_ptr<visualization_msgs::MarkerArray const> osm_map;
-        osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>("visualization_marker_array", ros::Duration(3.0));
+        osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>(in_topic_, ros::Duration(10.0));
+
         if (osm_map != NULL){
             osm_map_ = *osm_map;
-            ROS_INFO("OSM Map gotten");
+            ROS_INFO_STREAM("OSM Map gotten topic " << in_topic_);
             return true;
             //ROS_INFO_STREAM("Got by topic: " << topological_map_);
         }
@@ -100,7 +185,6 @@ namespace gr_map_utils{
         geometry_msgs::PoseStamped in;
         in.pose.orientation.w = 1.0;
 
-        std::string needle = "buildings_osm";
         std::string hack = "others_osm";
         std::string boundshack = "bounds_osm";
 
@@ -122,18 +206,17 @@ namespace gr_map_utils{
             x.clear();
             y.clear();
             visualization_msgs::Marker marker(*it);
-            ROS_ERROR_STREAM("ERROR->(()) TO FILTER MAP :::-> " << marker);
+            //ROS_ERROR_STREAM("ERROR->(()) TO FILTER MAP :::-> " << marker);
 
             hack =  &marker.ns[0u];
 
-            if (true){
-            //gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
-                in.header.frame_id = "world";
+            if (it->header.frame_id.compare(map_frame_)!=0){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
+            //if (true){
+                in.header.frame_id = it->header.frame_id;
                 in.pose.position.x = it->pose.position.x;
                 in.pose.position.y = it->pose.position.y;
                 in.pose.orientation.w =1.0;
-                ROS_WARN_STREAM(in);
-                to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
+                to_map_transform = tf_buffer_.lookupTransform(map_frame_,it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
                 tf2::doTransform(in, out, to_map_transform);
                 marker.header = out.header;
                 marker.pose = out.pose; //visualization_msgs "OSM Map"
@@ -142,7 +225,7 @@ namespace gr_map_utils{
             bool marker_of_interest = false;
 
             //MarkerArray
-            if (std::strcmp(needle.c_str(), hack.c_str()) == 0){// if building then pass to static map
+            if (std::strcmp(needle_.c_str(), hack.c_str()) == 0){// if building then pass to static map
                 marker_of_interest = true;
                 //std::cout << it->points.size() << std::endl;
             }
@@ -153,14 +236,12 @@ namespace gr_map_utils{
             for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
                 //osm server has some issues with frames some points come on world frame so quick fix(distance to origin > 10000) is implemented but must be changed
 
-                if (true){
-                //gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
+                if (it->header.frame_id.compare(map_frame_)!=0){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
                     in.header.frame_id = "world";
                     in.pose.position.x = it_point->x;
                     in.pose.position.y = it_point->y;
-                    to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
+                    to_map_transform = tf_buffer_.lookupTransform(map_frame_, it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
                     tf2::doTransform(in, out, to_map_transform);
-                    ROS_ERROR("WHYYYYYYYYYYYYYYYY");
                     it_point->x = out.pose.position.x;
                     it_point->y = out.pose.position.y;
                 }
@@ -189,39 +270,51 @@ namespace gr_map_utils{
             }
         }
 
-        auto ba = boundaries_x.begin();
-        auto bb = boundaries_y.begin();
+        float ox,oy, minx, miny;
+        if (boundaries_x.size() > 1){
 
-        for (;ba!=boundaries_x.end();ba++,bb++){
-            std::cout << "BOUNDARIES "<< *ba << " :::: " << *bb << std::endl;
+          auto ba = boundaries_x.begin();
+          auto bb = boundaries_y.begin();
+
+          /*
+          for (;ba!=boundaries_x.end();ba++,bb++){
+              std::cout << "BOUNDARIES "<< *ba << " :::: " << *bb << std::endl;
+          }
+          */
+
+          minx = *std::min_element(std::begin(boundaries_x), std::end(boundaries_x));
+          auto maxx = *std::max_element(std::begin(boundaries_x), std::end(boundaries_x));
+          miny = *std::min_element(std::begin(boundaries_y), std::end(boundaries_y));
+          auto maxy = *std::max_element(std::begin(boundaries_y), std::end(boundaries_y));
+
+          //std::cout << "RANGE X" << maxx - minx << std::endl;
+          //std::cout << "RANGE Y" << maxy - miny << std::endl;
+
+          //gridmap_.setGeometry(Length(std::fabs(maxx-minx),std::fabs(maxy - miny)), 0.05);
+          //boundaries
+
+          gr_tf_publisher_->getTf(ox,oy);
+          ox = (maxx-minx)/2;
+          oy = (maxy-miny)/2;
+          grid_map::Position center;
+          center(0) = ox+minx;
+          center(1) = oy+miny;
+          OSMGRIDMAP.setPosition(center);
+
         }
-
-        auto minx = *std::min_element(std::begin(boundaries_x), std::end(boundaries_x));
-        auto maxx = *std::max_element(std::begin(boundaries_x), std::end(boundaries_x));
-        auto miny = *std::min_element(std::begin(boundaries_y), std::end(boundaries_y));
-        auto maxy = *std::max_element(std::begin(boundaries_y), std::end(boundaries_y));
-
-        std::cout << "RANGE X" << maxx - minx << std::endl;
-        std::cout << "RANGE Y" << maxy - miny << std::endl;
-
-        gridmap_.setGeometry(Length(std::fabs(maxx-minx),std::fabs(maxy - miny)), 0.05);
-        //boundaries
-
-        float ox,oy;
-        gr_tf_publisher_->getTf(ox,oy);
-        ox = (maxx-minx)/2;
-        oy = (maxy-miny)/2;
-        grid_map::Position center;
-        center(0) = ox+minx;
-        center(1) = oy+miny;
-        gridmap_.setPosition(center);
+        else{
+          ox = 0;
+          oy = 0;
+          minx = 0.0;
+          miny = 0.0;
+          //gridmap_.setGeometry(Length(200,200), 2.5);
+        }
 
         //Filling Polygons
         auto ia = testx.begin();
         auto ib = testy.begin();
 
         for (;ia!=testx.end();ia++,ib++){
-            //std::cout << "filling something:: " << ia->size() << std::endl;
             fillPolygon(*ia,*ib);
         }
         is_ready_ = true;
@@ -239,7 +332,7 @@ namespace gr_map_utils{
         //TODO set proper dataMin/dataMax values
         // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
-            GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 255.0,grid_);
+            GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0.0, 255.0,grid_);
             //ROS_INFO_STREAM("MAP INfO " << grid.info);
             gridmap_pub_.publish(grid_);
         }
