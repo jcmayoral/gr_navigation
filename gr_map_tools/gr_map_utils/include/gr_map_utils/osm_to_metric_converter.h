@@ -18,13 +18,15 @@
 #include <grid_map_msgs/GridMap.h>
 #include <nav_msgs/OccupancyGrid.h>
 
+//YAML
+#include <yaml-cpp/yaml.h>
+
 
 namespace gr_map_utils{
 
     class Osm2MetricMap : public MapConverterInterface{
         public:
-            Osm2MetricMap(ros::NodeHandle nh,std::string topic="/visualization_marker_array", std::string map_topic="/map", std::string needle = "buildings_osm",
-              bool initialize_tf=false, std::string type = "polygon");
+            Osm2MetricMap(ros::NodeHandle nh,std::string config_file="config/default_osm.yaml");
             ~Osm2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();

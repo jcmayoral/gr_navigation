@@ -1,0 +1,5 @@
+topic: "/temporal_topological_map"
+map_topic: "/map2"
+needle: "edges"
+enable_tf: 0
+type : "line"

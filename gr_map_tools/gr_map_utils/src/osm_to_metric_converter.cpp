@@ -3,10 +3,18 @@
 using namespace grid_map;
 
 namespace gr_map_utils{
-    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh,std::string topic,std::string map_topic, std::string needle, bool initialize_tf, std::string type):
-        nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false), needle_(needle), type_(type){
+    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file):
+        nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
+        std::cout << "Config file " << config_file << std::endl;
+        YAML::Node config = YAML::LoadFile(config_file);
+        needle_ = config["needle"].as<std::string>();
+        type_ = config["type"].as<std::string>();
+
         //TO BE TESTED
-        in_topic_ = topic;
+        in_topic_ = config["topic"].as<std::string>();
+        std::string map_topic = config["map_topic"].as<std::string>();
+        bool initialize_tf = (bool) config["enable_tf"].as<int>();
+
         gridmap_.setFrameId("map");
         //TODO Create a setup Gridmap function
         gridmap_.setGeometry(Length(100, 100), 10);
@@ -14,12 +22,11 @@ namespace gr_map_utils{
 
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
 
-
         gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps222");
         is_map_received_ = false;
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
-        osm_map_sub_ = nh_.subscribe(topic,10, &Osm2MetricMap::osm_map_cb, this);
+        osm_map_sub_ = nh_.subscribe(in_topic_,10, &Osm2MetricMap::osm_map_cb, this);
         dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
     }

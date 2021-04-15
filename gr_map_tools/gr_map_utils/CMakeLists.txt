@@ -98,16 +98,15 @@ add_executable(osm_metric_converter src/osm_to_metric_node.cpp src/osm_to_metric
 add_dependencies(osm_metric_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
 target_link_libraries(osm_metric_converter
     ${catkin_LIBRARIES}
+    yaml-cpp
 )
-
 
 add_executable(experimental_node src/experimental_node.cpp src/osm_to_metric_converter.cpp src/tf_frame_publisher.cpp)
 add_dependencies(experimental_node ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
 target_link_libraries(experimental_node
     ${catkin_LIBRARIES}
+    yaml-cpp
 )
-
-
 
 
 ## Install executables and/or libraries
