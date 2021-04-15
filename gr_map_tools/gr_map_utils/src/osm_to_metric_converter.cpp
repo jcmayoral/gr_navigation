@@ -3,6 +3,38 @@
 using namespace grid_map;
 
 namespace gr_map_utils{
+
+    void Osm2MetricMap::addOSMRegions(){
+      YAML::Node config = YAML::LoadFile("config/workspace.yaml");
+      float minx = config["minx"].as<float>();
+      float miny = config["miny"].as<float>();
+      float maxx = config["maxx"].as<float>();
+      float maxy = config["maxy"].as<float>();
+
+
+      std::vector<std::pair<float, float>> coordinates;
+      coordinates.push_back(std::make_pair(minx, miny));
+      coordinates.push_back(std::make_pair(maxx, miny));
+      coordinates.push_back(std::make_pair(maxx, maxy));
+      coordinates.push_back(std::make_pair(minx, maxy));
+      coordinates.push_back(std::make_pair(minx, miny));
+
+      grid_map::Polygon polygon;
+      polygon.setFrameId(OSMGRIDMAP.getFrameId());
+      //std::cout << "aqui " << in_topic_ << std::endl;
+
+      //assign values in the gridmap
+      for (auto& m : coordinates){
+          //std::cout << "vertex" << std::endl;
+          polygon.addVertex(grid_map::Position(m.first, m.second));
+      }
+
+      for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
+          //std::cout << "polygon " << in_topic_ << std::endl;
+          OSMGRIDMAP.at("example", *iterator) = 65;
+      }
+    }
+
     Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file):
         nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
         std::cout << "Config file " << config_file << std::endl;

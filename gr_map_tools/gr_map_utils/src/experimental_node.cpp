@@ -26,6 +26,8 @@ int main(int argc, char **argv)
     for (auto l:layers){
       std::cout << " LAYER "<< l << std::endl;
     }
+
+    map_converter.addOSMRegions();
     map_converter_2.transformMap();
     //auto layer = OSMGRIDMAP.get("example");
     //map_converter_2.addLayer("example", layer);

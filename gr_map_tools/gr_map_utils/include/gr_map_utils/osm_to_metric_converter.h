@@ -23,6 +23,7 @@
 
 
 namespace gr_map_utils{
+
     static grid_map::GridMap OSMGRIDMAP{};
 
     class Osm2MetricMap : public MapConverterInterface{
@@ -36,6 +37,7 @@ namespace gr_map_utils{
             virtual void transformMap();
             virtual void publishMaps();
 
+            void addOSMRegions();
             void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
             void dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level);
             void fillPolygon(std::vector<double>x, std::vector<double> y);
