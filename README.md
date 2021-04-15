@@ -20,7 +20,7 @@ Navigation over hybrid map (topologic + metric map).
 ![Hybrid Navigation 12.04.19](/doc/hybrid_map_navigation_2.png)
 
 ### Semantic Map 
-Semantic representation. Place Polytunnel.Colors: Purple (containers), Blue(workspace), Pink(Robot current row)
+Semantic representation. Place Polytunnel.Colors: Purple (buildings, containers, polytunnel), Blue(workspace), Pink(Robot current row)
 ![OSM Sample 15.04.21](/doc/semantic_map.png)
 
 ## Proximity Monitor
