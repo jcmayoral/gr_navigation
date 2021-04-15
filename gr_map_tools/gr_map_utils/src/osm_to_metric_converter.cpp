@@ -153,7 +153,6 @@ namespace gr_map_utils{
         std::vector<double> boundaries_x;
         std::vector<double> boundaries_y;
 
-
         for (std::vector<visualization_msgs::Marker>::iterator it = osm_map_.markers.begin(); it != osm_map_.markers.end(); ++it){
             if (it->type != 4 && it->type != 5){//Just go for lines
                 ROS_DEBUG_STREAM("IGNORE "<< it->type);
@@ -164,7 +163,6 @@ namespace gr_map_utils{
             y.clear();
             visualization_msgs::Marker marker(*it);
             //ROS_ERROR_STREAM("ERROR->(()) TO FILTER MAP :::-> " << marker);
-
 
             hack =  &marker.ns[0u];
 
@@ -187,7 +185,6 @@ namespace gr_map_utils{
                 marker_of_interest = true;
                 //std::cout << it->points.size() << std::endl;
             }
-
 
             x.clear();
             y.clear();
@@ -291,7 +288,7 @@ namespace gr_map_utils{
     }
 
     void Osm2MetricMap::publishMaps(){
-      gr_tf_publisher_->publishTfTransform();
+        gr_tf_publisher_->publishTfTransform();
         //TO BE TESTED
         //Signature of function
         //GridMapRosConverter::toOccupancyGrid(const grid_map::GridMap& gridMap,const std::string& layer, float dataMin, float dataMax,nav_msgs::OccupancyGrid& occupancyGrid);
