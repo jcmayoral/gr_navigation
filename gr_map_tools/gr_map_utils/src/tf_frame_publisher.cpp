@@ -1,9 +1,9 @@
 #include <gr_map_utils/tf_frame_publisher.h>
 
 namespace gr_map_utils{
-    TfFramePublisher::TfFramePublisher(bool init): origin_x_(0.0), origin_y_(0.0), initialize_{init}{
-        static_transformStamped_.header.frame_id = "world";
-        static_transformStamped_.child_frame_id = "map";
+    TfFramePublisher::TfFramePublisher(bool init, std::string origin_frame, std::string map_frame): origin_x_(0.0), origin_y_(0.0), initialize_{init}{
+        static_transformStamped_.header.frame_id = origin_frame;
+        static_transformStamped_.child_frame_id = map_frame;
 
         if (initialize_){
 

@@ -62,6 +62,7 @@ namespace gr_map_utils{
             std::string in_topic_;
             std::string needle_;
             std::string type_;
+            std::string map_frame_;
 
     };
 }

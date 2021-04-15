@@ -9,20 +9,27 @@ namespace gr_map_utils{
         YAML::Node config = YAML::LoadFile(config_file);
         needle_ = config["needle"].as<std::string>();
         type_ = config["type"].as<std::string>();
+        map_frame_ = config["map_frame"].as<std::string>();
 
         //TO BE TESTED
         in_topic_ = config["topic"].as<std::string>();
         std::string map_topic = config["map_topic"].as<std::string>();
-        bool initialize_tf = (bool) config["enable_tf"].as<int>();
 
-        gridmap_.setFrameId("map");
+        gridmap_.setFrameId(map_frame_);
         //TODO Create a setup Gridmap function
         gridmap_.setGeometry(Length(100, 100), 10);
         gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
 
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
 
-        gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
+
+        YAML::Node tf_node = config["TF"];
+
+        bool initialize_tf = (bool) tf_node["enable_tf"].as<int>();
+        std::string origin_frame = tf_node["origin_frame"].as<std::string>();
+        std::string output_frame = tf_node["output_frame"].as<std::string>();
+
+        gr_tf_publisher_ = new TfFramePublisher(initialize_tf, origin_frame, output_frame);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps222");
         is_map_received_ = false;
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
@@ -173,13 +180,13 @@ namespace gr_map_utils{
 
             hack =  &marker.ns[0u];
 
-            if (it->header.frame_id.compare("map")!=0){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
+            if (it->header.frame_id.compare(map_frame_)!=0){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it->pose.position.x , it->pose.position.y) > 10000){//osm server has some issues with frames
             //if (true){
                 in.header.frame_id = "world";
                 in.pose.position.x = it->pose.position.x;
                 in.pose.position.y = it->pose.position.y;
                 in.pose.orientation.w =1.0;
-                to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
+                to_map_transform = tf_buffer_.lookupTransform(map_frame_,it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
                 tf2::doTransform(in, out, to_map_transform);
                 marker.header = out.header;
                 marker.pose = out.pose; //visualization_msgs "OSM Map"
@@ -199,11 +206,11 @@ namespace gr_map_utils{
             for (std::vector<geometry_msgs::Point>::iterator it_point = it->points.begin() ; it_point != it->points.end(); ++it_point){
                 //osm server has some issues with frames some points come on world frame so quick fix(distance to origin > 10000) is implemented but must be changed
 
-                if (it->header.frame_id.compare("map")!=0){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
+                if (it->header.frame_id.compare(map_frame_)!=0){//gr_tf_publisher_->getEuclideanDistanceToOrigin(it_point->x, it_point->y) > 10000){//osm server has some issues with frames
                     in.header.frame_id = "world";
                     in.pose.position.x = it_point->x;
                     in.pose.position.y = it_point->y;
-                    to_map_transform = tf_buffer_.lookupTransform("map", "world", ros::Time(0), ros::Duration(1.0) );
+                    to_map_transform = tf_buffer_.lookupTransform(map_frame_, it->header.frame_id, ros::Time(0), ros::Duration(1.0) );
                     tf2::doTransform(in, out, to_map_transform);
                     it_point->x = out.pose.position.x;
                     it_point->y = out.pose.position.y;

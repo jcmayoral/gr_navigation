@@ -11,7 +11,7 @@
 namespace gr_map_utils{
     class TfFramePublisher{
         public:
-            TfFramePublisher(bool init=true);
+            TfFramePublisher(bool init=true, std::string origin_frame="world", std::string map_frame="map");
             ~TfFramePublisher();
             void publishTfTransform();
             void transformGPSToProjection(sensor_msgs::NavSatFix gps_msg, float& x, float& y);

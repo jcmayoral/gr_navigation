@@ -1,5 +1,10 @@
 topic: "/temporal_topological_map"
 map_topic: "/map2"
 needle: "edges"
-enable_tf: 0
 type : "line"
+map_frame: "map"
+
+TF:
+  enable_tf: 0
+  origin_frame: "world"
+  output_frame: "map"
