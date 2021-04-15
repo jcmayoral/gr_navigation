@@ -1,7 +1,6 @@
 topic: "/visualization_marker_array"
 map_topic: "/map"
 needle: "buildings_osm"
-enable_tf: 1
 type : "polygon"
 map_frame: "map"
 size_x: 100.0

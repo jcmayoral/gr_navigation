@@ -17,13 +17,15 @@ namespace gr_map_utils{
         auto size_x = config["size_x"].as<float>();
         auto size_y = config["size_y"].as<float>();
 
-        gridmap_.setFrameId(map_frame_);
-        //TODO Create a setup Gridmap function
-        gridmap_.setGeometry(Length(size_x, size_y), 1);
-        gridmap_.add("example", Matrix::Random(gridmap_.getSize()(0), gridmap_.getSize()(1)));
+        if (!OSMGRIDMAP.exists("example")){
+            ROS_ERROR("ADDING LAYER example");
+            OSMGRIDMAP.setFrameId(map_frame_);
+            //TODO Create a setup Gridmap function
+            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 1);
+            OSMGRIDMAP.add("example", Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
+        }
 
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
-
 
         YAML::Node tf_node = config["TF"];
 
@@ -55,7 +57,7 @@ namespace gr_map_utils{
         std::transform(x.begin(), x.end(), y.begin(), std::back_inserter(target),
                [](double a, double b) { return std::make_pair(a, b); });
 
-        std::cout << "receiving " << x.size() << " , " << y.size() <<std::endl;
+        //std::cout << "receiving " << x.size() << " , " << y.size() <<std::endl;
 
         if (type_.compare("line") ==0){
           grid_map::Index start;
@@ -67,16 +69,15 @@ namespace gr_map_utils{
             auto index = &m - &target[0];
             startPose(0) = target[0].first;
             startPose(1) = target[0].second;
-            gridmap_.getIndex(startPose, start);
+            OSMGRIDMAP.getIndex(startPose, start);
 
             endPose(0) = m.first;
             endPose(1) = m.second;
-            gridmap_.getIndex(endPose, end);
+            OSMGRIDMAP.getIndex(endPose, end);
 
-            for (grid_map::LineIterator iterator(gridmap_, start, end);
+            for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end);
                 !iterator.isPastEnd(); ++iterator) {
-              //std::cout << "polygon " << in_topic_ << std::endl;
-              gridmap_.at("example", *iterator) = 64;
+              OSMGRIDMAP.at("example", *iterator) = 255;
             }
           }
           return;
@@ -84,16 +85,18 @@ namespace gr_map_utils{
 
         //POLYGON
         grid_map::Polygon polygon;
-        polygon.setFrameId(gridmap_.getFrameId());
+        polygon.setFrameId(OSMGRIDMAP.getFrameId());
+        //std::cout << "aqui " << in_topic_ << std::endl;
 
         //assign values in the gridmap
         for (auto& m : target){
+            //std::cout << "vertex" << std::endl;
             polygon.addVertex(grid_map::Position(m.first, m.second));
         }
 
-        for (grid_map::PolygonIterator iterator(gridmap_,polygon); !iterator.isPastEnd(); ++iterator) {
-            std::cout << "polygon " << in_topic_ << std::endl;
-            gridmap_.at("example", *iterator) = 64;
+        for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
+            //std::cout << "polygon " << in_topic_ << std::endl;
+            OSMGRIDMAP.at("example", *iterator) = 127;
         }
     }
 
@@ -125,8 +128,6 @@ namespace gr_map_utils{
 
     bool Osm2MetricMap::getMapFromTopic(){
         std::unique_lock<std::mutex> lk(mutex_);
-        std::cout << "IN TOPIC "<< in_topic_ << std::endl;
-
         boost::shared_ptr<visualization_msgs::MarkerArray const> osm_map;
         osm_map =  ros::topic::waitForMessage<visualization_msgs::MarkerArray>(in_topic_, ros::Duration(10.0));
 
@@ -237,12 +238,6 @@ namespace gr_map_utils{
             }
         }
 
-
-        std::cout << "boundaries " << in_topic_ << std::endl;
-        std::cout << boundaries_x.size() << std::endl;
-        std::cout << "x  " << x.size() << std::endl;
-        std::cout << "testx  " << testx.size() << std::endl;
-
         float ox,oy, minx, miny;
         if (boundaries_x.size() > 1){
 
@@ -269,26 +264,25 @@ namespace gr_map_utils{
           gr_tf_publisher_->getTf(ox,oy);
           ox = (maxx-minx)/2;
           oy = (maxy-miny)/2;
+          grid_map::Position center;
+          center(0) = ox+minx;
+          center(1) = oy+miny;
+          OSMGRIDMAP.setPosition(center);
+
         }
         else{
-          std::cout << "else " << in_topic_ << std::endl;
           ox = 0;
           oy = 0;
           minx = 0.0;
           miny = 0.0;
           //gridmap_.setGeometry(Length(200,200), 2.5);
         }
-        grid_map::Position center;
-        center(0) = ox+minx;
-        center(1) = oy+miny;
-        gridmap_.setPosition(center);
 
         //Filling Polygons
         auto ia = testx.begin();
         auto ib = testy.begin();
 
         for (;ia!=testx.end();ia++,ib++){
-          std::cout << "Calling polygon " << std::endl;
             fillPolygon(*ia,*ib);
         }
         is_ready_ = true;
@@ -306,7 +300,7 @@ namespace gr_map_utils{
         //TODO set proper dataMin/dataMax values
         // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
-            GridMapRosConverter::toOccupancyGrid(gridmap_,"example", 0.0, 255.0,grid_);
+            GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0.0, 255.0,grid_);
             //ROS_INFO_STREAM("MAP INfO " << grid.info);
             gridmap_pub_.publish(grid_);
         }

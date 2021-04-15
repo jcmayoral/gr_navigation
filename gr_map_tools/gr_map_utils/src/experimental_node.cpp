@@ -21,18 +21,20 @@ int main(int argc, char **argv)
     }
 
     map_converter.transformMap();
+    auto layers = OSMGRIDMAP.getLayers();
+
+    for (auto l:layers){
+      std::cout << " LAYER "<< l << std::endl;
+    }
     map_converter_2.transformMap();
-
-    auto layer = map_converter.getGridMapLayer("example");
-
+    //auto layer = OSMGRIDMAP.get("example");
     //map_converter_2.addLayer("example", layer);
-
     //map_converter.storeMap();
 
     while (ros::ok()){
         loop_rate.sleep();
         map_converter.publishMaps();
-        map_converter_2.publishMaps();
+        //map_converter_2.publishMaps();
         ros::spinOnce();
     }
 

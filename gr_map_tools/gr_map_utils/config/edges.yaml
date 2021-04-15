@@ -2,7 +2,7 @@ topic: "/temporal_topological_map"
 map_topic: "/map2"
 needle: "edges"
 type : "line"
-map_frame: "map"
+map_frame: "workspace"
 size_x: 100.0
 size_y: 100.0
 
