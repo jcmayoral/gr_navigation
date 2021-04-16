@@ -7,10 +7,14 @@
 #include <ros/ros.h>
 #include <math.h>
 #include <geodesy/utm.h>
+//YAML
+#include <yaml-cpp/yaml.h>
+
 
 namespace gr_map_utils{
     class TfFramePublisher{
         public:
+            TfFramePublisher(YAML::Node config);
             TfFramePublisher(bool init=true, std::string origin_frame="world", std::string map_frame="map");
             ~TfFramePublisher();
             void publishTfTransform();

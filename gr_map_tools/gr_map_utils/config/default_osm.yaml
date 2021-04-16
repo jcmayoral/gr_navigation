@@ -10,3 +10,6 @@ TF:
   enable_tf: 1
   origin_frame: "world"
   output_frame: "map"
+  type: "landmark"
+  latitude: 10.0
+  longitude: 10.0

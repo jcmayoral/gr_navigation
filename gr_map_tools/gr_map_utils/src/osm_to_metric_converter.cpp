@@ -58,14 +58,7 @@ namespace gr_map_utils{
         }
 
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
-
-        YAML::Node tf_node = config["TF"];
-
-        bool initialize_tf = (bool) tf_node["enable_tf"].as<int>();
-        std::string origin_frame = tf_node["origin_frame"].as<std::string>();
-        std::string output_frame = tf_node["output_frame"].as<std::string>();
-
-        gr_tf_publisher_ = new TfFramePublisher(initialize_tf, origin_frame, output_frame);
+        gr_tf_publisher_ = new TfFramePublisher(config["TF"]);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps222");
         is_map_received_ = false;
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
