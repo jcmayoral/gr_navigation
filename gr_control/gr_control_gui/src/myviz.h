@@ -40,6 +40,7 @@
 #include <QGridLayout>
 #include <QVBoxLayout>
 #include <QDoubleSpinBox>
+#include <QLineEdit>
 
 #include <rviz/visualization_manager.h>
 #include <rviz/render_panel.h>
@@ -86,6 +87,7 @@ namespace gr_control_gui{
       void visualizeMap();
       void saveMap();
       void deleteTopoMap();
+      void setFrame(std::string frame);
 
       void publishRegion();
       void timetogoCB(const std_msgs::Float32ConstPtr time2go);
@@ -121,6 +123,8 @@ namespace gr_control_gui{
       int id_maxnumberrows_;
 
       std::thread* t1;
+
+      std::string map_frame_;
   };
 };
   // END_TUTORIAL
