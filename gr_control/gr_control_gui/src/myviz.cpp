@@ -42,7 +42,7 @@ MyViz::MyViz( QWidget* parent )
   region_publisher_ = nh_.advertise<visualization_msgs::Marker>("region", 1 );
   reset_publisher_ = nh_.advertise<std_msgs::Time>("update_map", 1);
   //collection and database as arguments to messageStoreProxy
-  message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps222","message_store");
+  message_store_ = new mongodb_store::MessageStoreProxy(nh_,"topological_maps","message_store");
 
   // Construct and lay out labels and slider controls.
   QLabel* width_label = new QLabel( "Y Terrain" );
@@ -176,7 +176,7 @@ MyViz::MyViz( QWidget* parent )
     saveMap();
   }  
 
-  manager_->setFixedFrame("map");
+  manager_->setFixedFrame(map_frame_.c_str());
   manager_->initialize();
   manager_->startUpdate();
   update_client_ = nh_.serviceClient<gr_map_utils::UpdateMap>("update_metric_map");
