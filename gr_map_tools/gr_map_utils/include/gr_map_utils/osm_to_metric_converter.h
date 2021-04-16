@@ -36,8 +36,9 @@ namespace gr_map_utils{
             virtual bool getMapFromDatabase();
             virtual void transformMap();
             virtual void publishMaps();
+            void publishTransform();
 
-            void addOSMRegions();
+            bool addOSMRegions();
             void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
             void dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level);
             void fillPolygon(std::vector<double>x, std::vector<double> y);

@@ -11,5 +11,5 @@ TF:
   origin_frame: "world"
   output_frame: "map"
   type: "landmark"
-  latitude: 10.0
-  longitude: 10.0
+  latitude: 59.6642
+  longitude: 10.76354

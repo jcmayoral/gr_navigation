@@ -27,7 +27,12 @@ int main(int argc, char **argv)
       std::cout << " LAYER "<< l << std::endl;
     }
 
-    map_converter.addOSMRegions();
+
+    while(!map_converter.addOSMRegions()){
+        map_converter.publishTransform();
+        map_converter_2.publishTransform();
+    }
+
     map_converter_2.transformMap();
     //auto layer = OSMGRIDMAP.get("example");
     //map_converter_2.addLayer("example", layer);
@@ -36,7 +41,7 @@ int main(int argc, char **argv)
     while (ros::ok()){
         loop_rate.sleep();
         map_converter.publishMaps();
-        //map_converter_2.publishMaps();
+        map_converter_2.publishTransform();
         ros::spinOnce();
     }
 

@@ -4,35 +4,52 @@ using namespace grid_map;
 
 namespace gr_map_utils{
 
-    void Osm2MetricMap::addOSMRegions(){
-      YAML::Node config = YAML::LoadFile("config/workspace.yaml");
-      float minx = config["minx"].as<float>();
-      float miny = config["miny"].as<float>();
-      float maxx = config["maxx"].as<float>();
-      float maxy = config["maxy"].as<float>();
+    bool Osm2MetricMap::addOSMRegions(){
+        YAML::Node config = YAML::LoadFile("config/workspace.yaml");
+        float minx = config["minx"].as<float>();
+        float miny = config["miny"].as<float>();
+        float maxx = config["maxx"].as<float>();
+        float maxy = config["maxy"].as<float>();
+        std::string start_frame = config["start_frame"].as<std::string>();
+        std::string end_frame = config["end_frame"].as<std::string>();
+        if (!tf_buffer_.canTransform(end_frame, start_frame, ros::Time(0), ros::Duration(3.0) )){
+            ROS_INFO("SKIP OSM");
+            return false;
+        }
 
+        std::vector<std::pair<float, float>> coordinates;
+        coordinates.push_back(std::make_pair(minx, miny));
+        coordinates.push_back(std::make_pair(maxx, miny));
+        coordinates.push_back(std::make_pair(maxx, maxy));
+        coordinates.push_back(std::make_pair(minx, maxy));
+        coordinates.push_back(std::make_pair(minx, miny));
 
-      std::vector<std::pair<float, float>> coordinates;
-      coordinates.push_back(std::make_pair(minx, miny));
-      coordinates.push_back(std::make_pair(maxx, miny));
-      coordinates.push_back(std::make_pair(maxx, maxy));
-      coordinates.push_back(std::make_pair(minx, maxy));
-      coordinates.push_back(std::make_pair(minx, miny));
+        grid_map::Polygon polygon;
+        polygon.setFrameId(OSMGRIDMAP.getFrameId());
+        //std::cout << "aqui " << in_topic_ << std::endl;
+        geometry_msgs::TransformStamped tf_transform;
+        tf_transform = tf_buffer_.lookupTransform(end_frame, start_frame, ros::Time(0), ros::Duration(3.0) );
 
-      grid_map::Polygon polygon;
-      polygon.setFrameId(OSMGRIDMAP.getFrameId());
-      //std::cout << "aqui " << in_topic_ << std::endl;
+        //assign values in the gridmap
+        geometry_msgs::PointStamped out;
+        geometry_msgs::PointStamped in;
+        in.header.frame_id = start_frame;
 
-      //assign values in the gridmap
-      for (auto& m : coordinates){
-          //std::cout << "vertex" << std::endl;
-          polygon.addVertex(grid_map::Position(m.first, m.second));
-      }
+        for (auto& m : coordinates){
+            //std::cout << "vertex" << std::endl;
+            in.point.x = m.first;
+            in.point.y = m.second;
+            //tf_transform = tf_buffer_.lookupTransform(map_frame_,start_frame, ros::Time(0), ros::Duration(1.0) );
+            tf2::doTransform(in, out, tf_transform);
+            polygon.addVertex(grid_map::Position(out.point.x, out.point.y));
+        }
 
-      for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
-          //std::cout << "polygon " << in_topic_ << std::endl;
-          OSMGRIDMAP.at("example", *iterator) = 65;
-      }
+        for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
+            //std::cout << "polygon " << in_topic_ << std::endl;
+            OSMGRIDMAP.at("example", *iterator) = 65;
+        }
+
+        return true;
     }
 
     Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file):
@@ -59,7 +76,7 @@ namespace gr_map_utils{
 
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
         gr_tf_publisher_ = new TfFramePublisher(config["TF"]);
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps222");
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
         is_map_received_ = false;
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
         osm_map_sub_ = nh_.subscribe(in_topic_,10, &Osm2MetricMap::osm_map_cb, this);
@@ -315,6 +332,9 @@ namespace gr_map_utils{
 
     void Osm2MetricMap::osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map){
         osm_map_ = *map;
+    }
+    void Osm2MetricMap::publishTransform(){
+        gr_tf_publisher_->publishTfTransform();
     }
 
     void Osm2MetricMap::publishMaps(){

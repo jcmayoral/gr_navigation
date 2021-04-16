@@ -1,4 +1,6 @@
-minx: -20
-maxx: 30
-miny: -30
-maxy: 30
+minx: -5
+maxx: 50
+miny: -5
+maxy: 50
+start_frame: "workspace"
+end_frame: "map"

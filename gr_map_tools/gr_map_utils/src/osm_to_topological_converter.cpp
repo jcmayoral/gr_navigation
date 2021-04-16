@@ -19,7 +19,6 @@ namespace gr_map_utils{
     }
 
     void Osm2TopologicalMap::dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level){
-        ROS_INFO("aaaa");
         if (!is_map_received_){
             ROS_WARN("Map not received");
             return;
