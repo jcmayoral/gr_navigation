@@ -87,7 +87,7 @@ namespace gr_control_gui{
       void visualizeMap();
       void saveMap();
       void deleteTopoMap();
-      void setFrame(std::string frame);
+      void setFrame(QString frame);
 
       void publishRegion();
       void timetogoCB(const std_msgs::Float32ConstPtr time2go);

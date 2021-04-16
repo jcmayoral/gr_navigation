@@ -113,7 +113,7 @@ MyViz::MyViz( QWidget* parent )
   connect( delete_topological_map, SIGNAL( released( )), this, SLOT( deleteTopoMap( )));
 
   connect( column_spinbox, SIGNAL(valueChanged(int)), this, SLOT(setDesiredRow(int)));
-  connect( map_frame_edit, SIGNAL(returnPressed()), this, SLOT(setFrame(std::string)));
+  connect( map_frame_edit, SIGNAL(textChanged(QString)), this, SLOT(setFrame(QString)));
 
   // Next we initialize the main RViz classes.
   //
@@ -198,13 +198,13 @@ MyViz::~MyViz()
   delete manager_;
 }
 
-void MyViz::setFrame(std::string frame){
-  map_frame_ = frame;
+void MyViz::setFrame(QString frame){
+  map_frame_ = frame.toStdString();
 }
 
 void MyViz::publishRegion(){
   visualization_msgs::Marker region;
-  region.header.frame_id = "map";
+  region.header.frame_id = map_frame_;
   region.ns = "region";
   region.id = 20001;
   region.type = visualization_msgs::Marker::LINE_STRIP;
@@ -271,7 +271,7 @@ void MyViz::visualizeMap(){
   edges_.clear();
 
   //For now this fields are constants FOR NODES
-  temporal_marker.header.frame_id="map";
+  temporal_marker.header.frame_id= map_frame_;
   temporal_marker.header.stamp = ros::Time::now();
   temporal_marker.ns = "nodes"; //TODO maybe add segmentation layers
   temporal_marker.type = visualization_msgs::Marker::CUBE;
@@ -295,12 +295,12 @@ void MyViz::visualizeMap(){
   geometry_msgs::Point temporal_point;
   visualization_msgs::Marker temporal_edges;
 
-  temporal_edges.header.frame_id="map";
+  temporal_edges.header.frame_id=map_frame_;
   temporal_edges.header.stamp = ros::Time::now();
   temporal_edges.ns = "edges"; //TODO maybe add segmentation layers
   temporal_edges.type = visualization_msgs::Marker::LINE_LIST;
   temporal_edges.action = visualization_msgs::Marker::ADD;
-  temporal_edges.scale.x = 10.0;
+  temporal_edges.scale.x = 1.0;
   //temporal_edges.scale.y = 0.1;
   //temporal_edges.scale.z = 1.5;
   temporal_edges.color.r = 1.0;
