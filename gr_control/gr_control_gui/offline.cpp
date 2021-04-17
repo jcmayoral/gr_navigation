@@ -28,7 +28,7 @@
  */
 
 
-#include <myviz.h>
+#include <offline.h>
 
 using namespace gr_control_gui;
 // BEGIN_TUTORIAL

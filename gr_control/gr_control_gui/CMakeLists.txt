@@ -32,10 +32,25 @@ find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
 
 include_directories(${catkin_INCLUDE_DIRS})
 
-add_executable(myviz_node main.cpp myviz.cpp)
-qt5_use_modules(myviz_node Widgets)
-qt5_use_modules(myviz_node Core)
-target_link_libraries(myviz_node ${catkin_LIBRARIES} ${Qt5Widgets_LIBRARIES})
+add_library(offline_gui offline.cpp)
+qt5_use_modules(offline_gui Widgets)
+qt5_use_modules(offline_gui Core)
+target_link_libraries(offline_gui ${catkin_LIBRARIES} ${Qt5Widgets_LIBRARIES})
+
+add_library(online_gui online.cpp)
+qt5_use_modules(online_gui Widgets)
+qt5_use_modules(online_gui Core)
+target_link_libraries(online_gui ${catkin_LIBRARIES} ${Qt5Widgets_LIBRARIES})
+
+add_executable(online main_online.cpp)
+qt5_use_modules(online Widgets)
+qt5_use_modules(online Core)
+target_link_libraries(online online_gui)
+
+add_executable(offline main_online.cpp)
+qt5_use_modules(offline Widgets)
+qt5_use_modules(offline Core)
+target_link_libraries(offline offline_gui)
 
 # Instalv
 install(TARGETS myviz_node DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

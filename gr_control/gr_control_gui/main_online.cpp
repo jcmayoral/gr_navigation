@@ -29,13 +29,9 @@
 
 // BEGIN_TUTORIAL
 
-// The main() for this "myviz" example is very simple, it just
-// initializes ROS, creates a QApplication, creates the top-level
-// widget (of type "MyViz"), shows it, and runs the Qt event loop.
-
 #include <QApplication>
 #include <ros/ros.h>
-#include <myviz.h>
+#include <online.h>
 
 using namespace gr_control_gui;
 
