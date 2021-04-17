@@ -35,7 +35,7 @@
 
 #include <QApplication>
 #include <ros/ros.h>
-#include "myviz.h"
+#include <myviz.h>
 
 using namespace gr_control_gui;
 

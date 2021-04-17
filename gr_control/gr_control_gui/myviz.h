@@ -47,7 +47,7 @@
 #include <rviz/display.h>
 #include <rviz/default_plugin/marker_array_display.h>
 
-#include "nodes_visualizer.hpp"
+#include <nodes_visualizer.hpp>
 
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>

@@ -28,8 +28,7 @@
  */
 
 
-#include "myviz.h"
-
+#include <myviz.h>
 
 using namespace gr_control_gui;
 // BEGIN_TUTORIAL
@@ -438,6 +437,7 @@ void MyViz::saveMap(){
   navigation_msgs::Edge edge;
   std::string map_id("wish_map_move_base");
   //deleteTopoMap();
+  topo_map.header.frame_id = map_frame_;
   topo_map.map_id = map_id;
 
   //TODO this is a hack for the python mongodb implementation
