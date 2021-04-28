@@ -71,7 +71,7 @@ namespace gr_map_utils{
             OSMGRIDMAP.setFrameId(map_frame_);
             //TODO Create a setup Gridmap function
             OSMGRIDMAP.setGeometry(Length(size_x, size_y), 1);
-            OSMGRIDMAP.add("example", Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
+            OSMGRIDMAP.add("example", 0);//Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
         }
 
         //Integrate Map Service
@@ -92,7 +92,7 @@ namespace gr_map_utils{
                      nav_msgs::GetMap::Response &res )
     {
       // request is empty; we ignore it
-
+      ROS_ERROR("MAPCB");
       // = operator is overloaded to make deep copy (tricky!)
       res.map = grid_;
       ROS_INFO("Sending map");
@@ -135,7 +135,7 @@ namespace gr_map_utils{
 
             for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end);
                 !iterator.isPastEnd(); ++iterator) {
-              OSMGRIDMAP.at("example", *iterator) = 255;
+              OSMGRIDMAP.at("example", *iterator) = 100;
             }
           }
           return;
@@ -154,7 +154,7 @@ namespace gr_map_utils{
 
         for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
             //std::cout << "polygon " << in_topic_ << std::endl;
-            OSMGRIDMAP.at("example", *iterator) = 127;
+            OSMGRIDMAP.at("example", *iterator) = 100;
         }
     }
 
@@ -361,8 +361,11 @@ namespace gr_map_utils{
         //TODO set proper dataMin/dataMax values
         // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
-            GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0.0, 255.0,grid_);
-            //ROS_INFO_STREAM("MAP INfO " << grid.info);
+            GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 255,grid_);
+            //ROS_INFO_STREAM("MAP INfO " << OSMGRIDMAP["example"]);
+            for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
+                *it = (*it!=0) ? 254: *it;
+            }
             gridmap_pub_.publish(grid_);
         }
     }
