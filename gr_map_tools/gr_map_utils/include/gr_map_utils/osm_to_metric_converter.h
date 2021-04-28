@@ -20,7 +20,7 @@
 
 //YAML
 #include <yaml-cpp/yaml.h>
-
+#include <nav_msgs/GetMap.h>
 
 namespace gr_map_utils{
 
@@ -42,6 +42,7 @@ namespace gr_map_utils{
             void osm_map_cb(const visualization_msgs::MarkerArray::ConstPtr& map);
             void dyn_reconfigureCB(OSMMapConverterConfig &config, uint32_t level);
             void fillPolygon(std::vector<double>x, std::vector<double> y);
+            bool mapCallback(nav_msgs::GetMap::Request  &req, nav_msgs::GetMap::Response &res );
         private:
             visualization_msgs::MarkerArray osm_map_;
             ros::Publisher topological_map_pub_;
@@ -61,6 +62,9 @@ namespace gr_map_utils{
             //Reuse gridmap to meteric
             grid_map::GridMap gridmap_;
             nav_msgs::OccupancyGrid grid_;
+
+            //Integrate Map Service
+            ros::ServiceServer get_map_service_;
 
             bool is_ready_;
             std::string in_topic_;

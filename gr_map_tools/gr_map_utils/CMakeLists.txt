@@ -18,6 +18,7 @@ find_package(catkin REQUIRED
         visualization_msgs
         geographic_msgs
         navigation_msgs
+        nav_msgs
         message_generation
         tf2
         tf2_ros
@@ -70,6 +71,7 @@ catkin_package(
         visualization_msgs
         geographic_msgs
         navigation_msgs
+        nav_msgs
         tf2
         tf2_ros
         geodesy

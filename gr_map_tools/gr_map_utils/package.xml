@@ -1,6 +1,6 @@
 <package>
     <name>gr_map_utils</name>
-    <version>0.11.0</version>
+    <version>0.11.1</version>
     <description>
       gr_map_utils package
     </description>
@@ -22,6 +22,7 @@
     <build_depend>visualization_msgs</build_depend>
     <build_depend>geographic_msgs</build_depend>
     <build_depend>navigation_msgs</build_depend>
+    <build_depend>nav_msgs</build_depend>
     <build_depend>message_generation</build_depend>
     <build_depend>tf2</build_depend>
     <build_depend>tf2_ros</build_depend>
@@ -42,6 +43,7 @@
     <run_depend>visualization_msgs</run_depend>
     <run_depend>geographic_msgs</run_depend>
     <run_depend>navigation_msgs</run_depend>
+    <run_depend>nav_msgs</run_depend>
     <run_depend>message_runtime</run_depend>
     <run_depend>tf2</run_depend>
     <run_depend>tf2_ros</run_depend>

@@ -74,6 +74,10 @@ namespace gr_map_utils{
             OSMGRIDMAP.add("example", Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
         }
 
+        //Integrate Map Service
+        get_map_service_ = nh_.advertiseService("static_map", &Osm2MetricMap::mapCallback, this);
+
+
         gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>(map_topic, 1, true);
         gr_tf_publisher_ = new TfFramePublisher(config["TF"]);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
@@ -82,6 +86,18 @@ namespace gr_map_utils{
         osm_map_sub_ = nh_.subscribe(in_topic_,10, &Osm2MetricMap::osm_map_cb, this);
         dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
+    }
+
+    bool Osm2MetricMap::mapCallback(nav_msgs::GetMap::Request  &req,
+                     nav_msgs::GetMap::Response &res )
+    {
+      // request is empty; we ignore it
+
+      // = operator is overloaded to make deep copy (tricky!)
+      res.map = grid_;
+      ROS_INFO("Sending map");
+
+      return true;
     }
 
     Osm2MetricMap::~Osm2MetricMap(){
