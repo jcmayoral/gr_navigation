@@ -39,7 +39,7 @@ namespace gr_map_utils{
             //std::cout << "vertex" << std::endl;
             in.point.x = m.first;
             in.point.y = m.second;
-            //tf_transform = tf_buffer_.lookupTransform(map_frame_,start_frame, ros::Time(0), ros::Duration(1.0) );
+            //tf_transform = tf_buffer_.lookupTransform(map_frame_,start_frame, ros::Time(0), ros::Duration(0.0) );
             tf2::doTransform(in, out, tf_transform);
             polygon.addVertex(grid_map::Position(out.point.x, out.point.y));
         }
@@ -70,7 +70,7 @@ namespace gr_map_utils{
             ROS_ERROR("ADDING LAYER example");
             OSMGRIDMAP.setFrameId(map_frame_);
             //TODO Create a setup Gridmap function
-            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 1);
+            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 0.1);
             OSMGRIDMAP.add("example", 0);//Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
         }
 
@@ -96,6 +96,7 @@ namespace gr_map_utils{
       // = operator is overloaded to make deep copy (tricky!)
       res.map = grid_;
       ROS_INFO("Sending map");
+      publishMaps();
 
       return true;
     }
@@ -364,7 +365,7 @@ namespace gr_map_utils{
             GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 255,grid_);
             //ROS_INFO_STREAM("MAP INfO " << OSMGRIDMAP["example"]);
             for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
-                *it = (*it!=0) ? 254: *it;
+                *it = (*it!=0) ? 100: 0;//*it;
             }
             gridmap_pub_.publish(grid_);
         }
