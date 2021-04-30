@@ -158,6 +158,35 @@ namespace gr_map_utils{
             OSMGRIDMAP.at("example", *iterator) = 0;
         }
 
+        grid_map::Index start;
+        grid_map::Position startPose;
+        grid_map::Index end;
+        grid_map::Position endPose;
+
+        for (auto i = 0; i< polygon.nVertices()-1; i++){
+            startPose = polygon.getVertex(i);
+            endPose = polygon.getVertex(i+1);
+            OSMGRIDMAP.getIndex(startPose, start);
+            OSMGRIDMAP.getIndex(endPose, end);
+            if (!OSMGRIDMAP.isInside(startPose)){
+                ROS_ERROR("Start not in map");
+                continue;
+            }
+            if (!OSMGRIDMAP.isInside(endPose)){
+                ROS_ERROR("End not in map");
+                continue;
+            }
+            for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end); !iterator.isPastEnd(); ++iterator) {
+                 ROS_WARN_STREAM(*iterator);
+                 if(!OSMGRIDMAP.isValid(*iterator, "example")){
+                     continue;
+            }
+           OSMGRIDMAP.at("example", *iterator) = 100;
+        }
+            
+        }
+        return;
+
 
         grid_map::Position center;
         grid_map::Length length;
@@ -166,10 +195,7 @@ namespace gr_map_utils{
         ROS_ERROR_STREAM(length);
         ROS_ERROR_STREAM(center);
 
-        grid_map::Index start;
-        grid_map::Position startPose;
-        grid_map::Index end;
-        grid_map::Position endPose;
+
 
         startPose(0) = center.x() - length.x()/2;
         startPose(1) = center.y() - length.y()/2;
