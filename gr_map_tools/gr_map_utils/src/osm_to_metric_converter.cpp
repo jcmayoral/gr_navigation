@@ -435,9 +435,9 @@ namespace gr_map_utils{
         if (is_ready_){
             GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 100,grid_);
             //ROS_INFO_STREAM("MAP INfO " << OSMGRIDMAP["example"]);
-            //for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
-            //    *it = (*it!=0) ? 100: 0;//*it;
-            //}
+            for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
+                *it = (*it!=0) ? 100: 0;//*it;
+            }
             gridmap_pub_.publish(grid_);
         }
     }
