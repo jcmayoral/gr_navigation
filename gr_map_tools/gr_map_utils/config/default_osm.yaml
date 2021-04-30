@@ -3,8 +3,8 @@ map_topic: "/map"
 needle: "buildings_osm"
 type : "polygon"
 map_frame: "map"
-size_x: 100.0
-size_y: 100.0
+size_x: 300.0
+size_y: 300.0
 
 TF:
   enable_tf: 1

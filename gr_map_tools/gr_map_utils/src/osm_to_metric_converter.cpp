@@ -70,7 +70,7 @@ namespace gr_map_utils{
             ROS_ERROR("ADDING LAYER example");
             OSMGRIDMAP.setFrameId(map_frame_);
             //TODO Create a setup Gridmap function
-            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 0.1);
+            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 1.0);
             OSMGRIDMAP.add("example", 0);//Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
         }
 
@@ -146,8 +146,8 @@ namespace gr_map_utils{
         grid_map::Polygon polygon;
         polygon.setFrameId(OSMGRIDMAP.getFrameId());
         //std::cout << "aqui " << in_topic_ << std::endl;
-
         //assign values in the gridmap
+
         for (auto& m : target){
             //std::cout << "vertex" << std::endl;
             polygon.addVertex(grid_map::Position(m.first, m.second));
@@ -155,7 +155,52 @@ namespace gr_map_utils{
 
         for (grid_map::PolygonIterator iterator(OSMGRIDMAP,polygon); !iterator.isPastEnd(); ++iterator) {
             //std::cout << "polygon " << in_topic_ << std::endl;
-            OSMGRIDMAP.at("example", *iterator) = 100;
+            OSMGRIDMAP.at("example", *iterator) = 0;
+        }
+
+
+        grid_map::Position center;
+        grid_map::Length length;
+        polygon.getBoundingBox(center, length);
+
+        ROS_ERROR_STREAM(length);
+        ROS_ERROR_STREAM(center);
+
+        grid_map::Index start;
+        grid_map::Position startPose;
+        grid_map::Index end;
+        grid_map::Position endPose;
+
+        startPose(0) = center.x() - length.x()/2;
+        startPose(1) = center.y() - length.y()/2;
+        OSMGRIDMAP.getIndex(startPose, start);
+        ROS_INFO_STREAM(startPose);
+        ROS_INFO_STREAM(start);
+
+
+        if (!OSMGRIDMAP.isInside(startPose)){
+            ROS_ERROR("Start not in map");
+            return;
+        }
+
+
+        endPose(0) = center.x() + length.x()/2;
+        endPose(1) = center.y() + length.y()/2;
+        OSMGRIDMAP.getIndex(endPose, end);
+        ROS_ERROR_STREAM(endPose);
+        ROS_ERROR_STREAM(end);
+        if (!OSMGRIDMAP.isInside(endPose)){
+            ROS_ERROR("end not in map");
+            return;
+        }
+
+
+        for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end); !iterator.isPastEnd(); ++iterator) {
+                 ROS_WARN_STREAM(*iterator);
+                 if(!OSMGRIDMAP.isValid(*iterator, "example")){
+                     continue;
+                 }
+           OSMGRIDMAP.at("example", *iterator) = 100;
         }
     }
 
@@ -362,11 +407,11 @@ namespace gr_map_utils{
         //TODO set proper dataMin/dataMax values
         // GridMap GridMap::getTransformedMap(const Eigen::Isometry3d& transform, const std::string& heightLayerName, const std::string& newFrameId,const double sampleRatio)
         if (is_ready_){
-            GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 255,grid_);
+            GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 100,grid_);
             //ROS_INFO_STREAM("MAP INfO " << OSMGRIDMAP["example"]);
-            for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
-                *it = (*it!=0) ? 100: 0;//*it;
-            }
+            //for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
+            //    *it = (*it!=0) ? 100: 0;//*it;
+            //}
             gridmap_pub_.publish(grid_);
         }
     }
