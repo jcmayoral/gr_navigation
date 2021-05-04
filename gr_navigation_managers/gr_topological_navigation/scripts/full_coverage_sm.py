@@ -19,7 +19,7 @@ if __name__ == '__main__':
     rospy.init_node("full_coverage_plan")
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("-nav_action", "--nav_action", default="sbpl_action", required=False, help="navigation action server name")
+    ap.add_argument("-nav_action", "--nav_action", default="carrot_action", required=False, help="navigation action server name")
 
     argv = ap.parse_args()
     print (argv.nav_action)
@@ -33,11 +33,11 @@ if __name__ == '__main__':
     sm.userdata.execution_requested = False
 
     with sm:
-        smach.StateMachine.add('IDLE', MonitorState("/update_map", Time, update_cb, max_checks=1, output_keys=['execution_requested']),
-                            transitions={'invalid':'END_SM', 'valid':'SETUP', 'preempted':'SETUP'},
-                            remapping={'execution_requested':'execution_requested'})
+        #smach.StateMachine.add('IDLE', MonitorState("/update_map", Time, update_cb, max_checks=1, output_keys=['execution_requested']),
+        #                    transitions={'invalid':'END_SM', 'valid':'SETUP', 'preempted':'SETUP'},
+        #                    remapping={'execution_requested':'execution_requested'})
         smach.StateMachine.add('SETUP', Manager(),
-                            transitions={'SETUP_DONE':'CONFIG_WRITER', 'FINISH_REQUEST': 'IDLE'},
+                            transitions={'SETUP_DONE':'CONFIG_WRITER', 'FINISH_REQUEST': 'END_SM'},
                             remapping={'counter_in':'sm_counter',
                                 'counter_out':'sm_counter',
                                 'restart_requested_out':'restart_requested',

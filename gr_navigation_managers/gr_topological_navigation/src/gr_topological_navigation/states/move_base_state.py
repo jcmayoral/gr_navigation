@@ -27,9 +27,9 @@ def command_robot_to_node(node_id, no_orientation=True):
     return action_client.get_result()
 
 
-def move_base(commands):
-    action_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
-    rospy.loginfo("Waiting for Action Server move_base")
+def move_base(commands, movebase_server = "move_base"):
+    action_client = actionlib.SimpleActionClient(movebase_server, MoveBaseAction)
+    rospy.loginfo("Waiting for Action Server "+ movebase_server)
     action_client.wait_for_server()
     rospy.loginfo("Action Server Found")
     goal = MoveBaseGoal()
@@ -45,6 +45,7 @@ def move_base(commands):
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
     action_client.send_goal(goal)
+    print "WAITING FOR RESULT"
     action_client.wait_for_result()
     return action_client.get_result()
 
@@ -53,7 +54,7 @@ def sbpl_action_mode(commands):
     action_client = actionlib.SimpleActionClient('sbpl_action', MoveBaseAction)
     rospy.loginfo("Waiting for Action Server /sbpl_action")
     action_client.wait_for_server()
-    rospy.loginfo("Action Server Found")
+    rospy.loginfo("Action Server Found", commands)
     goal = MoveBaseGoal()
     goal.target_pose.pose.position.x = commands[0]
     goal.target_pose.pose.position.y = commands[1]
@@ -64,7 +65,7 @@ def sbpl_action_mode(commands):
     goal.target_pose.pose.orientation.z = quaternion[2]
     goal.target_pose.pose.orientation.w = quaternion[3]
 
-    goal.target_pose.header.frame_id = "map"
+    goal.target_pose.header.frame_id = "workspace"
     goal.target_pose.header.stamp = rospy.Time.now()
     action_client.send_goal(goal)
     action_client.wait_for_result()
