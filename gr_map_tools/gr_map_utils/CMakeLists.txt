@@ -18,6 +18,7 @@ find_package(catkin REQUIRED
         visualization_msgs
         geographic_msgs
         navigation_msgs
+        nav_msgs
         message_generation
         tf2
         tf2_ros
@@ -30,6 +31,7 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
+find_package(YAML-CPP 0.6.0 REQUIRED)
 
 find_package(PkgConfig)
 pkg_check_modules(NEW_YAMLCPP yaml-cpp>=0.5)
@@ -69,6 +71,7 @@ catkin_package(
         visualization_msgs
         geographic_msgs
         navigation_msgs
+        nav_msgs
         tf2
         tf2_ros
         geodesy
@@ -79,11 +82,17 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS}   ${EIGEN3_INCLUDE_DIR})
 
 add_library(gr_map_utils src/tf_frame_publisher.cpp)
+target_link_libraries(gr_map_utils
+    ${catkin_LIBRARIES}
+    yaml-cpp
+)
+
 
 add_executable(osm_to_topological src/osm_to_topological_node.cpp src/osm_to_topological_converter.cpp src/tf_frame_publisher.cpp)
 add_dependencies(osm_to_topological ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
 target_link_libraries(osm_to_topological
     ${catkin_LIBRARIES}
+    gr_map_utils
 )
 
 add_executable(topological_map_converter src/topological_to_metric_node.cpp src/topological_to_metric_converter.cpp  src/tf_frame_publisher.cpp)
@@ -92,6 +101,7 @@ add_executable(topological_map_converter src/topological_to_metric_node.cpp src/
 add_dependencies(topological_map_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
 target_link_libraries(topological_map_converter
     ${catkin_LIBRARIES}
+    gr_map_utils
 )
 
 add_executable(osm_metric_converter src/osm_to_metric_node.cpp src/osm_to_metric_converter.cpp src/tf_frame_publisher.cpp)
@@ -99,6 +109,7 @@ add_dependencies(osm_metric_converter ${catkin_EXPORTED_TARGETS} gr_map_utils_ge
 target_link_libraries(osm_metric_converter
     ${catkin_LIBRARIES}
     yaml-cpp
+    gr_map_utils
 )
 
 add_executable(experimental_node src/experimental_node.cpp src/osm_to_metric_converter.cpp src/tf_frame_publisher.cpp)
@@ -106,6 +117,7 @@ add_dependencies(experimental_node ${catkin_EXPORTED_TARGETS} gr_map_utils_gencf
 target_link_libraries(experimental_node
     ${catkin_LIBRARIES}
     yaml-cpp
+    gr_map_utils
 )
 
 

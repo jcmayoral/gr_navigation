@@ -2,11 +2,14 @@ topic: "/temporal_topological_map"
 map_topic: "/map2"
 needle: "edges"
 type : "line"
-map_frame: "workspace"
+map_frame: "map"
 size_x: 100.0
 size_y: 100.0
 
 TF:
-  enable_tf: 0
+  enable_tf: 1
   origin_frame: "world"
-  output_frame: "map"
+  output_frame: "workspace"
+  type: "landmark"
+  latitude: 59.6640
+  longitude: 10.7635

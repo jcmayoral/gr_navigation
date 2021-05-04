@@ -32,9 +32,77 @@ namespace gr_map_utils{
         }
     }
 
+     TfFramePublisher::TfFramePublisher(YAML::Node config): origin_x_(0.0), origin_y_(0.0){
+        initialize_ = (bool) config["enable_tf"].as<int>();
+
+        if (config["type"].as<std::string>().compare("topic")==0){
+            ROS_ERROR("TF TYPE TOPIC");
+            static_transformStamped_.header.frame_id = config["origin_frame"].as<std::string>();
+            static_transformStamped_.child_frame_id = config["output_frame"].as<std::string>();
+
+            if (initialize_){
+
+                //TODO get from GPS?
+                ROS_INFO("Waiting for GPS topic");
+                boost::shared_ptr<sensor_msgs::NavSatFix const> gps_msg;
+                gps_msg =  ros::topic::waitForMessage<sensor_msgs::NavSatFix>("fix");
+                ROS_INFO("GPS topic received");
+
+                transformGPSToProjection(*gps_msg,origin_x_,origin_y_);
+
+                static_transformStamped_.transform.translation.x = origin_x_;
+                static_transformStamped_.transform.translation.y = origin_y_;
+                static_transformStamped_.transform.translation.z = 0;;
+
+
+                tf2::Quaternion quat;
+                quat.setRPY(0.0,0.0,0.0);//TODO get Orientation from GPS;
+                static_transformStamped_.transform.rotation.x = quat.x();
+                static_transformStamped_.transform.rotation.y = quat.y();
+                static_transformStamped_.transform.rotation.z = quat.z();
+                static_transformStamped_.transform.rotation.w = quat.w();
+            }
+            else{
+            ROS_INFO("skipping tf transform map world");
+            }
+        }
+        if (config["type"].as<std::string>().compare("landmark")==0){
+            ROS_ERROR("TF TYPE LANDMARK");
+            static_transformStamped_.header.frame_id = config["origin_frame"].as<std::string>();;
+            static_transformStamped_.child_frame_id = config["output_frame"].as<std::string>();;
+
+            if (initialize_){
+
+                //TODO get from GPS?
+                ROS_INFO("Waiting for GPS topic");
+                sensor_msgs::NavSatFix gps_msg;
+                gps_msg.latitude = config["latitude"].as<float>();
+                gps_msg.longitude = config["longitude"].as<float>();
+                ROS_INFO("GPS topic received");
+
+                transformGPSToProjection(gps_msg,origin_x_,origin_y_);
+
+                static_transformStamped_.transform.translation.x = origin_x_;
+                static_transformStamped_.transform.translation.y = origin_y_;
+                static_transformStamped_.transform.translation.z = 0;;
+
+
+                tf2::Quaternion quat;
+                quat.setRPY(0.0,0.0,0.0);//TODO get Orientation from GPS;
+                static_transformStamped_.transform.rotation.x = quat.x();
+                static_transformStamped_.transform.rotation.y = quat.y();
+                static_transformStamped_.transform.rotation.z = quat.z();
+                static_transformStamped_.transform.rotation.w = quat.w();
+            }
+            else{
+            ROS_INFO("skipping tf transform map world");
+            }
+        }
+    }
+
     void TfFramePublisher::publishTfTransform(){
         if (!initialize_){
-          //std::cout << "skip publishing" << std::endl;
+          ROS_INFO_ONCE("skip publishing tf not initialize");
           return;
         }
         static_transformStamped_.header.stamp = ros::Time::now();
