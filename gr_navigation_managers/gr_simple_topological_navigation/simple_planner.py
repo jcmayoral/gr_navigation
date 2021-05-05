@@ -38,11 +38,15 @@ class SimpleTopoPlanner:
             self.execute_plan()
 
     def execute_plan(self):
-        print (self.plan)
+        #print (self.plan)
+
         for node in self.plan:
             print node
-            print self.nodes_poses[node]
-            print move_base_server(self.nodes_poses[node], "sbpl_action")
+        #    print self.nodes_poses[node]
+            #print move_base_server(self.nodes_poses[node], "sbpl_action")
+        print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
+        print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
+
 
     def get_topological_plan(self):
         return nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
