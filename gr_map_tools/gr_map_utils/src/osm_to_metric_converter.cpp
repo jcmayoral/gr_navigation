@@ -70,7 +70,7 @@ namespace gr_map_utils{
             ROS_ERROR("ADDING LAYER example");
             OSMGRIDMAP.setFrameId(map_frame_);
             //TODO Create a setup Gridmap function
-            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 1.0);
+            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 0.025);
             OSMGRIDMAP.add("example", 0);//Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
         }
 
@@ -177,13 +177,13 @@ namespace gr_map_utils{
                 continue;
             }
             for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end); !iterator.isPastEnd(); ++iterator) {
-                 ROS_WARN_STREAM(*iterator);
+                 //ROS_WARN_STREAM(*iterator);
                  if(!OSMGRIDMAP.isValid(*iterator, "example")){
                      continue;
             }
            OSMGRIDMAP.at("example", *iterator) = 100;
         }
-            
+
         }
         return;
 
@@ -222,7 +222,7 @@ namespace gr_map_utils{
 
 
         for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end); !iterator.isPastEnd(); ++iterator) {
-                 ROS_WARN_STREAM(*iterator);
+                 //ROS_WARN_STREAM(*iterator);
                  if(!OSMGRIDMAP.isValid(*iterator, "example")){
                      continue;
                  }
@@ -398,6 +398,14 @@ namespace gr_map_utils{
           center(0) = ox+minx;
           center(1) = oy+miny;
           OSMGRIDMAP.setPosition(center);
+          in.header.frame_id = "world";
+          in.pose.position.x = minx;
+          in.pose.position.y = miny;
+          to_map_transform = tf_buffer_.lookupTransform(map_frame_, "world", ros::Time(0), ros::Duration(1.0) );
+          tf2::doTransform(in, out, to_map_transform);
+          ROS_ERROR_STREAM("CENTER in map coordinates"<<minx << " , " << miny);
+
+          ROS_ERROR_STREAM("CENTER in map coordinates"<<out);
 
         }
         else{
