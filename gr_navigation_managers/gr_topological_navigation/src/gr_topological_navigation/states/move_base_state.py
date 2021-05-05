@@ -47,6 +47,10 @@ def move_base(commands, movebase_server = "move_base"):
     action_client.send_goal(goal)
     print "WAITING FOR RESULT"
     action_client.wait_for_result()
+    print "RESULT GOTTEN "
+    print action_client.get_result()
+    print "after "
+
     return action_client.get_result()
 
 
