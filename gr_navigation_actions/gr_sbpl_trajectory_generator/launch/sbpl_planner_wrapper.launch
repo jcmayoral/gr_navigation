@@ -4,7 +4,14 @@
   <arg name="maps_package" default="gr_config_files" />
   <arg name="maps_folder" default="maps" />
   <arg name="map_filename" default="map.yaml" />
+
+  <!--arg name="primitives_file" default="$(find my_own_thorvald)/mprim/mymprim_2021.mprim"/>
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2r.mprim"/>
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/test.mprim"/-->
   <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim"/>
+  <arg name="nominalvel_mpersecs" default="0.4"/>
+  <arg name="timetoturn45degsinplace_secs" default="0.6"/>
+
 
 
 

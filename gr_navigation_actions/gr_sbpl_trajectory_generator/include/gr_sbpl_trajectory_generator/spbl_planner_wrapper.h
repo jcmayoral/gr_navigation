@@ -75,6 +75,7 @@ namespace gr_sbpl_trajectory_generator{
             bool is_start_received_;
             tf2_ros::Buffer tfBuffer;
             tf2_ros::TransformListener tf2_listener;
+            double vdiff_;
 
     };
 };
