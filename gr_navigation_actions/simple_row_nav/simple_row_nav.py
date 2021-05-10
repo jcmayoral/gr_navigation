@@ -8,7 +8,7 @@ from tf2_msgs.msg import TFMessage
 from nav_msgs.msg import Odometry
 from grid_map_msgs.msg import GridMap
 from command_parser import parse_command
-from jsk_gui_msgs.msg import VoiceMessage
+#from jsk_gui_msgs.msg import VoiceMessage
 from safety_msgs.msg import FoundObjectsArray
 import tf
 import sys
@@ -28,13 +28,13 @@ list_topics = {"/velodyne_points": PointCloud2, "/tf" : TFMessage, "/tf_statc" :
 }
 
 class SimpleRowNavController:
-    def __init__(self, desired_speed = 0.5, folder = "data", init_bag=False):
+    def __init__(self, desired_speed = 0.5, folder = "data", init_bag=True):
         self.twist = Twist()
         self.twist.linear.x = desired_speed
         self.desired_speed = desired_speed
         self.is_next_required = False
         self.distance = 10.0
-        self.repetitions = 2
+        self.repetitions = 20
         self.listener = tf.TransformListener()
         self.initialize_test()
         self.set_start_pose()
@@ -49,7 +49,7 @@ class SimpleRowNavController:
                                     enable_smach=False, start=False)
 
         rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
-        rospy.Subscriber("/Tablet/voice", VoiceMessage, self.voice_cb)
+        #rospy.Subscriber("/Tablet/voice", VoiceMessage, self.voice_cb)
         rospy.Subscriber("fake_voice_command", String, self.voice_cb2)
         self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
 
@@ -196,7 +196,7 @@ class SimpleRowNavController:
                 self.endpose = self.pendPose
                 #self.endpose = [self.distance + self.initPose[0],self.initPose[1]]
             else:
-                self.startpose = [trans[0],trans[1]]#trans[0], trans[1]]
+                self.startpose = self.pendPose#[trans[0],trans[1]]#trans[0], trans[1]]
                 #endpose.pose.position.x = 0
                 self.endpose = self.initPose
                 #endpose.pose.position.x = self.startpose[1]-self.distance
@@ -220,7 +220,8 @@ class SimpleRowNavController:
         self.start = True
 
     def is_running(self):
-        flag = self.current_motions < self.repetitions and self.check_time()
+        flag = self.current_motions < self.repetitions #and self.check_time()
+        print "FLLLLLLLLLLLLLLAAAAAAAAAAAAAAAAAAAAG" , flag
         if not flag:
             self.twist.linear.x = 0
             self.twist.linear.y = 0
@@ -230,9 +231,8 @@ class SimpleRowNavController:
             n = 1*self.currentpose[0] + 0* self.currentpose[1] + 0
             d = np.sqrt(np.power(1,2)+ np.power(0,2))
             #print n/d
-
-            self.twist.linear.y = -self.currentpose[1]#n/d
-            self.twist.angular.z = -self.currentpose[2]
+            #self.twist.linear.y = -self.currentpose[1]#n/d
+            #self.twist.angular.z = -self.currentpose[2]
         return flag
 
 
@@ -276,12 +276,12 @@ class SimpleRowNavController:
             self.ac_fb.sequence = self.current_motions
             self._as.publish_feedback(self.ac_fb)
 
-        if not self.is_next_required:
-            self.setPoses()
-            rospy.logerr("Does this solve the issue????")
-        else:
-            rospy.logerr("TODO Add turn around functionality")
-            self.swapPoses()
+        #if not self.is_next_required:
+        self.setPoses()
+        #rospy.logerr("Does this solve the issue????")
+        #else:
+        rospy.logerr("TODO Add turn around functionality")
+        #self.swapPoses()
 
         self.is_next_required = False
         #self.start_time = time.time()
