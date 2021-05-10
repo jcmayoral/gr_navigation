@@ -13,7 +13,7 @@
 #include <dynamic_reconfigure/server.h>
 
 namespace gr_map_utils{
-    
+
     class Osm2TopologicalMap : public MapConverterInterface{
         public:
             Osm2TopologicalMap(ros::NodeHandle nh);

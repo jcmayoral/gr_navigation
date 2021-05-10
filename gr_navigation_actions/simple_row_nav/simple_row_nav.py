@@ -51,7 +51,7 @@ class SimpleRowNavController:
         rospy.Subscriber("/odometry/base_raw", Odometry, self.odom_cb)
         #rospy.Subscriber("/Tablet/voice", VoiceMessage, self.voice_cb)
         rospy.Subscriber("fake_voice_command", String, self.voice_cb2)
-        self.pub = rospy.Publisher("/nav_vel", Twist, queue_size=1)
+        self.pub = rospy.Publisher("/safe_nav_vel", Twist, queue_size=1)
 
 
         self._asclient = rospy.ServiceProxy('get_metrics', GetMetrics)
@@ -131,10 +131,12 @@ class SimpleRowNavController:
 
         self.command = None
 
-        srvmessage = GetMetricsRequest()
-        srvmessage.file_name = "srvtest.txt"
-        resp = self._asclient(srvmessage)
-        self.ac_result.metrics = resp.metrics
+        if goal.request_metrics:
+            srvmessage = GetMetricsRequest()
+            srvmessage.file_name = "srvtest.txt"
+            resp = self._asclient(srvmessage)
+            self.ac_result.metrics = resp.metrics
+
         print ("Transcurred time " + str(time.time() - self.start_time) + str(self.check_time()) )
         if self.is_not_aborted:
             self.ac_result.message.data = "Success"

@@ -4,11 +4,12 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "topological_to_metric_converter");
     ros::NodeHandle nh;
-    gr_map_utils::Topological2MetricMap map_converter(nh);
+    // Not publish the tf by default
+    gr_map_utils::Topological2MetricMap map_converter(nh, false);
 
     if (false) //TODO
         map_converter.storeMap();
-    
+
     if (!map_converter.getMap()){
         ROS_ERROR("Map not gotten");
         return 1;

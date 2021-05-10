@@ -29,7 +29,7 @@ class TopologicalPlanner(SimpleActionState):
         request_tool_pub = rospy.Publisher("cut_grass", Bool, queue_size =1)
 
         #TODO ask for the parameter
-        self.gui = gui
+        self.gui = True
         self.pointset = pointset
         self.topological_plan = None
         self.nodes_poses = None
@@ -53,9 +53,9 @@ class TopologicalPlanner(SimpleActionState):
             return
         self.current_node = node.data
 
-    def reset_graph(self,map):
+    def reset_graph(self,amap):
         #generate_full_coverage_plan
-        self.create_graph(map)
+        self.create_graph(amap)
         self.generate_full_coverage_plan()
 
     def get_map(self):
@@ -65,7 +65,6 @@ class TopologicalPlanner(SimpleActionState):
         #map = get_topological_map(msg)
         query = self.msg_store.query_named("wish_map_move_base", TopologicalMap._type)
         map = query[0]
-        print query[1]
         self.reset_graph(map)
 
     #Getting FB form topological navigation
@@ -98,11 +97,12 @@ class TopologicalPlanner(SimpleActionState):
         return b[2]-a[2]
 
 
-    def create_graph(self, map):
+    def create_graph(self, amap):
         self.networkx_graph = nx.Graph()
         self.nodes_poses = dict()
+        n_poses = dict()
 
-        for n in map.nodes:
+        for n in amap.nodes:
             #assuming 2d map just yaw matters
             quaternion = (n.pose.orientation.x,
                           n.pose.orientation.y,
@@ -110,7 +110,10 @@ class TopologicalPlanner(SimpleActionState):
                           n.pose.orientation.w)
             euler = tf.transformations.euler_from_quaternion(quaternion)[2]
             self.networkx_graph.add_node(n.name)
-            self.nodes_poses[n.name] =(n.pose.position.x, n.pose.position.y, euler)
+            n_poses[n.name] =[n.pose.position.x, n.pose.position.y]
+
+            self.nodes_poses[n.name] =[n.pose.position.x, n.pose.position.y, euler]
+            #poses.append([n.pose.position.x, n.pose.position.y])
             for e in n.edges:
                 if not self.networkx_graph.has_edge(e.node, n.name) and  not self.networkx_graph.has_edge(n.name, e.node):
                     self.networkx_graph.add_edge(n.name, e.node, edge_id=e.edge_id)
@@ -118,11 +121,11 @@ class TopologicalPlanner(SimpleActionState):
         rospy.loginfo("%d Nodes found", self.networkx_graph.number_of_nodes())
         rospy.loginfo("%d Edges found", self.networkx_graph.number_of_edges())
 
-        if self.gui:
-            nx.draw(self.networkx_graph, pos = self.nodes_poses, with_labels=True, font_weight='bold')
-            nx.draw_networkx_edge_labels(self.networkx_graph, self.nodes_poses, font_color='red')
-            #nx.draw_networkx_edges(self.networkx_graph, pos = nx.spring_layout(self.networkx_graph))
-            plt.show(False)
+        if True:#self.gui:
+            nx.draw(self.networkx_graph, pos=n_poses,with_labels=True, font_weight='bold')
+            nx.draw_networkx_edge_labels(self.networkx_graph, n_poses, font_color='red')
+            nx.draw_networkx_edges(self.networkx_graph, pos = nx.spring_layout(self.networkx_graph))
+            plt.show()
 
     #TODO
     #Add distance weight to the edges
@@ -143,7 +146,6 @@ class TopologicalPlanner(SimpleActionState):
         #self.topological_plan = list(nx.dfs_tree(self.networkx_graph, source=self.start_node))
         #self.topological_plan = list(nx.dfs_preorder_nodes(self.networkx_graph, source=self.start_node))
         #self.start_node = self.topological_plan[0][0]
-        print self.topological_plan
 
     def go_to_source(self):
         rospy.loginfo("Robot going to start node %s", self.topological_plan[0])

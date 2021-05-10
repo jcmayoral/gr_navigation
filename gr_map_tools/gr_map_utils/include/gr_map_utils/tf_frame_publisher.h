@@ -7,11 +7,15 @@
 #include <ros/ros.h>
 #include <math.h>
 #include <geodesy/utm.h>
+//YAML
+#include <yaml-cpp/yaml.h>
+
 
 namespace gr_map_utils{
     class TfFramePublisher{
         public:
-            TfFramePublisher();
+            TfFramePublisher(YAML::Node config);
+            TfFramePublisher(bool init=true, std::string origin_frame="world", std::string map_frame="map");
             ~TfFramePublisher();
             void publishTfTransform();
             void transformGPSToProjection(sensor_msgs::NavSatFix gps_msg, float& x, float& y);
@@ -38,5 +42,6 @@ namespace gr_map_utils{
             geometry_msgs::TransformStamped static_transformStamped_;
             float origin_x_;
             float origin_y_;
+            bool initialize_;
     };
 }
