@@ -114,7 +114,7 @@ void GRLinePlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 
   if (makePlan(start_,goal_)){
       ROS_INFO("Executing path");
-      executePath();
+      //executePath();
     }
     else{
       ROS_ERROR("ERROR");
@@ -131,7 +131,7 @@ void GRLinePlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
 
   if (makePlan(start_,goal_)){
     ROS_INFO("WORKING");
-    if (executePath()){
+    if (true){//executePath()){
       as_->setSucceeded();
     }
     else{
@@ -301,10 +301,97 @@ void GRLinePlanner::odom_cb(const nav_msgs::OdometryConstPtr odom_msg){
 bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::PoseStamped goal){
 
   plan_.clear();
-
   double theta_start = 2 * atan2(start.pose.orientation.z, start.pose.orientation.w);
   double theta_goal = 2 * atan2(goal.pose.orientation.z, goal.pose.orientation.w);
 
+  double theta_mid = (theta_goal-theta_start)/2;
+
+  auto angle = atan2(goal.pose.position.y - start.pose.position.y, goal.pose.position.x - start.pose.position.x);
+  auto acceleration = 0.5;
+  auto dt = 0.1;
+
+  geometry_msgs::Pose mid_pose;
+  mid_pose.position.x = start.pose.position.x + (goal.pose.position.x - start.pose.position.x)/2;
+  mid_pose.position.y = start.pose.position.y + (goal.pose.position.y - start.pose.position.y)/2;
+
+  nav_msgs::Path gui_path;
+
+  geometry_msgs::PoseStamped current_pose;
+  current_pose = start;
+  int c = 0;
+  double velocity = 0.0;
+  double maxvel = 2.0;
+  std::vector<geometry_msgs::PoseStamped> oneway_midpath;
+
+  
+  while (c <10){//dist2goal(current_pose.pose, mid_pose)> velocity*dt){
+    std::cout << dist2goal(current_pose.pose, mid_pose) << std::endl;
+    oneway_midpath.push_back(current_pose);
+    std::cout << oneway_midpath.size() << std::endl;
+    current_pose.pose.position.x += cos(angle)*acceleration*dt;
+    current_pose.pose.position.y += sin(angle)*velocity;
+    velocity += acceleration*dt;
+    if (velocity > maxvel){
+      velocity = maxvel;
+    }
+    c++;
+  }
+  ROS_ERROR_STREAM("OUT");
+
+  auto angle_diff = theta_mid/oneway_midpath.size();
+  auto count = 1;
+  tf2::Quaternion current_quaternion;
+
+  auto startyaw = theta_start;
+
+  for ( auto pose : oneway_midpath){
+    /*
+    current_quaternion.setRPY(0,0,startyaw);
+    current_quaternion.normalize();
+    tf2::convert( pose.pose.orientation, current_quaternion);
+    startyaw += angle_diff*/
+    pose.pose.orientation.w = 1.0;
+  }
+
+  std::vector<geometry_msgs::PoseStamped> reverse_midpath;
+  reverse_midpath.reserve(oneway_midpath.size());
+  gui_path.poses.reserve(2*oneway_midpath.size());
+
+  //gui_path.poses.insert(gui_path.end(), gui_path.poses.rbegin(), gui_path.poses.rend());
+  std::copy(oneway_midpath.begin(), oneway_midpath.end(), gui_path.poses.begin());//std::back_inserter(gui_path.poses));
+  std::reverse_copy(oneway_midpath.begin(), oneway_midpath.end(), reverse_midpath.begin());//std::back_inserter(gui_path.poses));
+  std::copy(reverse_midpath.begin(), reverse_midpath.end(), gui_path.poses.begin()+oneway_midpath.size());//std::back_inserter(gui_path.poses));
+
+  //gui_path.poses.resize(sbpl_path.size());
+  gui_path.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
+  gui_path.header.stamp = ros::Time::now();
+  for(auto pose: gui_path.poses){
+    geometry_msgs::PoseStamped ppose;
+    ppose.header.stamp = ros::Time::now();
+    ppose.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
+
+    ppose.pose.position.x = pose.pose.position.x;
+    ppose.pose.position.y = pose.pose.position.y;
+    ppose.pose.position.z = start.pose.position.z;
+
+    tf2::Quaternion temp;
+    temp.setRPY(0,0,0);
+    pose.pose.orientation.x = temp.getX();
+    pose.pose.orientation.y = temp.getY();
+    pose.pose.orientation.z = temp.getZ();
+    pose.pose.orientation.w = temp.getW();
+
+    plan_.push_back(ppose);
+
+    //gui_path.poses[i] = plan_[i];
+  }
+  plan_pub_.publish(gui_path);
+  ROS_INFO_STREAM(gui_path);
+
+
+
+  
+  /*
   try{
     //Check conversion offset of map start with frame -> gr_map_utils
     //Substract offset
@@ -438,34 +525,9 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
 
   ROS_DEBUG("Plan has %d points.\n", (int)sbpl_path.size());
   ros::Time plan_time = ros::Time::now();
-
+  */
   //create a message for the plan
-  nav_msgs::Path gui_path;
-  gui_path.poses.resize(sbpl_path.size());
-  gui_path.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
-  gui_path.header.stamp = plan_time;
-  for(unsigned int i=0; i<sbpl_path.size(); i++){
-    geometry_msgs::PoseStamped pose;
-    pose.header.stamp = plan_time;
-    pose.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
-
-    pose.pose.position.x = sbpl_path[i].x + map_metadata_->origin.position.x;
-    pose.pose.position.y = sbpl_path[i].y + map_metadata_->origin.position.y;
-    pose.pose.position.z = start.pose.position.z;
-
-    tf2::Quaternion temp;
-    temp.setRPY(0,0,sbpl_path[i].theta);
-    pose.pose.orientation.x = temp.getX();
-    pose.pose.orientation.y = temp.getY();
-    pose.pose.orientation.z = temp.getZ();
-    pose.pose.orientation.w = temp.getW();
-
-    plan_.push_back(pose);
-
-    gui_path.poses[i] = plan_[i];
-  }
-  plan_pub_.publish(gui_path);
-  //ROS_INFO_STREAM(gui_path);
+ 
   //publishStats(solution_cost, sbpl_path.size(), start, goal);
   return true;
 };

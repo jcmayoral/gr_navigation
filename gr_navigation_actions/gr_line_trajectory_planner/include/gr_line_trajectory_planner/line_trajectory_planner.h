@@ -43,6 +43,10 @@ namespace gr_line_trajectory_planner{
             void stop();
             double getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame);
 
+            double dist2goal(const geometry_msgs::Pose goal, const geometry_msgs::Pose pose){
+                return sqrt(pow(goal.position.x - pose.position.x,2) + pow(goal.position.y - pose.position.y,2));
+            };
+
         private:
             std::vector<geometry_msgs::PoseStamped> plan_;
             bool odom_received_;
