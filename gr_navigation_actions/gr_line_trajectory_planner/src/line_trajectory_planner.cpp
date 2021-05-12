@@ -4,7 +4,7 @@ using namespace gr_line_trajectory_planner;
 
 GRLinePlanner::GRLinePlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"),
-                                odom_received_(false), tfBuffer(ros::Duration(5)),position_tolerance_(1.0),
+                                odom_received_(false), tfBuffer(ros::Duration(1.0)),position_tolerance_(1.0),
                                 tf2_listener(tfBuffer){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
@@ -114,7 +114,7 @@ void GRLinePlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 
   if (makePlan(start_,goal_)){
       ROS_INFO("Executing path");
-      //executePath();
+      executePath();
     }
     else{
       ROS_ERROR("ERROR");
@@ -131,7 +131,7 @@ void GRLinePlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
 
   if (makePlan(start_,goal_)){
     ROS_INFO("WORKING");
-    if (true){//executePath()){
+    if (executePath()){
       as_->setSucceeded();
     }
     else{
@@ -167,7 +167,7 @@ void GRLinePlanner::setStart(){
 
   try{
     transformStamped = tfBuffer.lookupTransform("map", "base_link",
-                             ros::Time(0));
+                             ros::Time::now());
     start_.header = transformStamped.header;
     start_.pose.position.x = transformStamped.transform.translation.x;
     start_.pose.position.y = transformStamped.transform.translation.y;
@@ -189,7 +189,7 @@ void GRLinePlanner::stop(){
 double GRLinePlanner::getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame){
   geometry_msgs::TransformStamped transform_stamped;
   //tf::Pose tf_pose;
-  transform_stamped = tfBuffer.lookupTransform(frame, pose.header.frame_id, ros::Time(0), ros::Duration(1.0) );
+  transform_stamped = tfBuffer.lookupTransform(frame, pose.header.frame_id, ros::Time::now(), ros::Duration(1.0) );
   tf2::doTransform(pose, pose, transform_stamped);
   //tf::poseMsgToTF(pose.pose, tf_pose);
   return tf2::getYaw(pose.pose.orientation);
@@ -215,7 +215,7 @@ bool GRLinePlanner::executePath(){
     geometry_msgs::Twist cmd_vel;
     //Transforming next waypoint on map_coordinates to base_libk
     plan_[0].header.stamp = ros::Time::now();
-    base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
+    base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time::now(), ros::Duration(1.0) );
     tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
 
     //Calculating Angles
@@ -259,7 +259,7 @@ bool GRLinePlanner::executePath(){
   p.header = odom_msg_.header;
   p.header.stamp = ros::Time::now();
   p.pose = odom_msg_.pose.pose;
-  base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+  base_link_to_odom = tfBuffer.lookupTransform("base_link", "map", ros::Time::now(), ros::Duration(1.0) );
   tf2::doTransform(p, p, base_link_to_odom);
 
   yaw1 = getRotationInFrame(p, "base_link");
@@ -281,7 +281,7 @@ bool GRLinePlanner::executePath(){
     p.header = odom_msg_.header;
     p.header.stamp = ros::Time::now();
     p.pose = odom_msg_.pose.pose;
-    base_link_to_odom = tfBuffer.lookupTransform("base_link", "odom", ros::Time(0), ros::Duration(1.0) );
+    base_link_to_odom = tfBuffer.lookupTransform("base_link", "map", ros::Time::now(), ros::Duration(1.0) );
     tf2::doTransform(p, p, base_link_to_odom);
 
     yaw1 = getRotationInFrame(p, "map");
@@ -323,11 +323,19 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
   double maxvel = 2.0;
   std::vector<geometry_msgs::PoseStamped> oneway_midpath;
 
+  auto startgoal_dist_half = dist2goal(start.pose, goal.pose)/2.0;
+  std::cout << "startgoal hald distance " << startgoal_dist_half <<std::endl;
+
+  if (dist2goal(start.pose, goal.pose)< 0.2){
+    ROS_INFO_STREAM("ROBOT ON GOAL POse");
+    return true;
+  }
+
   
-  while (c <10){//dist2goal(current_pose.pose, mid_pose)> velocity*dt){
+  while (dist2goal(current_pose.pose, goal_.pose)>= startgoal_dist_half){
     std::cout << dist2goal(current_pose.pose, mid_pose) << std::endl;
     oneway_midpath.push_back(current_pose);
-    std::cout << oneway_midpath.size() << std::endl;
+    //std::cout << oneway_midpath.size() << std::endl;
     current_pose.pose.position.x += cos(angle)*acceleration*dt;
     current_pose.pose.position.y += sin(angle)*velocity;
     velocity += acceleration*dt;
@@ -336,31 +344,70 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     }
     c++;
   }
-  ROS_ERROR_STREAM("OUT");
+  ROS_ERROR_STREAM("OUT path size" << oneway_midpath.size());
 
+
+  /*
   auto angle_diff = theta_mid/oneway_midpath.size();
   auto count = 1;
   tf2::Quaternion current_quaternion;
 
-  auto startyaw = theta_start;
-
   for ( auto pose : oneway_midpath){
-    /*
-    current_quaternion.setRPY(0,0,startyaw);
+    current_quaternion.setRPY(0,0,theta_start);
     current_quaternion.normalize();
     tf2::convert( pose.pose.orientation, current_quaternion);
-    startyaw += angle_diff*/
-    pose.pose.orientation.w = 1.0;
+    //startyaw += angle_diff;
+    //pose.pose.orientation.w = 1.0;
   }
+  */
 
+  
+  //gui_path.poses.insert(gui_path.end(), gui_path.poses.rbegin(), gui_path.poses.rend());
+
+
+  /*
   std::vector<geometry_msgs::PoseStamped> reverse_midpath;
   reverse_midpath.reserve(oneway_midpath.size());
   gui_path.poses.reserve(2*oneway_midpath.size());
 
-  //gui_path.poses.insert(gui_path.end(), gui_path.poses.rbegin(), gui_path.poses.rend());
+  //THIS IS NOT WORKING CHECK IT LATER
   std::copy(oneway_midpath.begin(), oneway_midpath.end(), gui_path.poses.begin());//std::back_inserter(gui_path.poses));
   std::reverse_copy(oneway_midpath.begin(), oneway_midpath.end(), reverse_midpath.begin());//std::back_inserter(gui_path.poses));
   std::copy(reverse_midpath.begin(), reverse_midpath.end(), gui_path.poses.begin()+oneway_midpath.size());//std::back_inserter(gui_path.poses));
+  */
+
+  //HaCK
+  geometry_msgs::PoseStamped tmp;
+
+  for (int i=0; i< oneway_midpath.size(); i++){
+    //gui_path.poses[i].header.stamp = ros::Time::now();
+    //gui_path.poses[i].header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
+    //gui_path.poses[i] = oneway_midpath[i];
+    tmp = oneway_midpath[i];
+    tmp.header.stamp = ros::Time::now();
+    tmp.header.frame_id = "map";
+    tmp.pose.orientation.w = 1.0;
+    gui_path.poses.push_back(tmp);
+  }
+
+  auto xoffset = oneway_midpath[oneway_midpath.size()-1].pose.position.x;
+  auto yoffset = oneway_midpath[oneway_midpath.size()-1].pose.position.x;
+  
+
+  for (int i=oneway_midpath.size()-1; i> 0; i--){
+    //gui_path.poses[i].header.stamp = ros::Time::now();
+    //gui_path.poses[i].header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
+    //gui_path.poses[i] = oneway_midpath[i]
+    tmp = oneway_midpath[i];
+    tmp.header.stamp = ros::Time::now();
+    tmp.header.frame_id = "map";
+    tmp.pose.position.x +=xoffset;
+    tmp.pose.position.y +=yoffset;
+    tmp.pose.orientation.w = 1.0;
+    //TODO ANGLE
+    gui_path.poses.push_back(tmp);
+  }
+  ROS_ERROR_STREAM("GUT path size" << gui_path);
 
   //gui_path.poses.resize(sbpl_path.size());
   gui_path.header.frame_id = "map";//costmap_ros_->getGlobalFrameID();
