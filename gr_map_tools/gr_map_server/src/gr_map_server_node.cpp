@@ -1,0 +1,6 @@
+#include <gr_map_server/gr_map_server.h>
+using namespace gr_map_server;
+
+int main(int argc, char**argv){
+    GRMapServer server;
+}
