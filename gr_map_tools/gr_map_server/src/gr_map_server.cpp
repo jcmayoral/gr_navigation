@@ -48,6 +48,33 @@ void GRMapServer::edges_cb(const visualization_msgs::Marker::ConstPtr& region){
 
     auto width = maxx-minx;
     auto height = maxy-miny;
-    std::cout << "HEIGHT " << height << std::endl;
-    std::cout << "WIDHT " << width << std::endl;
+    std::cout << "HEIGHT " << height << " c " << ceil(height/0.025) <<std::endl;
+    std::cout << "WIDHT " << width << " c "<< ceil(width/0.025)<< std::endl;
+    metadata_.map_load_time = ros::Time::now();
+    metadata_.width = ceil(width/0.025);
+    metadata_.height = ceil(height/0.025);
+    metadata_.resolution = 0.025;
+
+    metadata_.origin.position.x = minx;
+    metadata_.origin.position.y = miny;
+    
+    metadata_.origin.orientation.w =1.0;
+
+    map_.header.frame_id = map_frame_;
+    map_.header.stamp = ros::Time::now();
+    map_.info = metadata_;
+    
+
+    auto cells = ceil(height/0.025)*ceil(width/0.025);
+    int map[int(width*height/0.025)] = { 0 };
+    
+    map_.data.clear();
+    for (int i = 0; i< cells;i++)
+        map_.data.push_back(0);
+      
+    //map_.data = map;
+
+    map_pub_.publish(map_);
+    map_metadata_pub_.publish(metadata_);
+
 }

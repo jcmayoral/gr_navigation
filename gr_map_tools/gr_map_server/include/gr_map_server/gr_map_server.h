@@ -25,5 +25,6 @@ namespace gr_map_server{
             std::string map_frame_;
             bool init_;
             nav_msgs::OccupancyGrid map_;
+            nav_msgs::MapMetaData metadata_;
     };
 }
