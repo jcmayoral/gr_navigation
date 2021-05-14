@@ -23,5 +23,7 @@ namespace gr_map_server{
             ros::Publisher map_pub_;
             ros::Publisher map_metadata_pub_;
             std::string map_frame_;
+            bool init_;
+            nav_msgs::OccupancyGrid map_;
     };
 }
