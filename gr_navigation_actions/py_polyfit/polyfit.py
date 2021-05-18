@@ -1,26 +1,35 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-x = np.array([1,2,3,4])
-y = np.array([0,2,2,0])
-coeff = (np.polyfit(x,y,4))
-print (coeff, coeff.shape)
-x1 = np.linspace(0,np.max(x),10)
-y1 = np.polyval(coeff,x1)
-#for xi in x1:
-#    y1.append(np.power(xi,4)*coeff[0] + np.power(xi,3)*coeff[1] + np.power(xi,2)*coeff[2] + xi *coeff[3] + coeff[4])
 
-print (x1)
-print (np.asarray(y1))
-ang1 = np.arctan2(y1,x1)
-print ( ang1, "angulars")
-plt.plot(x1,np.asarray(y1))
-plt.scatter(x,y)
+class Action:
+    def __init__(self):
+        self.x = np.array([0,2,4])
+        self.y = np.array([0,6,0])
 
-for i,j,z in zip(x1,y1,ang1):
-    plt.arrow(i,j, i*np.cos(z), j*np.sin(z))
+    def drawArrow(self,A, B):
+        plt.arrow(A[0], A[1], B[0] - A[0], B[1] - A[1],
+              head_width=0.1, length_includes_head=True)
 
-#for i in range(len(ang1):
-#    plt.arrow(x1[i],y1[i], x1[i]+x1[i+1](z), j+np.sin(z))
+    def calculate(self):
+        s0 = np.pi/2
+        sf = 0
+        self.coeff = (np.polyfit(self.x,self.y,4))
+        x1 = np.linspace(0,np.max(self.x),10)
+        y1 = np.polyval(self.coeff,x1)
+        ang3 = []
+        for i in range(len(x1)-1):
+            ang3.append(np.arctan2(y1[i+1]-y1[i],x1[i+1]-x1[i]))
 
+        ang1 = np.arctan2(y1,x1)
+        ang2 = np.linspace(s0,sf, len(x1))
+        #print ( ang1, "angulars")
+        plt.plot(x1,np.asarray(y1))
+        plt.scatter(self.x,self.y)
+
+        for i in range(len(ang1)-1):
+            self.drawArrow([x1[i],y1[i]], [x1[i+1], y1[i+1]])
+
+a = Action()
+a.calculate()
 plt.show()
