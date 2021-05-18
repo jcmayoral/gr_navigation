@@ -69,7 +69,7 @@ def sbpl_action_mode(commands):
     goal.target_pose.pose.orientation.z = quaternion[2]
     goal.target_pose.pose.orientation.w = quaternion[3]
 
-    goal.target_pose.header.frame_id = "workspace"
+    goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
     action_client.send_goal(goal)
     action_client.wait_for_result()
