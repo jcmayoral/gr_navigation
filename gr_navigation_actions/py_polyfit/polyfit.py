@@ -9,9 +9,13 @@ class Action:
         self.final = [self.x[-1],self.y[-1], np.pi]
         self.nmotion = 8
         self.trajectory = []
+        self.motions = []
 
     def cost2goal(self, p):
         return np.sqrt(np.power(self.final[0] - p[0],2)+np.power(self.final[1] - p[1],2))
+
+    def complete(self):
+        return np.sqrt(np.power(self.final[0] - self.startx,2)+np.power(self.final[1] - self.starty,2)) < 0.5
 
     def setStart(self):
         self.startx = self.x[0]
@@ -38,6 +42,7 @@ class Action:
 
     def apply(self, motion):
         print ("Applying", motion, self.startx, self.starty)
+        self.motions.append(motion)
         if motion == 0:
             self.startx += 0.1*np.cos(self.starttheta)
         if motion == 1:
@@ -121,8 +126,12 @@ class Action:
 a = Action()
 a.calculate()
 a.setStart()
-for i in range(1500):
+for i in range(100):
     a.run()
+    if a.complete():
+        break
     print ("STEP SCORE ", a.evalStep())
 a.plotTrajectory()
+plt.figure()
+plt.plot(np.arange(len(a.motions)), a.motions)
 plt.show()
