@@ -5,8 +5,12 @@ import matplotlib.pyplot as plt
 class Action:
     def __init__(self):
         self.x = np.array([0,2,4])
-        self.y = np.array([0,6,0])
-        self.nmotion = 6
+        self.y = np.array([0,0,0])
+        self.final = [4,0]
+        self.nmotion = 8
+
+    def cost2goal(self, p):
+        return 2* np.sqrt(np.power(self.final[0] - p[0],2)+np.power(self.final[1] - p[1],2))
 
     def setStart(self):
         self.startx = 0
@@ -16,57 +20,64 @@ class Action:
         if motion == 0:
             return self.startx + 0.1, self.starty
         if motion == 1:
-            return self.startx + 0.1, self.starty - 0.1
+            return self.startx, self.starty + 0.1
         if motion == 2:
-            return self.startx + 0.1, self.starty - 0.1
+            return self.startx + 0.1, self.starty + 0.1
         if motion == 3:
-            return self.startx, self.starty+0.1
+            return self.startx+0.1, self.starty-0.1
         if motion == 4:
-            return self.startx - 0.1, self.starty
+            return self.startx - 0.1, self.starty+0.1
         if motion == 5:
+            return self.startx-0.1, self.starty-0.1
+        if motion == 6:
+            return self.startx-0.1, self.starty
+        if motion == 7:
             return self.startx, self.starty-0.1
-        #if motion == 6:
-        #    return self.startx, self.starty
 
     def apply(self, motion):
         print ("Applying", motion)
         if motion == 0:
             self.startx += 0.1
         if motion == 1:
-            self.startx += 0.1
             self.starty += 0.1
         if motion == 2:
-            self.startx -= 0.1
-            self.starty -=0.1
-        if motion == 3:
+            self.startx += 0.1
             self.starty +=0.1
+        if motion == 3:
+            self.startx +=0.1
+            self.starty -=0.1
         if motion == 4:
             self.startx -= 0.1
+            self.starty += 0.1
         if motion == 5:
+            self.startx -=0.1
             self.starty -=0.1
-        #if motion == 6:
-        #    pass
+        if motion == 6:
+            self.startx -=0.1
+        if motion == 7:
+            self.starty -=0.1
 
     def evalMotion(self,x,y):
-        plt.scatter(x, y, c='r')
-        return np.fabs(y - np.polyval(self.coeff, x))
+        plt.scatter(x, y, c='b', s=50.0)
+        return np.fabs(y - np.polyval(self.coeff, x)) + self.cost2goal([x, y])
 
     def evalStep(self):
-        plt.scatter(self.startx, self.starty, c='b')
-        return np.fabs(self.starty - np.polyval(self.coeff, self.startx))
+        plt.scatter(self.startx, self.starty, c='r', s=150.0)
+        return np.fabs(self.starty - np.polyval(self.coeff, self.startx)) + self.cost2goal([self.startx, self.starty])
 
     def run(self):
         scores = []
         for i in range(self.nmotion):
             x,y = self.predict(i)
             scores.append(self.evalMotion(x,y))
-        action_indx = np.argmin(scores)
-        print (action_indx)
+        action_indx = np.argmin(scores/np.sum(scores))
+        print (scores/np.sum(scores), action_indx)
         self.apply(action_indx)
+        print self.evalStep()
 
     def drawArrow(self,A, B):
         plt.arrow(A[0], A[1], B[0] - A[0], B[1] - A[1],
-              head_width=0.1, length_includes_head=True)
+              head_width=1.0, length_includes_head=False)
 
     def calculate(self):
         s0 = np.pi/2
@@ -84,8 +95,8 @@ class Action:
         plt.plot(x1,np.asarray(y1))
         plt.scatter(self.x,self.y)
 
-        for i in range(len(ang1)-1):
-            self.drawArrow([x1[i],y1[i]], [x1[i+1], y1[i+1]])
+        #for i in range(len(ang1)-1):
+        #    self.drawArrow([x1[i],y1[i]], [x1[i+1], y1[i+1]])
 
 a = Action()
 a.calculate()
