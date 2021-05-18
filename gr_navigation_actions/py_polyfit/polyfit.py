@@ -6,7 +6,7 @@ class Action:
     def __init__(self):
         self.x = np.array([0,2,4])
         self.y = np.array([0,0,0])
-        self.final = [self.x[-1],self.y[-1], np.pi]
+        self.final = [self.x[-1],self.y[-1], 0]
         self.nmotion = 10
         self.trajectory = []
         self.motions = []
@@ -15,12 +15,12 @@ class Action:
         return np.sqrt(np.power(self.final[0] - p[0],2)+np.power(self.final[1] - p[1],2))
 
     def complete(self):
-        return np.sqrt(np.power(self.final[0] - self.startx,2)+np.power(self.final[1] - self.starty,2)) < 0.15
+        return np.sqrt(np.power(self.final[0] - self.startx,2)+np.power(self.final[1] - self.starty,2)) < 0.15 and np.fabs(self.starttheta - self.final[2]) < 0.2
 
     def setStart(self):
         self.startx = self.x[0]
         self.starty = self.y[0]
-        self.starttheta = np.pi/2
+        self.starttheta = np.pi
 
     def predict(self, motion,x,y, theta):
         if motion == 0:
@@ -137,6 +137,7 @@ a.setStart()
 for i in range(1000):
     a.run()
     if a.complete():
+        print "MOTION COMPLETED BEFORE TIME"
         break
     print ("STEP SCORE ", a.evalStep())
 a.plotTrajectory()
