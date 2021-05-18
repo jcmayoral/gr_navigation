@@ -7,6 +7,23 @@ class Action:
         self.x = np.array([0,2,4])
         self.y = np.array([0,6,0])
 
+    def setStart(self):
+        self.startx = 0
+        self.starty = 0
+
+    def step(self):
+        self.startx += 0.1
+        self.starty += 0.1
+
+    def evalStep(self):
+        print self.startx, self.starty
+        plt.scatter(self.startx, self.starty, c='b')
+        return np.fabs(self.starty - np.polyval(self.coeff, self.startx))
+
+    def run(self):
+        print self.evalStep()
+        self.step()
+
     def drawArrow(self,A, B):
         plt.arrow(A[0], A[1], B[0] - A[0], B[1] - A[1],
               head_width=0.1, length_includes_head=True)
@@ -32,4 +49,7 @@ class Action:
 
 a = Action()
 a.calculate()
+a.setStart()
+for i in range(20):
+    a.run()
 plt.show()
