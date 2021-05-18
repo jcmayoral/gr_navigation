@@ -6,23 +6,63 @@ class Action:
     def __init__(self):
         self.x = np.array([0,2,4])
         self.y = np.array([0,6,0])
+        self.nmotion = 6
 
     def setStart(self):
         self.startx = 0
         self.starty = 0
 
-    def step(self):
-        self.startx += 0.1
-        self.starty += 0.1
+    def predict(self, motion):
+        if motion == 0:
+            return self.startx + 0.1, self.starty
+        if motion == 1:
+            return self.startx + 0.1, self.starty - 0.1
+        if motion == 2:
+            return self.startx + 0.1, self.starty - 0.1
+        if motion == 3:
+            return self.startx, self.starty+0.1
+        if motion == 4:
+            return self.startx - 0.1, self.starty
+        if motion == 5:
+            return self.startx, self.starty-0.1
+        #if motion == 6:
+        #    return self.startx, self.starty
+
+    def apply(self, motion):
+        print ("Applying", motion)
+        if motion == 0:
+            self.startx += 0.1
+        if motion == 1:
+            self.startx += 0.1
+            self.starty += 0.1
+        if motion == 2:
+            self.startx -= 0.1
+            self.starty -=0.1
+        if motion == 3:
+            self.starty +=0.1
+        if motion == 4:
+            self.startx -= 0.1
+        if motion == 5:
+            self.starty -=0.1
+        #if motion == 6:
+        #    pass
+
+    def evalMotion(self,x,y):
+        plt.scatter(x, y, c='r')
+        return np.fabs(y - np.polyval(self.coeff, x))
 
     def evalStep(self):
-        print self.startx, self.starty
         plt.scatter(self.startx, self.starty, c='b')
         return np.fabs(self.starty - np.polyval(self.coeff, self.startx))
 
     def run(self):
-        print self.evalStep()
-        self.step()
+        scores = []
+        for i in range(self.nmotion):
+            x,y = self.predict(i)
+            scores.append(self.evalMotion(x,y))
+        action_indx = np.argmin(scores)
+        print (action_indx)
+        self.apply(action_indx)
 
     def drawArrow(self,A, B):
         plt.arrow(A[0], A[1], B[0] - A[0], B[1] - A[1],
@@ -50,6 +90,7 @@ class Action:
 a = Action()
 a.calculate()
 a.setStart()
-for i in range(20):
+for i in range(200):
     a.run()
+    print ("STEP SCORE ", a.evalStep())
 plt.show()
