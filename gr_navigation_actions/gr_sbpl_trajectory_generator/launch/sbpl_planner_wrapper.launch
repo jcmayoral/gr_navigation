@@ -7,21 +7,25 @@
 
   <!--arg name="primitives_file" default="$(find my_own_thorvald)/mprim/mymprim_2021.mprim"/>
   <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2r.mprim"/>
-  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/test.mprim"/-->
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/test.mprim"/>
   <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim"/>
-  <arg name="nominalvel_mpersecs" default="0.4"/>
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/ok.mprim"/>
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim"/-->
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/jose.mprim"/>
   <arg name="timetoturn45degsinplace_secs" default="0.6"/>
+  <arg name="nominalvel_mpersecs" default="5.0"/>
 
 
 
 
-   <!-- my_mprim_test.mprim   -default pr2.mprim -->
+  <!-- my_mprim_test.mprim   -default pr2.mprim -->
 
   <param name="robot_radius" type="double" value="0.4"/>
 
   <node pkg="gr_sbpl_trajectory_generator" type="gr_sbpl_trajectory_generator_node"
         name="gr_sbpl_trajectory_generator_node" output="screen" respawn="true" >
       <param name="primitives_file" type="str" value="$(arg primitives_file)"/>
+      <param name="nominalvel_mpersecs" type="double" value="$(arg nominalvel_mpersecs)"/>
   </node>
   
   <!--node pkg="gr_map_utils" type="multi_map_server"
