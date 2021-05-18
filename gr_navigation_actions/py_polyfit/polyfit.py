@@ -6,7 +6,7 @@ class Action:
     def __init__(self):
         self.x = np.array([0,2,4])
         self.y = np.array([0,6,0])
-        self.final = [self.x[-1],self.y[-1]]
+        self.final = [self.x[-1],self.y[-1], np.pi]
         self.nmotion = 8
         self.trajectory = []
 
@@ -16,78 +16,86 @@ class Action:
     def setStart(self):
         self.startx = self.x[0]
         self.starty = self.y[0]
+        self.starttheta = np.pi/4
 
-    def predict(self, motion,x,y):
+    def predict(self, motion,x,y, theta):
         if motion == 0:
-            return x + 0.1, y
+            return x + 0.1*np.cos(theta), y, theta
         if motion == 1:
-            return x, y + 0.1
+            return x, y + 0.1*np.sin(theta), theta+0.1
         if motion == 2:
-            return x + 0.1, y + 0.1
+            return x + 0.1*np.cos(theta), y + 0.1*np.sin(theta), theta
         if motion == 3:
-            return x+0.1, y-0.1
+            return x+0.1*np.cos(theta), y-0.1*np.sin(theta), theta+0.1
         if motion == 4:
-            return x - 0.1, y+0.1
+            return x - 0.1*np.cos(theta), y+0.1*np.sin(theta),theta
         if motion == 5:
-            return x-0.1, y-0.1
+            return x-0.1*np.cos(theta), y-0.1*np.sin(theta),theta+0.1
         if motion == 6:
-            return x-0.1, y
+            return x-0.1*np.cos(theta), y*np.sin(theta),theta
         if motion == 7:
-            return x, y-0.1
+            return x, y-0.1*np.sin(theta),theta+0.1
 
     def apply(self, motion):
         print ("Applying", motion, self.startx, self.starty)
         if motion == 0:
-            self.startx += 0.1
+            self.startx += 0.1*np.cos(self.starttheta)
         if motion == 1:
-            self.starty += 0.1
+            self.starty += 0.1*np.sin(self.starttheta)
+            self.starttheta+=0.1
         if motion == 2:
-            self.startx += 0.1
-            self.starty +=0.1
+            self.startx += 0.1*np.cos(self.starttheta)
+            self.starty +=0.1*np.sin(self.starttheta)
         if motion == 3:
-            self.startx +=0.1
-            self.starty -=0.1
+            self.startx +=0.1*np.cos(self.starttheta)
+            self.starty -=0.1*np.sin(self.starttheta)
+            self.starttheta+=0.1
         if motion == 4:
-            self.startx -= 0.1
-            self.starty += 0.1
+            self.startx -= 0.1*np.cos(self.starttheta)
+            self.starty += 0.1*np.sin(self.starttheta)
         if motion == 5:
-            self.startx -=0.1
-            self.starty -=0.1
+            self.startx -=0.1*np.cos(self.starttheta)
+            self.starty -=0.1*np.sin(self.starttheta)
+            self.starttheta+=0.1
         if motion == 6:
-            self.startx -=0.1
+            self.startx -=0.1*np.cos(self.starttheta)
         if motion == 7:
-            self.starty -=0.1
-        print ("End", motion, self.startx, self.starty)
+            self.starty -=0.1*np.sin(self.starttheta)
+        print ("End", motion, self.startx, self.starty, self.starttheta)
+        self.starttheta+=0.1
+        if self.starttheta > 2*np.pi:
+            self.starttheta = 0.0
 
 
-    def evalMotion(self,x,y, t):
+    def evalMotion(self,x,y, theta):
         #plt.scatter(x, y, c='b', s=20.0*t)
-        return 0.2*np.fabs(y - np.polyval(self.coeff, x)) + 100.5*self.cost2goal([x, y])
+        print "costs ", 20*np.fabs(y - np.polyval(self.coeff, x)) , 0.25*self.cost2goal([x, y]) , 10.0 *np.fabs(theta-self.final[2])
+        return 20.0*np.fabs(y - np.polyval(self.coeff, x)) + 0.25*self.cost2goal([x, y]) + 10.0 *np.fabs(theta-self.final[2])
 
     def evalStep(self):
         #plt.scatter(self.startx, self.starty, c='r', s=150.0)
-        self.trajectory.append([self.startx, self.starty])
-        return 0.2*np.fabs(self.starty - np.polyval(self.coeff, self.startx)) + 0.5*self.cost2goal([self.startx, self.starty])
+        self.trajectory.append([self.startx, self.starty, self.starttheta])
+        return 20.0*np.fabs(self.starty - np.polyval(self.coeff, self.startx)) + 0.25*self.cost2goal([self.startx, self.starty]) + 10.0 *np.fabs(self.starttheta -self.final[2])
 
     def plotTrajectory(self):
-        print (np.array(self.trajectory)[:,0].shape)
         plt.plot(np.array(self.trajectory)[:,0], np.array(self.trajectory)[:,1], c='g')
 
     def run(self):
         scores = np.zeros(self.nmotion)
         x = self.startx
         y = self.starty
+        theta = self.starttheta
 
         for i in range(self.nmotion):
-            xs,ys = self.predict(i,x,y)
-            scores[i] += self.evalMotion(xs,ys,10)
+            xs,ys,ts = self.predict(i,x,y, theta)
+            scores[i] += self.evalMotion(xs,ys,ts)
 
         action_indx = np.argmin(scores/np.sum(scores))
         print (scores/np.sum(scores), action_indx)
         self.apply(action_indx)
         print self.evalStep()
 
-    def drawArr150ow(self,A, B):
+    def drawArrow(self,A, B):
         plt.arrow(A[0], A[1], B[0] - A[0], B[1] - A[1],
               head_width=1.0, length_includes_head=False)
 
@@ -107,13 +115,13 @@ class Action:
         plt.plot(x1,np.asarray(y1))
         plt.scatter(self.x,self.y)
 
-        #for i in range(len(ang1)-1):
-        #    self.drawArrow([x1[i],y1[i]], [x1[i+1], y1[i+1]])
+        for i in range(len(ang1)-1):
+            self.drawArrow([x1[i],y1[i]], [x1[i+1], y1[i+1]])
 
 a = Action()
 a.calculate()
 a.setStart()
-for i in range(50):
+for i in range(1500):
     a.run()
     print ("STEP SCORE ", a.evalStep())
 a.plotTrajectory()
