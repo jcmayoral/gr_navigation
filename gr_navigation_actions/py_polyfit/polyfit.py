@@ -5,13 +5,14 @@ import rospy
 from gr_action_msgs.msg import PolyFitRowAction, PolyFitRowActionGoal
 import time
 from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Twist
 
 class Action(object):
     def __init__(self):
         rospy.init_node("polyfit_server")
         self.gpath_pub = rospy.Publisher("global", Path)
         self.lpath_pub = rospy.Publisher("local", Path)
+        self.cmd_vel = rospy.Publisher("nav_vel", Twist)
 
         self._as = actionlib.SimpleActionServer('polyfit_action', PolyFitRowAction, execute_cb=self.myexecution_cb, auto_start = False)
         self.dt = 0.1
@@ -53,12 +54,14 @@ class Action(object):
             self._as.set_succeeded()
             return
 
-        self.calculate()
         self.setStart()
+        self.calculate()
 
         for i in range(500):
             print "run ", i
             self.run()
+            self.plotTrajectory()
+            time.sleep(0.5)
             if self.complete():
                 break
         self.plotTrajectory()
@@ -185,6 +188,11 @@ class Action(object):
         self.v = new_state[3]
         self.s = new_state[4]
         self.starttheta = new_state[2]
+
+        cmdvel = Twist()
+        cmdvel.linear.x = self.v
+        cmdvel.angular.z = self.v/L * self.s
+        self.cmd_vel.publish(cmdvel)
         #print "new state ", new_state
 
 
@@ -214,8 +222,8 @@ class Action(object):
             p.poses.append(ps)
 
         self.lpath_pub.publish(p)
-        plt.plot(np.array(self.trajectory)[:,0], np.array(self.trajectory)[:,1], c='g')
-        plt.draw()
+        #plt.plot(np.array(self.trajectory)[:,0], np.array(self.trajectory)[:,1], c='g')
+        #plt.draw()
         #time.sleep(100)
         #plt.show()
 
@@ -257,7 +265,7 @@ class Action(object):
         s0 = self.thetas[0]#np.pi/2
         sf = self.thetas[-1]
         self.coeff = (np.polyfit(self.y,self.x,3))
-        y1 = np.linspace(np.min(self.y),np.max(self.y),10)
+        y1 = np.linspace(np.min(self.starty),np.max(self.y),10)
         x1 = np.polyval(self.coeff,y1)
         ang3 = []
         for i in range(len(x1)-1):

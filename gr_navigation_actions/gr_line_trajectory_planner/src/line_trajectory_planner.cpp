@@ -4,7 +4,7 @@ using namespace gr_line_trajectory_planner;
 
 GRLinePlanner::GRLinePlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"),
-                                odom_received_(false), tfBuffer(ros::Duration(1.0)),position_tolerance_(1.0),
+                                odom_received_(false), tfBuffer(ros::Duration(5)),position_tolerance_(1.0),
                                 tf2_listener(tfBuffer){
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
@@ -114,7 +114,7 @@ void GRLinePlanner::point_cb(const geometry_msgs::PointStampedConstPtr msg){
 
   if (makePlan(start_,goal_)){
       ROS_INFO("Executing path");
-      executePath();
+      //executePath();
     }
     else{
       ROS_ERROR("ERROR");
@@ -245,6 +245,7 @@ bool GRLinePlanner::executePath(){
 
     cmd_vel_pub_.publish(cmd_vel);
     ROS_INFO_STREAM_THROTTLE(2,"Time to GO " << plan_.size()*0.1);
+    ROS_ERROR_STREAM(cmd_vel);
     std_msgs::Float32 fb_msg;
     fb_msg.data = plan_.size()*0.1;
     time_pub_.publish(fb_msg);
@@ -262,7 +263,7 @@ bool GRLinePlanner::executePath(){
   base_link_to_odom = tfBuffer.lookupTransform("base_link", "map", ros::Time::now(), ros::Duration(1.0) );
   tf2::doTransform(p, p, base_link_to_odom);
 
-  yaw1 = getRotationInFrame(p, "base_link");
+  yaw1 = getRotationInFrame(p, "map");
 
   //orientation of the goal on map frame
   yaw2 = getRotationInFrame(goal_, "map");
@@ -281,7 +282,7 @@ bool GRLinePlanner::executePath(){
     p.header = odom_msg_.header;
     p.header.stamp = ros::Time::now();
     p.pose = odom_msg_.pose.pose;
-    base_link_to_odom = tfBuffer.lookupTransform("base_link", "map", ros::Time::now(), ros::Duration(1.0) );
+    base_link_to_odom = tfBuffer.lookupTransform("base_link",  odom_msg_.header.frame_id, ros::Time::now(), ros::Duration(1.0) );
     tf2::doTransform(p, p, base_link_to_odom);
 
     yaw1 = getRotationInFrame(p, "map");
@@ -318,6 +319,7 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
 
   geometry_msgs::PoseStamped current_pose;
   current_pose = start;
+  current_pose.pose.orientation = goal.pose.orientation;
   int c = 0;
   double velocity = 0.0;
   double maxvel = 2.0;
@@ -338,6 +340,7 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     //std::cout << oneway_midpath.size() << std::endl;
     current_pose.pose.position.x += cos(angle)*acceleration*dt;
     current_pose.pose.position.y += sin(angle)*velocity;
+    current_pose.pose.orientation = goal.pose.orientation;
     velocity += acceleration*dt;
     if (velocity > maxvel){
       velocity = maxvel;
@@ -386,12 +389,12 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     tmp = oneway_midpath[i];
     tmp.header.stamp = ros::Time::now();
     tmp.header.frame_id = "map";
-    tmp.pose.orientation.w = 1.0;
+    //tmp.pose.orientation.w = 1.0;
     gui_path.poses.push_back(tmp);
   }
 
   auto xoffset = oneway_midpath[oneway_midpath.size()-1].pose.position.x;
-  auto yoffset = oneway_midpath[oneway_midpath.size()-1].pose.position.x;
+  auto yoffset = oneway_midpath[oneway_midpath.size()-1].pose.position.y;
   
 
   for (int i=oneway_midpath.size()-1; i> 0; i--){
@@ -403,7 +406,7 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
     tmp.header.frame_id = "map";
     tmp.pose.position.x +=xoffset;
     tmp.pose.position.y +=yoffset;
-    tmp.pose.orientation.w = 1.0;
+    //tmp.pose.orientation.w = 1.0;
     //TODO ANGLE
     gui_path.poses.push_back(tmp);
   }
@@ -419,14 +422,15 @@ bool GRLinePlanner::makePlan(geometry_msgs::PoseStamped start, geometry_msgs::Po
 
     ppose.pose.position.x = pose.pose.position.x;
     ppose.pose.position.y = pose.pose.position.y;
-    ppose.pose.position.z = start.pose.position.z;
+    ppose.pose.position.z = pose.pose.position.z;
 
-    tf2::Quaternion temp;
-    temp.setRPY(0,0,0);
-    pose.pose.orientation.x = temp.getX();
-    pose.pose.orientation.y = temp.getY();
-    pose.pose.orientation.z = temp.getZ();
-    pose.pose.orientation.w = temp.getW();
+    //tf2::Quaternion temp;
+    //temp.setRPY(0,0,0);
+    //pose.pose.orientation.x = temp.getX();
+    //pose.pose.orientation.y = temp.getY();
+    //pose.pose.orientation.z = temp.getZ();
+    //pose.pose.orientation.w = temp.getW();
+    ppose.pose.orientation = pose.pose.orientation;
 
     plan_.push_back(ppose);
 

@@ -43,6 +43,8 @@ class SimpleTopoPlanner:
 
     def execute_plan(self):
         print ("THIS IS MY PLAN " ,self.plan)
+        print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
+        #POLYFIT
         #for p in self.plan:
         poses = []
 
@@ -52,7 +54,7 @@ class SimpleTopoPlanner:
         print ("poses", np.asarray(poses).shape)
         polyfit_server(np.asarray(poses), self.action_client)
 
-
+        #SBPL
         """
         for node in self.plan:
             print node
