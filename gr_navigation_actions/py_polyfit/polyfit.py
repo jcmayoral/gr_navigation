@@ -21,8 +21,8 @@ class Action(object):
         self.thetas = np.array([0,0,0])
         self.final = [self.x[-1],self.y[-1], 0]
         self.nmotion = 9
-        self.ac = 0.25
-        self.max_vel = 1.4
+        self.ac = 0.4
+        self.max_vel = 1.9
         self.v = 0.0
         self.s = 0.0
         self.max_steer = np.pi/6
@@ -57,13 +57,13 @@ class Action(object):
         self.setStart()
         self.calculate()
 
-        for i in range(500):
+        i = 0
+        while not self.complete() and  i < 2500:
             print "run ", i
             self.run()
             self.plotTrajectory()
-            time.sleep(0.5)
-            if self.complete():
-                break
+            time.sleep(0.05)
+            i = i+1
         self.plotTrajectory()
 
         print "MOTIONS ", self.motions
