@@ -19,9 +19,9 @@ class Action(object):
         self.y = np.array([0,0,0])
         self.thetas = np.array([0,0,0])
         self.final = [self.x[-1],self.y[-1], 0]
-        self.nmotion = 2
+        self.nmotion = 9
         self.ac = 0.25
-        self.max_vel = 1.0
+        self.max_vel = 1.4
         self.v = 0.0
         self.s = 0.0
         self.max_steer = np.pi/6
@@ -74,7 +74,7 @@ class Action(object):
 
     def complete(self):
         #print self.final, self.startx, self.starty
-        return np.sqrt(np.power(self.final[0] - self.startx,2)+np.power(self.final[1] - self.starty,2)) < 0.15 # and np.fabs(self.starttheta - self.final[2]) < 0.2
+        return np.sqrt(np.power(self.final[0] - self.startx,2)+np.power(self.final[1] - self.starty,2)) < self.ac*self.dt*2 # and np.fabs(self.starttheta - self.final[2]) < 0.2
 
     def setStart(self):
         self.startx = self.x[0]
@@ -87,18 +87,17 @@ class Action(object):
         L = 1.0
         psi = self.starttheta
 
-        time2stop = np.fabs(self.v*self.ac+0.1)
-        #print "TIME2 stop", np.fabs(self.v/time2stop)
+        time2stop = np.fabs(self.v/self.ac)
         if self.v > 0.0000:
-            self.stop = self.v/time2stop
+            self.stop = np.fabs(self.v*time2stop)
         else:
             self.stop = 0.0
 
-        if self.cost2goal([x, y]) <= np.fabs(self.v/time2stop):
-            v1 = self.v - (self.ac * self.dt)
-            v1 = max(0.0, v1)
-            psi1 = psi+v1/L * self.s * self.dt
-            return x + v1*np.cos(psi)*self.dt, y + v1*np.sin(psi)* self.dt, psi1, v1, self.s
+        #if self.cost2goal([x, y]) <= np.fabs(self.v/time2stop):
+        #    v1 = self.v - (self.ac * self.dt)
+        #    v1 = max(0.0, v1)
+        #    psi1 = psi+v1/L * self.s * self.dt
+        #    return x + v1*np.cos(psi)*self.dt, y + v1*np.sin(psi)* self.dt, psi1, v1, self.s
 
 
         #v+ s=
@@ -106,7 +105,7 @@ class Action(object):
             v1 = self.v + (self.ac * self.dt)
             v1 = min(self.max_vel, v1)
             #BRUTE FORCE STOP
-            time2stop = np.fabs(self.v*self.ac+0.1)
+            #time2stop = np.fabs(self.v*self.ac+0.1)
             psi1 = psi+v1/L * self.s * self.dt
             return x + v1*np.cos(psi)*self.dt, y + v1*np.sin(psi)* self.dt, psi1, v1, self.s
 
@@ -177,7 +176,7 @@ class Action(object):
         L = 1.0
         if self.cost2goal([self.startx, self.starty]) <= self.stop:
             motion = 1
-            print "apply motion ", motion
+            print "force stop motion ", motion
         new_state = states[motion]
         self.motions.append(motion)
         self.vels.append(new_state[3])
@@ -186,13 +185,14 @@ class Action(object):
         self.v = new_state[3]
         self.s = new_state[4]
         self.starttheta = new_state[2]
-        print "new state ", new_state
+        #print "new state ", new_state
 
 
     def evalMotion(self,x,y, theta):
         #plt.scatter(x, y, c='b', s=20.0)
         #print "costs ", 20*np.fabs(y - np.polyval(self.coeff, x)) , 0.25*self.cost2goal([x, y]) , 20.0 *np.fabs(theta-self.final[2])
-        cost = 5.0*self.cost2goal([x, y]) + 100.0 *int(self.stop > self.cost2goal([x, y]))# 0.5*(self.max_vel-self.v)
+        cost = 5.0*self.cost2goal([x, y]) +  0.50*np.fabs(y - np.polyval(self.coeff, x)) + 0.5*(self.max_vel-self.v)
+        print "distance 2 stop", self.stop , " distance to goal ", self.cost2goal([x, y])
 
         #cost = 0.50*np.fabs(x - np.polyval(self.coeff, y)) + 5.0*self.cost2goal([x, y]) + 0.20 *np.fabs(theta-self.final[2]) + 100.0 *int(self.stop > self.cost2goal([x, y]))# 0.5*(self.max_vel-self.v)
         return cost
@@ -234,9 +234,18 @@ class Action(object):
             scores[i] += self.evalMotion(xs,ys,ts)
 
         #print ("states",states)
+        print (scores/np.sum(scores))
+
+        if self.cost2goal([self.startx, self.starty]) <= self.stop:
+            print "AAAAAAAAAAAAAAAAAAAA"
+            scores[1] =0.001
+            scores[4] =0.15
+            scores[7] =0.15
+
+        print (scores/np.sum(scores))
 
         action_indx = np.argmin(scores/np.sum(scores))
-        #print (scores/np.sum(scores), action_indx)
+        print (scores/np.sum(scores), action_indx)
         self.apply(action_indx, states)
         print "cost of step ", self.evalStep()
 
