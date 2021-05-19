@@ -1,17 +1,22 @@
 from visualization_msgs.msg import MarkerArray, Marker
 import rospy
 import networkx as nx
+import numpy as np
 import tf
 import matplotlib.pyplot as plt
 from gr_topological_navigation.states.move_base_state import move_base as move_base_server
+from gr_topological_navigation.states.move_base_state import polyfit_action_mode as polyfit_server
 import actionlib
-from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult
+from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult, PolyFitRowAction, PolyFitRowResult
 
 class SimpleTopoPlanner:
     def __init__(self):
         self.temporal_map = None
         #self.map_sub = rospy.Subscriber("/current_topological_map", MarkerArray, self.map_cb)
         self._as = actionlib.SimpleActionServer("gr_simple_manager", GRNavigationAction, execute_cb=self.execute_cb, auto_start = False)
+        #self._as = actionlib.SimpleActionServer("gr_simple_manager", PolyFitRowAction, execute_cb=self.execute_cb, auto_start = False)
+        self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
+
         self._as.start()
 
     def execute_cb(self, goal):
@@ -28,7 +33,6 @@ class SimpleTopoPlanner:
         #self._as.set_succeeded(result)
         self._as.set_succeeded()
 
-
     def map_cb(self, map):
         rospy.loginfo("new map arriving")
         if self.create_graph(map.markers):
@@ -38,14 +42,26 @@ class SimpleTopoPlanner:
             self.execute_plan()
 
     def execute_plan(self):
-        #print (self.plan)
+        print ("THIS IS MY PLAN " ,self.plan)
+        #for p in self.plan:
+        poses = []
 
+        for n in self.plan:
+            p = self.nodes_poses[n]
+            poses.append([p[0], p[1],p[2]])
+        print ("poses", np.asarray(poses).shape)
+        polyfit_server(np.asarray(poses), self.action_client)
+
+
+        """
         for node in self.plan:
             print node
-        #    print self.nodes_poses[node]
-            #print move_base_server(self.nodes_poses[node], "sbpl_action")
-        print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
-        print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
+            print move_base_server(self.nodes_poses[node], "sbpl_action")
+        print self.nodes_poses["start_node"]
+        #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
+        print self.nodes_poses["end_node"]
+        #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
+        """
 
 
     def get_topological_plan(self):
