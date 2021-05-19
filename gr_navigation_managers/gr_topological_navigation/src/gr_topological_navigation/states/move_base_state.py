@@ -3,6 +3,7 @@ import rospy
 import tf
 #from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from gr_action_msgs.msg import PolyFitRowAction, PolyFitRowGoal
 
 
 def command_mapper(mode):
@@ -75,3 +76,29 @@ def sbpl_action_mode(commands):
     action_client.wait_for_result()
     return action_client.get_result()
     return action_client.get_result()
+
+
+def polyfit_action_mode(poses, action_client):
+    print "polyfit action mode2"
+    goal = PolyFitRowGoal()
+    goal.x = poses[:,0]
+    goal.y = poses[:,1]
+    goal.yaw = poses[:,2]
+    print (goal)
+    action_client.send_goal(goal)
+    action_client.wait_for_result()
+    print "AAAAAAALLLLLLLLl"
+
+
+def polyfit_action_modeold(poses):
+    print "polyfit action mode"
+    action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
+    goal = PolyFitRowGoal()
+    for p in poses:
+        goal.x.append(p[0])
+        goal.y.append(p[1])
+        goal.yaw.append(p[2])
+    print (goal)
+    action_client.send_goal(goal)
+    action_client.wait_for_result()
+    print "AAAAAAALLLLLLLLl"
