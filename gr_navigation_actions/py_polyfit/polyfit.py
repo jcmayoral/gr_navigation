@@ -1,15 +1,45 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import actionlib
+import rospy
+from gr_action_msgs.msg import PolyFitRowAction, PolyFitRowActionGoal
 
-
-class Action:
+class Action(object):
     def __init__(self):
+        rospy.init_node("polyfit_server")
+        self._as = actionlib.SimpleActionServer('polyfit_action', PolyFitRowAction, execute_cb=self.myexecution_cb, auto_start = False)
         self.x = np.array([0,2,4])
         self.y = np.array([0,0,0])
+        self.thetas = np.array([0,0,0])
         self.final = [self.x[-1],self.y[-1], 0]
         self.nmotion = 10
         self.trajectory = []
         self.motions = []
+        self._as.start()
+        print "server started"
+
+    def myexecution_cb(self, goal):
+        print "received"
+        self.x = []
+        self.y = []
+        self.thetas = []
+        for xi,yi,zi in zip(goal.x, goal.y,goal.yaw):
+            self.x.append(xi)
+            self.y.append(yi)
+            self.thetas.append(zi)
+        print (self.x)
+        print (self.y)
+        print (self.thetas)
+
+        self.calculate()
+        self.setStart()
+
+        for i in range(1000):
+            self.run()
+            if self.complete():
+                break
+        self.plotTrajectory()
+        self._as.set_succeeded()
 
     def cost2goal(self, p):
         return np.sqrt(np.power(self.final[0] - p[0],2)+np.power(self.final[1] - p[1],2))
@@ -20,7 +50,9 @@ class Action:
     def setStart(self):
         self.startx = self.x[0]
         self.starty = self.y[0]
-        self.starttheta = np.pi
+        self.starttheta = self.thetas[0]
+        self.final = [self.x[-1],self.y[-1], self.thetas[-1]]
+
 
     def predict(self, motion,x,y, theta):
         if motion == 0:
@@ -91,6 +123,7 @@ class Action:
         return 20.0*np.fabs(self.starty - np.polyval(self.coeff, self.startx)) + 0.25*self.cost2goal([self.startx, self.starty]) + 10.0 *np.fabs(self.starttheta -self.final[2])
 
     def plotTrajectory(self):
+        print (self.trajectory)
         plt.plot(np.array(self.trajectory)[:,0], np.array(self.trajectory)[:,1], c='g')
 
     def run(self):
@@ -113,10 +146,10 @@ class Action:
               head_width=1.0, length_includes_head=False)
 
     def calculate(self):
-        s0 = np.pi/2
-        sf = 0
+        s0 = self.thetas[0]#np.pi/2
+        sf = self.thetas[-1]
         self.coeff = (np.polyfit(self.x,self.y,4))
-        x1 = np.linspace(0,np.max(self.x),10)
+        x1 = np.linspace(np.min(self.x),np.max(self.x),10)
         y1 = np.polyval(self.coeff,x1)
         ang3 = []
         for i in range(len(x1)-1):
@@ -131,17 +164,22 @@ class Action:
         #for i in range(len(ang1)-1):
         #    self.drawArrow([x1[i],y1[i]], [x1[i+1], y1[i+1]])
 
-a = Action()
-a.calculate()
-a.setStart()
-for i in range(1000):
-    a.run()
-    if a.complete():
-        print "MOTION COMPLETED BEFORE TIME"
-        break
-    print ("STEP SCORE ", a.evalStep())
-a.plotTrajectory()
-plt.figure()
-plt.plot(np.arange(len(a.motions)), a.motions)
-plt.show()
+
+if __name__ == '__main__':
+    print "main"
+    a = Action()
+    plt.figure()
+    plt.plot(np.arange(len(a.motions)), a.motions)
+    plt.show()
+    rospy.spin()
+
+    #a.calculate()
+    #a.setStart()
+    #for i in range(1000):
+    #    a.run()
+    #    if a.complete():
+    #        print "MOTION COMPLETED BEFORE TIME"
+    #        break
+    #        print ("STEP SCORE ", a.evalStep())
+#a.plotTrajectory()
 #print (a.trajectory)
