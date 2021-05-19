@@ -10,8 +10,8 @@
   <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/test.mprim"/>
   <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim"/>
   <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/ok.mprim"/>
-  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim"/-->
-  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/jose.mprim"/>
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/jose_025.mprim"/-->
+  <arg name="primitives_file" default="$(find my_own_thorvald)/mprim/pr2.mprim"/>
   <arg name="timetoturn45degsinplace_secs" default="0.6"/>
   <arg name="nominalvel_mpersecs" default="5.0"/>
 

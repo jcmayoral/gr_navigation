@@ -130,38 +130,28 @@ void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
   goal_ = goal->target_pose;
 
   setStart();
-  ROS_WARN_STREAM ("START "<<start_);
-  ROS_WARN_STREAM ("GOAL "<<goal_);
-
-  if (makePlan(start_,goal_)){
-    ROS_INFO("WORKING");
-    if (executePath()){
-      ROS_ERROR_STREAM("Action " << action_name_ << " FINISHING as succeeded" );
-      as_->setSucceeded();
+  bool flag = true;
+  while (flag){
+    setStart();
+    ROS_WARN_STREAM ("START "<<start_);
+    ROS_WARN_STREAM ("GOAL "<<goal_);
+    if (makePlan(start_,goal_)){
+      ROS_INFO("PLAN FOUND");
+      if (executePath()){
+        ROS_ERROR_STREAM("Action " << action_name_ << " FINISHING as succeeded" );
+        as_->setSucceeded();
+        flag = false;
+      }
     }
+    /*
     else{
-      ROS_ERROR_STREAM("Action " << action_name_ << " FINISHING with abort " );
-      if (makePlan(start_, goal_)){
-      	ROS_INFO("SECOND TRY");
-    	if (executePath()){
-            ROS_ERROR_STREAM("Action " << action_name_ << " FINISHING as succeeded" );
-      	    as_->setSucceeded();
-    	}
-	else{
-	    as_->setAborted();
-	}
-
-      }
-      else{
-	as_->setAborted();
-      }
+      as_->setAborted();
     }
+    */
   }
-  else{
-    ROS_ERROR("ERROR");
-    ROS_ERROR_STREAM("Action " << action_name_ << " FINISHING " );
-    as_->setAborted();
-  }
+
+  ROS_ERROR_STREAM("Action " << action_name_ << " FINISHING " );
+  //  as_->setAborted();
 }
 
 
@@ -236,10 +226,10 @@ bool GRSBPLPlanner::executePath(){
 
     geometry_msgs::Twist cmd_vel;
     //Transforming next waypoint on map_coordinates to base_libk
-    plan_[0].header.stamp = ros::Time::now();
+    plan_[0].header.stamp = ros::Time(0);
     base_link_to_map = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
 
-    std::cout << "DIST 2 GOAL " << distance2Goal(plan_[0]) << std::endl;
+    //std::cout << "DIST 2 GOAL " << distance2Goal(plan_[0]) << std::endl;
     distance = distance2Goal(plan_[0]);
     tf2::doTransform(plan_[0], plan_[0], base_link_to_map);
 
@@ -273,7 +263,7 @@ bool GRSBPLPlanner::executePath(){
     //}
 
     cmd_vel_pub_.publish(cmd_vel);
-    ROS_INFO_STREAM_THROTTLE(2,"Time to GO " << plan_.size()*0.1);
+    ROS_INFO_STREAM_THROTTLE(10,"Time to GO " << plan_.size()*0.1);
     std_msgs::Float32 fb_msg;
     fb_msg.data = plan_.size()*0.1;
     time_pub_.publish(fb_msg);
@@ -281,7 +271,7 @@ bool GRSBPLPlanner::executePath(){
 
   stop();
   ROS_ERROR_STREAM("plan size before rotation " << plan_.size());
-  if (distance < 0.2){
+  if (distance > 0.2){
       ROS_ERROR("Trajectory does not reach the goal");
       return false;
   }
@@ -290,7 +280,7 @@ bool GRSBPLPlanner::executePath(){
   geometry_msgs::TransformStamped base_link_to_odom;
   geometry_msgs::PoseStamped p;
   p.header = odom_msg_.header;
-  p.header.stamp = ros::Time::now();
+  p.header.stamp = ros::Time(0);
   p.pose = odom_msg_.pose.pose;
   base_link_to_odom = tfBuffer.lookupTransform("base_link", "map", ros::Time(0), ros::Duration(1.0) );
   tf2::doTransform(p, p, base_link_to_odom);
@@ -317,7 +307,7 @@ bool GRSBPLPlanner::executePath(){
     p.header = odom_msg_.header;
     p.header.stamp = ros::Time::now();
     p.pose = odom_msg_.pose.pose;
-    base_link_to_odom = tfBuffer.lookupTransform("base_link", odom_msg_.header.frame_id, ros::Time(0), ros::Duration(1.0) );
+    base_link_to_odom = tfBuffer.lookupTransform("base_link","map", ros::Time(0), ros::Duration(1.0) );
     tf2::doTransform(p, p, base_link_to_odom);
 
     yaw1 = getRotationInFrame(p, "map");
