@@ -10,7 +10,7 @@ namespace gr_map_utils{
         ROS_INFO("Initiliazing Node Topological2MetricMap Node");
         gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
-        map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map_2", 1, true);
+        map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
         //Not implemented yet
         //map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
