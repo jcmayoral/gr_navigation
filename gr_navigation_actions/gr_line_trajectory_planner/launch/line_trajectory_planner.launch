@@ -12,8 +12,8 @@
 
   <param name="robot_radius" type="double" value="0.4"/>
 
-  <node pkg="gr_line_trajectory_generator" type="gr_line_trajectory_generator_node"
-        name="gr_line_trajectory_generator_node" output="screen" respawn="true" >
+  <node pkg="gr_line_trajectory_planner" type="gr_line_trajectory_planner_node"
+        name="gr_line_trajectory_planner_node" output="screen" respawn="true" >
       <param name="primitives_file" type="str" value="$(arg primitives_file)"/>
   </node>
   

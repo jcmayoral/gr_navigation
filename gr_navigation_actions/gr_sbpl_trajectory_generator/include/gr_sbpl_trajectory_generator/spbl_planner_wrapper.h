@@ -43,6 +43,11 @@ namespace gr_sbpl_trajectory_generator{
             void stop();
             double getRotationInFrame(geometry_msgs::PoseStamped& pose, std::string frame);
 
+	    double distance2Goal(const geometry_msgs::PoseStamped& pose){
+		    return sqrt(pow(pose.pose.position.x - goal_.pose.position.x,2)
+		       + pow(pose.pose.position.y - goal_.pose.position.y,2));
+	    } 
+
         private:
             std::vector<geometry_msgs::PoseStamped> plan_;
             bool odom_received_;

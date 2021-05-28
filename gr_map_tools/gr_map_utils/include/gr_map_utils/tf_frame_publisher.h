@@ -14,11 +14,18 @@
 namespace gr_map_utils{
     class TfFramePublisher{
         public:
+            TfFramePublisher(bool init, std::string map_frame, float x , float y);
             TfFramePublisher(YAML::Node config);
             TfFramePublisher(bool init=true, std::string origin_frame="world", std::string map_frame="map");
             ~TfFramePublisher();
             void publishTfTransform();
             void transformGPSToProjection(sensor_msgs::NavSatFix gps_msg, float& x, float& y);
+
+            void setTF(float x, float y){
+                origin_x_ = x;
+                origin_y_ = y;
+                initialize_ = true;
+            }
 
             void getTf(float& x, float &y){
                 x = origin_x_;

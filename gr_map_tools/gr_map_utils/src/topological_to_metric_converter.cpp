@@ -9,8 +9,8 @@ namespace gr_map_utils{
                                                                     map_resolution_(0.1){
         ROS_INFO("Initiliazing Node Topological2MetricMap Node");
         gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"filtered_topological_maps");
-        map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map_2", 1, true);
+        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
+        map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
         //Not implemented yet
         //map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
@@ -138,7 +138,7 @@ namespace gr_map_utils{
       ROS_INFO("in transform map");
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
-        created_map_.header.frame_id = "map"; //TODO this should be a param
+        created_map_.header.frame_id = topological_map_.info.map_frame; //TODO this should be a param
         created_map_.info.resolution = map_resolution_;
 
         float min_x = std::numeric_limits<float>::max();
@@ -222,10 +222,14 @@ namespace gr_map_utils{
 
         if (inverted_costmap_)
             created_map_.data.resize(created_map_.info.width * created_map_.info.height,254);
+            //created_map_.data.resize(topological_map_.info.sizex * topological_map_.info.sizey/map_resolution_,254);
         else
             created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
+            //created_map_.data.resize(topological_map_.info.sizex * topological_map_.info.sizey/map_resolution_,0);
 
         float res = created_map_.info.resolution;
+
+        ROS_INFO_STREAM(topological_map_.info);
 
         //Update costs
         float range_x = max_x - min_x;
@@ -326,8 +330,8 @@ namespace gr_map_utils{
     }
 
     void Topological2MetricMap::timer_cb(const ros::TimerEvent& event){
-        std::cout << "timer in" << std::endl;
+        //std::cout << "timer in" << std::endl;
         publishMaps();
-        std::cout << "timer out " << std::endl;
+        //std::cout << "timer out " << std::endl;
     }
 }

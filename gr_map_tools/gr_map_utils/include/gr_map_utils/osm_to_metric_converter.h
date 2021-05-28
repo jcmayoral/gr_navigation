@@ -58,6 +58,7 @@ namespace gr_map_utils{
             float distance_to_origin_;
             dynamic_reconfigure::Server<OSMMapConverterConfig> dyn_server_;
             dynamic_reconfigure::Server<OSMMapConverterConfig>::CallbackType dyn_server_cb_;
+            mongodb_store::MessageStoreProxy* message_store_;
 
             //Reuse gridmap to meteric
             grid_map::GridMap gridmap_;
