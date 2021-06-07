@@ -33,7 +33,7 @@ class SimpleTopoPlanner:
                 result.result.suceeded = True
         #NOT so sure why this crashes
         #self._as.set_succeeded(result)
-        id result.result.suceeded:
+        if result.result.suceeded:
             self._as.set_succeeded()
             return
         self._as.set_aborted()
@@ -63,22 +63,25 @@ class SimpleTopoPlanner:
         polyfit_server(np.asarray(poses), self.action_client)
         """
         #SBPL
-        if mode == GRNavigationActionGoal.VISIT_ALL:
+        if mode == 0:#GRNavigationAction.VISIT_ALL:
             for node in self.plan:
                 print node
                 print move_base_server(self.nodes_poses[node], "move_base")
+            return True
         #print self.nodes_poses["start_node"]
         #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
         #priyynt self.nodes_poses["end_node"]
         #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
-        elif GRNavigationActionGoal.JUST_END:
+        elif mode == 1: #GRNavigationAction.JUST_END:
             print move_base_server(self.nodes_poses["end_node"], "move_base")
-        elif GRNavigationActionGoal.VISIT_SOME:
+            return True
+        elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
             for n in range(0,len(self.plan),span):
                 print "VISIT_SOME", self.plan[n]
                 print move_base_server(self.nodes_poses[self.plan[n]], "move_base")
         else:
             rospy.logerr("ERROR")
+            return False
 
 
 
