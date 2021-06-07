@@ -5,7 +5,7 @@ using namespace gr_sbpl_trajectory_generator;
 GRSBPLPlanner::GRSBPLPlanner(): nh_("~"), primitive_filename_(""), initial_epsilon_(1.0),
                                 is_start_received_(false),action_name_("sbpl_action"),
                                 odom_received_(false), tfBuffer(ros::Duration(5)),position_tolerance_(1.0),
-                                tf2_listener(tfBuffer){
+                                tf2_listener(tfBuffer), reset_{false}{
     //set goal_ yaw to zero
     goal_.pose.orientation.w = 1.0;
 
@@ -131,7 +131,8 @@ void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
 
   setStart();
   bool flag = true;
-  while (flag){
+  int counts = 0;
+  while (flag && counts < 3 &&!reset_){
     setStart();
     ROS_WARN_STREAM ("START "<<start_);
     ROS_WARN_STREAM ("GOAL "<<goal_);
@@ -143,11 +144,16 @@ void GRSBPLPlanner::executeCB(const move_base_msgs::MoveBaseGoalConstPtr &goal){
         flag = false;
       }
     }
+    counts++;
+    
     /*
     else{
       as_->setAborted();
     }
     */
+  }
+  if (counts == 3 && !flag){
+    as_->setAborted();
   }
 
   ROS_ERROR_STREAM("Action " << action_name_ << " FINISHING " );
@@ -178,7 +184,7 @@ void GRSBPLPlanner::setStart(){
   try{
     transformStamped = tfBuffer.lookupTransform("map", "base_link",
                              ros::Time(0));
-    ROS_ERROR_STREAM("@@@@@@@@@@@@@@@@@"<< transformStamped);
+    //ROS_ERROR_STREAM("@@@@@@@@@@@@@@@@@"<< transformStamped);
     start_.header = transformStamped.header;
     start_.pose.position.x = transformStamped.transform.translation.x;
     start_.pose.position.y = transformStamped.transform.translation.y;
@@ -212,10 +218,10 @@ bool GRSBPLPlanner::executePath(){
   geometry_msgs::TransformStamped base_link_to_map;
 
   double yaw1, yaw2;
-  double distance = 1000000000000000000000000000;
+  double distance = 10000;
   //geometry_msgs::PoseStamped current_pose;
 
-  while(plan_.size()>1){
+  while(plan_.size()>1 && !reset_){
     ros::Duration(0.1).sleep();
     if (odom_received_){
       odom_received_ = false;
@@ -270,6 +276,12 @@ bool GRSBPLPlanner::executePath(){
   }
 
   stop();
+
+  if (reset_){
+    stop();
+    return false;
+  }
+
   ROS_ERROR_STREAM("plan size before rotation " << plan_.size());
   if (distance > 0.2){
       ROS_ERROR("Trajectory does not reach the goal");
