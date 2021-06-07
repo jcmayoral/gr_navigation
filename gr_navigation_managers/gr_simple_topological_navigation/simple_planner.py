@@ -27,11 +27,17 @@ class SimpleTopoPlanner:
             print "MY PLAN "
             self.plan = self.get_topological_plan()
             #TODO SET TRIGGER
-            self.execute_plan()
-            result.result.suceeded = True
+            if self.execute_plan(goal.mode,goal.span):
+                result.result.suceeded = True
+            else:
+                result.result.suceeded = True
         #NOT so sure why this crashes
         #self._as.set_succeeded(result)
-        self._as.set_succeeded()
+        id result.result.suceeded:
+            self._as.set_succeeded()
+            return
+        self._as.set_aborted()
+        
 
     def map_cb(self, map):
         rospy.loginfo("new map arriving")
@@ -41,10 +47,12 @@ class SimpleTopoPlanner:
             #TODO SET TRIGGER
             self.execute_plan()
 
-    def execute_plan(self):
+    def execute_plan(self,mode, span=0):
         print ("THIS IS MY PLAN " ,self.plan)
-        print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
+        print "THIS IS THE RESULT OF SBPL", move_base_server(self.nodes_poses["start_node"], "move_base")
+
         #POLYFIT
+        """
         #for p in self.plan:
         poses = []
 
@@ -53,17 +61,25 @@ class SimpleTopoPlanner:
             poses.append([p[0], p[1],p[2]])
         print ("poses", np.asarray(poses).shape)
         polyfit_server(np.asarray(poses), self.action_client)
-
+        """
         #SBPL
-        """
-        for node in self.plan:
-            print node
-            print move_base_server(self.nodes_poses[node], "sbpl_action")
-        print self.nodes_poses["start_node"]
+        if mode == GRNavigationActionGoal.VISIT_ALL:
+            for node in self.plan:
+                print node
+                print move_base_server(self.nodes_poses[node], "move_base")
+        #print self.nodes_poses["start_node"]
         #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
-        print self.nodes_poses["end_node"]
+        #priyynt self.nodes_poses["end_node"]
         #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
-        """
+        elif GRNavigationActionGoal.JUST_END:
+            print move_base_server(self.nodes_poses["end_node"], "move_base")
+        elif GRNavigationActionGoal.VISIT_SOME:
+            for n in range(0,len(self.plan),span):
+                print "VISIT_SOME", self.plan[n]
+                print move_base_server(self.nodes_poses[self.plan[n]], "move_base")
+        else:
+            rospy.logerr("ERROR")
+
 
 
     def get_topological_plan(self):
