@@ -72,11 +72,11 @@ class SimpleTopoPlanner:
         #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
         #priyynt self.nodes_poses["end_node"]
         #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
-        elif mode == 2: #GRNavigationAction.JUST_END:
+        elif mode == 1: #GRNavigationAction.JUST_END:
             print move_base_server(self.nodes_poses["end_node"], "move_base")
             return True
         #LAST TO BE IMPLEMENTED
-        elif mode == 1: #GRNavigationActionGoal.VISIT_SOME:
+            elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
             for n in range(0,len(self.plan),span):
                 print "VISIT_SOME", self.plan[n]
                 print move_base_server(self.nodes_poses[self.plan[n]], "move_base")
