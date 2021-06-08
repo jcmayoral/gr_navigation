@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 #from gr_topological_navigation.states.move_base_state import move_base2 as move_base_server
 from gr_topological_navigation.states.move_base_state import polyfit_action_mode as polyfit_server
 import actionlib
-from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult, PolyFitRowAction, PolyFitRowResult
+from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult, GRNavigationFeedback, PolyFitRowAction, PolyFitRowResult
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
 import time
@@ -27,7 +27,7 @@ class SimpleTopoPlanner:
     def move_base_server(self, commands):
         rospy.loginfo("Waiting for Action Server ")
         self.action_client.wait_for_server()
-        rospy.loginfo("Action Server Found")
+        rospy.loginfo("Action Server Found sending "+ str(commands))
         goal = MoveBaseGoal()
         goal.target_pose.pose.position.x = commands[0]
         goal.target_pose.pose.position.y = commands[1]
@@ -117,36 +117,53 @@ class SimpleTopoPlanner:
         self.goal_received = False
         self.goal_finished = False
 
-        #SBPL
+        fb = GRNavigationFeedback()
         if mode == 0:#GRNavigationAction.VISIT_ALL:
             for node in self.plan:
+                self.goal_received = False
+                self.goal_finished = False
                 print "moving to " , node
                 self.move_base_server(self.nodes_poses[node])
                 print  self.action_client.get_state()
                 if not self.waitMoveBase():
                     return False
+                else:
+                    fb.reached_node.data = node
+                    #print fb
+                    self._as.publish_feedback(fb)
             return True
         #print self.nodes_poses["start_node"]
         #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
         #priyynt self.nodes_poses["end_node"]
         #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
         elif mode == 1: #GRNavigationAction.JUST_END:
-            print "moving to start"
-            self.move_base_server(self.nodes_poses["start_node"])
-            if not self.waitMoveBase():
-                return False
-            print "moving to end"
-            self.move_base_server(self.nodes_poses["end_node"])
-            if not self.waitMoveBase():
-                return False
+            goals = ["start_node", "end_node"]
+            for node in goals:
+                self.goal_received = False
+                self.goal_finished = False
+
+                print "moving to ", node
+                self.move_base_server(self.nodes_poses[node])
+                if not self.waitMoveBase():
+                    return False
+                else:
+                    #fb.feedback.reached_node = node
+                    fb.reached_node.data = node
+                    self._as.publish_feedback(fb)
             return True
         #LAST TO BE IMPLEMENTED
         elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
             for n in range(0,len(self.plan),span):
+                self.goal_received = False
+                self.goal_finished = False
                 print "VISIT_SOME", self.plan[n]
                 self.move_base_server(self.nodes_poses[self.plan[n]])
                 if not self.waitMoveBase():
                     return False
+                else:
+                    #fb.reached_node = node
+                    fb.reached_node.data = node
+                    self._as.publish_feedback(fb)
         else:
             rospy.logerr("ERROR")
             return False
