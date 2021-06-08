@@ -4,10 +4,13 @@ import networkx as nx
 import numpy as np
 import tf
 import matplotlib.pyplot as plt
-from gr_topological_navigation.states.move_base_state import move_base as move_base_server
+#from gr_topological_navigation.states.move_base_state import move_base2 as move_base_server
 from gr_topological_navigation.states.move_base_state import polyfit_action_mode as polyfit_server
 import actionlib
 from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult, PolyFitRowAction, PolyFitRowResult
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
+import time
 
 class SimpleTopoPlanner:
     def __init__(self):
@@ -15,9 +18,49 @@ class SimpleTopoPlanner:
         #self.map_sub = rospy.Subscriber("/current_topological_map", MarkerArray, self.map_cb)
         self._as = actionlib.SimpleActionServer("gr_simple_manager", GRNavigationAction, execute_cb=self.execute_cb, auto_start = False)
         #self._as = actionlib.SimpleActionServer("gr_simple_manager", PolyFitRowAction, execute_cb=self.execute_cb, auto_start = False)
-        self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
-
+        #self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
+        self.action_client = actionlib.SimpleActionClient("move_base", MoveBaseAction)
+        self.goal_received = False
+        self.goal_finished = False
         self._as.start()
+
+    def move_base_server(self, commands):
+        rospy.loginfo("Waiting for Action Server ")
+        self.action_client.wait_for_server()
+        rospy.loginfo("Action Server Found")
+        goal = MoveBaseGoal()
+        goal.target_pose.pose.position.x = commands[0]
+        goal.target_pose.pose.position.y = commands[1]
+
+        quaternion = tf.transformations.quaternion_from_euler(0,0,commands[2])
+        goal.target_pose.pose.orientation.x = quaternion[0]
+        goal.target_pose.pose.orientation.y = quaternion[1]
+        goal.target_pose.pose.orientation.z = quaternion[2]
+        goal.target_pose.pose.orientation.w = quaternion[3]
+
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
+        self.action_client.send_goal(goal, done_cb = self.done_cb, feedback_cb=self.feedback_cb, active_cb=self.active_cb)
+        #print "WAITING FOR RESULT"
+        #action_client.wait_for_result()
+        #print "RESULT GOTTEN "
+        #self.action_client.get_status()
+        #print "after "
+
+        return #action_client.get_result()
+
+    def active_cb(self):
+        print "GOAL received"
+        self.goal_received = True
+
+    def feedback_cb(self, feedback):
+        pass
+        print "FB ", feedback
+
+    def done_cb(self, state, result):
+        print "Goal finished with state ", state
+        print "Goal finished with result ", result
+        self.goal_finished = True
 
     def execute_cb(self, goal):
         result = GRNavigationActionResult()
@@ -30,14 +73,14 @@ class SimpleTopoPlanner:
             if self.execute_plan(goal.mode,goal.span):
                 result.result.suceeded = True
             else:
-                result.result.suceeded = True
+                result.result.suceeded = False
         #NOT so sure why this crashes
         #self._as.set_succeeded(result)
         if result.result.suceeded:
             self._as.set_succeeded()
             return
         self._as.set_aborted()
-        
+
 
     def map_cb(self, map):
         rospy.loginfo("new map arriving")
@@ -49,7 +92,7 @@ class SimpleTopoPlanner:
 
     def execute_plan(self,mode, span=0):
         print ("THIS IS MY PLAN " ,self.plan)
-        print "THIS IS THE RESULT OF SBPL", move_base_server(self.nodes_poses["start_node"], "move_base")
+        #print "MOVING TO START ", move_base_server(self.nodes_poses["start_node"], self.action_client)
 
         #POLYFIT
         """
@@ -62,24 +105,47 @@ class SimpleTopoPlanner:
         print ("poses", np.asarray(poses).shape)
         polyfit_server(np.asarray(poses), self.action_client)
         """
+        self.goal_received = False
+        self.goal_finished = False
+
         #SBPL
         if mode == 0:#GRNavigationAction.VISIT_ALL:
             for node in self.plan:
-                print node
-                print move_base_server(self.nodes_poses[node], "move_base")
+                print "moving to " , node
+                self.move_base_server(self.nodes_poses[node])
+                print  self.action_client.get_state()
+                while not self.goal_finished:
+                    if self._as.is_preempt_requested():
+                        print "Cancel received"
+                        self.action_client.cancel_all_goals()
+                        return False
+                    time.sleep(1)
+
             return True
         #print self.nodes_poses["start_node"]
         #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
         #priyynt self.nodes_poses["end_node"]
         #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
         elif mode == 1: #GRNavigationAction.JUST_END:
-            print move_base_server(self.nodes_poses["end_node"], "move_base")
+            print self.move_base_server(self.nodes_poses["end_node"])
+            while not self.goal_finished:
+                if self._as.is_preempt_requested():
+                    print "Cancel received"
+                    self.action_client.cancel_all_goals()
+                    return False
+                time.sleep(1)
             return True
         #LAST TO BE IMPLEMENTED
-            elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
+        elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
             for n in range(0,len(self.plan),span):
                 print "VISIT_SOME", self.plan[n]
-                print move_base_server(self.nodes_poses[self.plan[n]], "move_base")
+                self.move_base_server(self.nodes_poses[self.plan[n]])
+                while not self.goal_finished:
+                    if self._as.is_preempt_requested():
+                        print "Cancel received"
+                        self.action_client.cancel_all_goals()
+                        return False
+                    time.sleep(1)
         else:
             rospy.logerr("ERROR")
             return False
