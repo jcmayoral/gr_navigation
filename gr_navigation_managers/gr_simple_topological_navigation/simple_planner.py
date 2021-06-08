@@ -55,7 +55,7 @@ class SimpleTopoPlanner:
 
     def feedback_cb(self, feedback):
         pass
-        print "FB ", feedback
+        #print "FB ", feedback
 
     def done_cb(self, state, result):
         print "Goal finished with state ", state
@@ -90,6 +90,15 @@ class SimpleTopoPlanner:
             #TODO SET TRIGGER
             self.execute_plan()
 
+    def waitMoveBase(self):
+        while not self.goal_finished:
+            if self._as.is_preempt_requested():
+                print "Cancel received"
+                self.action_client.cancel_all_goals()
+                return False
+            time.sleep(1)
+        return True
+
     def execute_plan(self,mode, span=0):
         print ("THIS IS MY PLAN " ,self.plan)
         #print "MOVING TO START ", move_base_server(self.nodes_poses["start_node"], self.action_client)
@@ -114,38 +123,30 @@ class SimpleTopoPlanner:
                 print "moving to " , node
                 self.move_base_server(self.nodes_poses[node])
                 print  self.action_client.get_state()
-                while not self.goal_finished:
-                    if self._as.is_preempt_requested():
-                        print "Cancel received"
-                        self.action_client.cancel_all_goals()
-                        return False
-                    time.sleep(1)
-
+                if not self.waitMoveBase():
+                    return False
             return True
         #print self.nodes_poses["start_node"]
         #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
         #priyynt self.nodes_poses["end_node"]
         #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
         elif mode == 1: #GRNavigationAction.JUST_END:
-            print self.move_base_server(self.nodes_poses["end_node"])
-            while not self.goal_finished:
-                if self._as.is_preempt_requested():
-                    print "Cancel received"
-                    self.action_client.cancel_all_goals()
-                    return False
-                time.sleep(1)
+            print "moving to start"
+            self.move_base_server(self.nodes_poses["start_node"])
+            if not self.waitMoveBase():
+                return False
+            print "moving to end"
+            self.move_base_server(self.nodes_poses["end_node"])
+            if not self.waitMoveBase():
+                return False
             return True
         #LAST TO BE IMPLEMENTED
         elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
             for n in range(0,len(self.plan),span):
                 print "VISIT_SOME", self.plan[n]
                 self.move_base_server(self.nodes_poses[self.plan[n]])
-                while not self.goal_finished:
-                    if self._as.is_preempt_requested():
-                        print "Cancel received"
-                        self.action_client.cancel_all_goals()
-                        return False
-                    time.sleep(1)
+                if not self.waitMoveBase():
+                    return False
         else:
             rospy.logerr("ERROR")
             return False
