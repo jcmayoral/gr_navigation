@@ -162,7 +162,8 @@ class SimpleTopoPlanner:
                     return False
                 else:
                     #fb.reached_node = node
-                    fb.reached_node.data = node
+                    print self.plan[n]
+                    fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
         else:
             rospy.logerr("ERROR")
