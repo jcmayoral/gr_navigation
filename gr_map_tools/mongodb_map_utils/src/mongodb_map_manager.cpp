@@ -8,15 +8,27 @@ MongoDBMapManager::MongoDBMapManager(): nh_{"~"}{
     getMapFrame();
 }
 
+void MongoDBMapManager::publishStuff(){
+    tf_frame_publisher_->publishTfTransform();
+}
+
 void MongoDBMapManager::storeMessage(){
     ROS_INFO("Waiting for GPS topic");
     boost::shared_ptr<sensor_msgs::NavSatFix const> gps_msg;
     gps_msg =  ros::topic::waitForMessage<sensor_msgs::NavSatFix>("fix");
     ROS_INFO("GPS topic received");
     std::string name("reference");
-    //Insert something with a name, storing id too
-    std::string id(message_store_->insertNamed(name, *gps_msg));
-    std::cout<<"Pose \""<<name<<"\" inserted with id "<<id<<std::endl;
+    //check if exists
+    std::vector< boost::shared_ptr<sensor_msgs::NavSatFix> > results;
+    if(message_store_->queryNamed<sensor_msgs::NavSatFix>(name, results)) {
+        message_store_->updateNamed(name, *gps_msg);
+        std::cout<<"Pose \""<<name<<"\" updated"<<std::endl;
+    }
+    else{
+        std::string id(message_store_->insertNamed(name, *gps_msg));
+        std::cout<<"Pose \""<<name<<"\" inserted with id "<<id<<std::endl;
+    }
+    getMapFrame();
 }
 
 void MongoDBMapManager::getMapFrame(){

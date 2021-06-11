@@ -12,6 +12,8 @@ namespace mongodb_map_utils{
             ~MongoDBMapManager();
             void storeMessage();
             void getMapFrame();
+            void publishStuff();
+
         private:
             mongodb_store::MessageStoreProxy* message_store_;
             ros::NodeHandle nh_;
