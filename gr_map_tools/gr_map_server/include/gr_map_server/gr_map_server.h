@@ -4,6 +4,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/MapMetaData.h>
 #include <visualization_msgs/Marker.h>
+//#include <mongodb_store/message_store.h>
 
 using namespace gr_action_msgs;
 
@@ -26,5 +27,6 @@ namespace gr_map_server{
             bool init_;
             nav_msgs::OccupancyGrid map_;
             nav_msgs::MapMetaData metadata_;
+           	//mongodb_store::MessageStoreProxy* message_store_;
     };
 }
