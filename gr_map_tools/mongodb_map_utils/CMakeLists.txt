@@ -18,6 +18,7 @@ catkin_package(
       geometry_msgs
       mongodb_store
       navigation_msgs
+      sensor_msgs
       tf2_geometry_msgs
       std_msgs
       gr_map_utils

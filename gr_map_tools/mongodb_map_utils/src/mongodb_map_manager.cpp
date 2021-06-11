@@ -2,8 +2,39 @@
 
 using namespace mongodb_map_utils;
 
-MongoDBMapManager::MongoDBMapManager(){
+MongoDBMapManager::MongoDBMapManager(): nh_{"~"}{
+    //nh , collection, database
+    message_store_ = new mongodb_store::MessageStoreProxy(nh_,"map_frame","message_store");
+    getMapFrame();
+}
 
+void MongoDBMapManager::storeMessage(){
+    ROS_INFO("Waiting for GPS topic");
+    boost::shared_ptr<sensor_msgs::NavSatFix const> gps_msg;
+    gps_msg =  ros::topic::waitForMessage<sensor_msgs::NavSatFix>("fix");
+    ROS_INFO("GPS topic received");
+    std::string name("reference");
+    //Insert something with a name, storing id too
+    std::string id(message_store_->insertNamed(name, *gps_msg));
+    std::cout<<"Pose \""<<name<<"\" inserted with id "<<id<<std::endl;
+}
+
+void MongoDBMapManager::getMapFrame(){
+    std::vector< boost::shared_ptr<sensor_msgs::NavSatFix> > results;
+    //sensor_msgs::NavSatFix fix;
+
+    //Get it back, by default get one
+    std::string name("reference");
+    if(message_store_->queryNamed<sensor_msgs::NavSatFix>(name, results)) {
+        //BOOST_FOREACH( boost::shared_ptr< sensor_msgs::NavSatFix> fix,  results){
+        BOOST_FOREACH( boost::shared_ptr< sensor_msgs::NavSatFix> fix,  results){
+        //        ROS_INFO_STREAM("Got by name: " << *fix);
+        }
+    }
+    else{
+        storeMessage();
+    }
+    results.clear();
 }
 
 
