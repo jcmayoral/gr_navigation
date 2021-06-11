@@ -29,7 +29,9 @@ void MongoDBMapManager::getMapFrame(){
         //BOOST_FOREACH( boost::shared_ptr< sensor_msgs::NavSatFix> fix,  results){
         BOOST_FOREACH( boost::shared_ptr< sensor_msgs::NavSatFix> fix,  results){
         //        ROS_INFO_STREAM("Got by name: " << *fix);
+        tf_frame_publisher_ = boost::make_shared<TfFramePublisher>(true, *fix);
         }
+
     }
     else{
         storeMessage();

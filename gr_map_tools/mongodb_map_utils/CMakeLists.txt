@@ -5,9 +5,8 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS roscpp visualization_msgs
                     geometry_msgs mongodb_store navigation_msgs
-                    tf2_geometry_msgs std_msgs gr_map_utils nav_msgs
-                    gr_action_msgs actionlib)
-
+                    tf2_geometry_msgs std_msgs nav_msgs
+                    gr_action_msgs geodesy actionlib)
 
 #add_definitions(-Wno-deprecated-declarations)
 
@@ -21,15 +20,15 @@ catkin_package(
       sensor_msgs
       tf2_geometry_msgs
       std_msgs
-      gr_map_utils
       gr_action_msgs
       nav_msgs
+      geodesy
       actionlib
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(${PROJECT_NAME} src/mongodb_map_manager.cpp)
+add_library(${PROJECT_NAME} src/mongodb_map_manager.cpp src/tf_frame_publisher.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_node src/map_manager_node.cpp)
