@@ -2,7 +2,7 @@
 
 using namespace mongodb_map_utils;
 
-MongoDBMapManager::MongoDBMapManager(): nh_{"~"}{
+MongoDBMapManager::MongoDBMapManager(): nh_{""}{
     //nh , collection, database
     message_store_ = new mongodb_store::MessageStoreProxy(nh_,"map_frame","message_store");
     update_server_ = nh_.advertiseService<std_srvs::Trigger::Request, std_srvs::Trigger::Response>("update_map_frame", 
@@ -51,9 +51,10 @@ void MongoDBMapManager::getMapFrame(){
         //        ROS_INFO_STREAM("Got by name: " << *fix);
         tf_frame_publisher_ = boost::make_shared<TfFramePublisher>(true, *fix);
         }
-
+        ROS_INFO("Get frame from mongo");
     }
     else{
+        ROS_INFO("NO map frame detected");
         storeMessage();
     }
     results.clear();
