@@ -1,6 +1,6 @@
 <package>
   <name>mongodb_map_utils</name>
-  <version>0.2.0</version>
+  <version>0.2.1</version>
   <description>
      MongoDB and map interfaces.
   </description>
@@ -22,6 +22,7 @@
   <build_depend>nav_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>geodesy</build_depend>
+  <build_depend>std_srvs</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>rviz</run_depend>
@@ -36,5 +37,6 @@
   <run_depend>actionlib</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>geodesy</run_depend>
+  <run_depend>std_srvs</run_depend>
 
 </package>

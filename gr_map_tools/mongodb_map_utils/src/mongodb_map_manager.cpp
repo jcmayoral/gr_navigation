@@ -5,7 +5,15 @@ using namespace mongodb_map_utils;
 MongoDBMapManager::MongoDBMapManager(): nh_{"~"}{
     //nh , collection, database
     message_store_ = new mongodb_store::MessageStoreProxy(nh_,"map_frame","message_store");
+    update_server_ = nh_.advertiseService<std_srvs::Trigger::Request, std_srvs::Trigger::Response>("update_map_frame", 
+                        boost::bind(&MongoDBMapManager::update_frame_callback, this, boost::placeholders::_1,  boost::placeholders::_2));
     getMapFrame();
+}
+
+bool MongoDBMapManager::update_frame_callback(std_srvs::Trigger::Request& request, std_srvs::Trigger::Response& response){
+    ROS_INFO_STREAM("Update frame service called");
+    storeMessage();
+    return true;
 }
 
 void MongoDBMapManager::publishStuff(){

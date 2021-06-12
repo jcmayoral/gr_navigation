@@ -6,7 +6,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS roscpp visualization_msgs
                     geometry_msgs mongodb_store navigation_msgs
                     tf2_geometry_msgs std_msgs nav_msgs
-                    gr_action_msgs geodesy actionlib)
+                    gr_action_msgs geodesy actionlib std_srvs)
 
 #add_definitions(-Wno-deprecated-declarations)
 
@@ -24,6 +24,7 @@ catkin_package(
       nav_msgs
       geodesy
       actionlib
+      std_srvs
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
