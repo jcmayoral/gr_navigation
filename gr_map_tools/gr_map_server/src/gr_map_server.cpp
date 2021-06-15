@@ -10,7 +10,7 @@ GRMapServer::GRMapServer(): nh_(""), map_frame_("map"){
     edges_sub_ = nh_.subscribe("region",10, &GRMapServer::edges_cb, this);
     map_metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
     map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
-
+    //message_store_ = new mongodb_store::MessageStoreProxy(nh_,"frames","message_store");
     ros::spin();
 }
 

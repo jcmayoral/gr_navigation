@@ -6,6 +6,7 @@ from gr_action_msgs.msg import PolyFitRowAction, PolyFitRowActionGoal
 import time
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Twist
+import tf
 
 class Action(object):
     def __init__(self):
@@ -21,7 +22,7 @@ class Action(object):
         self.thetas = np.array([0,0,0])
         self.final = [self.x[-1],self.y[-1], 0]
         self.nmotion = 9
-        self.ac = 0.4
+        self.ac = 0.05
         self.max_vel = 1.9
         self.v = 0.0
         self.s = 0.0
@@ -29,6 +30,8 @@ class Action(object):
         self.trajectory = []
         self.motions = []
         self.vels =[]
+        self.tf = tf.TransformListener()
+        self.setStart()
         self._as.start()
         print "server started"
 
@@ -43,10 +46,14 @@ class Action(object):
         self.trajectory = []
         self.v = 0
 
+
         for xi,yi,zi in zip(goal.x, goal.y,goal.yaw):
             self.x.append(xi)
             self.y.append(yi)
             self.thetas.append(zi)
+
+        self.final = [self.x[-1],self.y[-1], self.thetas[-1]]
+
 
         if len(self.x) < 4:
             rospy.loginfo("avoiding")
@@ -60,6 +67,7 @@ class Action(object):
         i = 0
         while not self.complete() and  i < 2500:
             print "run ", i
+            self.setStart()
             self.run()
             self.plotTrajectory()
             time.sleep(0.05)
@@ -80,10 +88,14 @@ class Action(object):
         return np.sqrt(np.power(self.final[0] - self.startx,2)+np.power(self.final[1] - self.starty,2)) < self.ac*self.dt*2 # and np.fabs(self.starttheta - self.final[2]) < 0.2
 
     def setStart(self):
-        self.startx = self.x[0]
-        self.starty = self.y[0]
+        #t = self.tf.getLatestCommonTime("base_link", "map")
+        while not self.tf.canTransform("base_link", "map", rospy.Time(0)):
+            pass
+        position, quaternion = self.tf.lookupTransform("base_link", "map", rospy.Time(0))
+        print position, quaternion
+        self.startx = position[1]
+        self.starty = position[0]
         self.starttheta = self.thetas[0]
-        self.final = [self.x[-1],self.y[-1], self.thetas[-1]]
 
 
     def predict(self, motion,x,y):

@@ -46,13 +46,39 @@ def move_base(commands, movebase_server = "move_base"):
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
     action_client.send_goal(goal)
-    print "WAITING FOR RESULT"
-    action_client.wait_for_result()
-    print "RESULT GOTTEN "
-    print action_client.get_result()
-    print "after "
+    #print "WAITING FOR RESULT"
+    #action_client.wait_for_result()
+    #print "RESULT GOTTEN "
+    #print action_client.get_result()
+    #print "after "
 
     return action_client.get_result()
+
+
+def move_base2(commands,action_client):
+    rospy.loginfo("Waiting for Action Server ")
+    action_client.wait_for_server()
+    rospy.loginfo("Action Server Found")
+    goal = MoveBaseGoal()
+    goal.target_pose.pose.position.x = commands[0]
+    goal.target_pose.pose.position.y = commands[1]
+
+    quaternion = tf.transformations.quaternion_from_euler(0,0,commands[2])
+    goal.target_pose.pose.orientation.x = quaternion[0]
+    goal.target_pose.pose.orientation.y = quaternion[1]
+    goal.target_pose.pose.orientation.z = quaternion[2]
+    goal.target_pose.pose.orientation.w = quaternion[3]
+
+    goal.target_pose.header.frame_id = "map"
+    goal.target_pose.header.stamp = rospy.Time.now()
+    print action_client.send_goal(goal)
+    #print "WAITING FOR RESULT"
+    #action_client.wait_for_result()
+    #print "RESULT GOTTEN "
+    print action_client.get_status()
+    #print "after "
+
+    return #action_client.get_result()
 
 
 def sbpl_action_mode(commands):

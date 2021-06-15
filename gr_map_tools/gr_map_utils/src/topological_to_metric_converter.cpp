@@ -221,7 +221,7 @@ namespace gr_map_utils{
         created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
 
         if (inverted_costmap_)
-            created_map_.data.resize(created_map_.info.width * created_map_.info.height,254);
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height,127);
             //created_map_.data.resize(topological_map_.info.sizex * topological_map_.info.sizey/map_resolution_,254);
         else
             created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
