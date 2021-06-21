@@ -102,9 +102,8 @@ class SimpleTopoPlanner:
     def execute_plan(self,mode, span=0):
         print ("THIS IS MY PLAN " ,self.plan)
         #print "MOVING TO START ", move_base_server(self.nodes_poses["start_node"], self.action_client)
-
-        #POLYFIT
         """
+        #POLYFIT
         #for p in self.plan:
         poses = []
 
@@ -113,6 +112,7 @@ class SimpleTopoPlanner:
             poses.append([p[0], p[1],p[2]])
         print ("poses", np.asarray(poses).shape)
         polyfit_server(np.asarray(poses), self.action_client)
+        return
         """
         self.goal_received = False
         self.goal_finished = False

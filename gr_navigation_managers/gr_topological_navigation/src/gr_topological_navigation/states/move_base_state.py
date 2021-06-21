@@ -110,8 +110,8 @@ def polyfit_action_mode(poses, action_client):
     goal.x = poses[:,0]
     goal.y = poses[:,1]
     goal.yaw = poses[:,2]
-    print (goal)
     action_client.send_goal(goal)
+    print "GOAL SENT"
     action_client.wait_for_result()
     print "AAAAAAALLLLLLLLl"
 
