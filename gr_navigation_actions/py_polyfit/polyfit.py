@@ -36,6 +36,7 @@ class Action(object):
         print "server started"
 
     def myexecution_cb(self, goal):
+        print "AAAAAAAAAAAAAAAAAAAAAAAAA"
         print "received"
         #plt.clf()
         self.motions = []
@@ -204,6 +205,7 @@ class Action(object):
         cmdvel = Twist()
         cmdvel.linear.x = self.v
         cmdvel.angular.z = self.v/L * self.s
+        print "why this is 0?" , self.v , L , self.s
         self.cmd_vel.publish(cmdvel)
         #print "new state ", new_state
 

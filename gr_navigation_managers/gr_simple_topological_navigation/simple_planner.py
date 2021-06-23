@@ -11,6 +11,7 @@ from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNav
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
 import time
+import dynamic_reconfigure.client
 
 class SimpleTopoPlanner:
     def __init__(self):
@@ -22,7 +23,13 @@ class SimpleTopoPlanner:
         self.action_client = actionlib.SimpleActionClient("move_base", MoveBaseAction)
         self.goal_received = False
         self.goal_finished = False
+
+        self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=10, config_callback=self.config_callback)
+
         self._as.start()
+
+    def config_callback(self,config):
+        rospy.loginfo("Config set to ", config)
 
     def move_base_server(self, commands):
         rospy.loginfo("Waiting for Action Server ")
@@ -102,9 +109,8 @@ class SimpleTopoPlanner:
     def execute_plan(self,mode, span=0):
         print ("THIS IS MY PLAN " ,self.plan)
         #print "MOVING TO START ", move_base_server(self.nodes_poses["start_node"], self.action_client)
-
-        #POLYFIT
         """
+        #POLYFIT
         #for p in self.plan:
         poses = []
 
@@ -113,6 +119,7 @@ class SimpleTopoPlanner:
             poses.append([p[0], p[1],p[2]])
         print ("poses", np.asarray(poses).shape)
         polyfit_server(np.asarray(poses), self.action_client)
+        return
         """
         self.goal_received = False
         self.goal_finished = False
@@ -123,6 +130,13 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
                 print "moving to " , node
+                if node == "start_node":
+                    self.dynconf_client.update_configuration({"constrain_motion": False})
+                else:
+                    self.dynconf_client.update_configuration({"constrain_motion": True})
+                #WAIT FOR MAP UPDATE
+                time.sleep(1)
+
                 self.move_base_server(self.nodes_poses[node])
                 print  self.action_client.get_state()
                 if not self.waitMoveBase():
@@ -143,6 +157,15 @@ class SimpleTopoPlanner:
                 self.goal_finished = False
 
                 print "moving to ", node
+
+                if node == "start_node":
+                    self.dynconf_client.update_configuration({"constrain_motion": False})
+                else:
+                    self.dynconf_client.update_configuration({"constrain_motion": True})
+                #WAIT FOR MAP UPDATE
+                time.sleep(1)
+
+
                 self.move_base_server(self.nodes_poses[node])
                 if not self.waitMoveBase():
                     return False
@@ -157,6 +180,15 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
                 print "VISIT_SOME", self.plan[n]
+
+                if self.plan[n] == "start_node":
+                    self.dynconf_client.update_configuration({"constrain_motion": False})
+                else:
+                    self.dynconf_client.update_configuration({"constrain_motion": True})
+
+                #WAIT FOR MAP UPDATE
+                time.sleep(1)
+
                 self.move_base_server(self.nodes_poses[self.plan[n]])
                 if not self.waitMoveBase():
                     return False
