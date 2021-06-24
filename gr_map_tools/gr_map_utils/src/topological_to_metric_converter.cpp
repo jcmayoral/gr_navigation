@@ -26,6 +26,7 @@ namespace gr_map_utils{
     void Topological2MetricMap::dyn_reconfigureCB(TopologicalMapConverterConfig &config, uint32_t level){
         mark_nodes_ = config.mark_nodes;
         mark_edges_ = config.mark_edges;
+	invert_value_ = config.invert_value;
         nodes_value_ = config.nodes_value;
         edges_value_ = config.edges_value;
         inverted_costmap_ = config.constrain_motion;
@@ -221,7 +222,7 @@ namespace gr_map_utils{
         created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
 
         if (inverted_costmap_)
-            created_map_.data.resize(created_map_.info.width * created_map_.info.height,254);
+            created_map_.data.resize(created_map_.info.width * created_map_.info.height, invert_value_);
             //created_map_.data.resize(topological_map_.info.sizex * topological_map_.info.sizey/map_resolution_,254);
         else
             created_map_.data.resize(created_map_.info.width * created_map_.info.height,0);
