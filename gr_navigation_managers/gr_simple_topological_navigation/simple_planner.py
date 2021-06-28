@@ -12,6 +12,8 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
 import time
 import dynamic_reconfigure.client
+from mongoutils import MongoManager
+from safety_msgs.msg import ExecutionMetadata
 
 class SimpleTopoPlanner:
     def __init__(self):
@@ -23,6 +25,7 @@ class SimpleTopoPlanner:
         self.action_client = actionlib.SimpleActionClient("move_base", MoveBaseAction)
         self.goal_received = False
         self.goal_finished = False
+        self.mongo_utils = MongoManager()
 
         self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=10, config_callback=self.config_callback)
 
@@ -129,6 +132,7 @@ class SimpleTopoPlanner:
         fb = GRNavigationFeedback()
         if mode == 0:#GRNavigationAction.VISIT_ALL:
             for node in self.plan:
+                exec_msg = ExecutionMetadata()
                 self.goal_received = False
                 self.goal_finished = False
                 print "moving to " , node
@@ -147,6 +151,8 @@ class SimpleTopoPlanner:
                     fb.reached_node.data = node
                     #print fb
                     self._as.publish_feedback(fb)
+                self.mongo_utils.insert_in_collection(exec_msg)
+
             return True
         #print self.nodes_poses["start_node"]
         #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
@@ -155,6 +161,7 @@ class SimpleTopoPlanner:
         elif mode == 1: #GRNavigationAction.JUST_END:
             goals = [self.startnode, self.goalnode]
             for node in goals:
+                exec_msg = ExecutionMetadata()
                 self.goal_received = False
                 self.goal_finished = False
 
@@ -167,7 +174,6 @@ class SimpleTopoPlanner:
                 #WAIT FOR MAP UPDATE
                 time.sleep(1)
 
-
                 self.move_base_server(self.nodes_poses[node])
                 if not self.waitMoveBase():
                     return False
@@ -175,10 +181,14 @@ class SimpleTopoPlanner:
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
                     self._as.publish_feedback(fb)
+                print "SAVE TO MONGO"
+                self.mongo_utils.insert_in_collection(exec_msg)
             return True
         #LAST TO BE IMPLEMENTED
         elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
             for n in range(0,len(self.plan),span):
+                exec_msg = ExecutionMetadata()
+
                 self.goal_received = False
                 self.goal_finished = False
                 print "VISIT_SOME", self.plan[n]
@@ -199,6 +209,7 @@ class SimpleTopoPlanner:
                     print self.plan[n]
                     fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
+                self.mongo_utils.insert_in_collection(exec_msg)
         else:
             rospy.logerr("ERROR")
             return False
