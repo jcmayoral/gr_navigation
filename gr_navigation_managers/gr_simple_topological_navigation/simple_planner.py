@@ -68,18 +68,19 @@ class SimpleTopoPlanner:
         self.goal_received = True
 
     def calc_distance(self,a,b):
-        return np.sqrt(np.power(a[0]-b[0],2)+np.power(a[1]-b[1],2))
+        return np.sqrt(np.power(b[0]-a[0],2)+np.power(b[1]-a[1],2))
 
     def feedback_cb(self, feedback):
         #print feedback.base_position.header.frame_id, time.time()- self.lastupdate_time
         bp = [feedback.base_position.pose.position.x, feedback.base_position.pose.position.y]
-        if time.time()- self.lastupdate_time > 0.5:
+        if time.time()- self.lastupdate_time > 0.1:
             if self.last_pose:
-                self.distance_covered =  self.calc_distance(self.last_pose, bp)
+                self.distance_covered +=  self.calc_distance(self.last_pose, bp)
                 rospy.loginfo("Distance covered {} meters".format(self.distance_covered))
                 self.lastupdate_time = time.time()
 
         self.last_pose = bp
+
         pass
         #print "FB ", feedback
 
@@ -214,6 +215,7 @@ class SimpleTopoPlanner:
                     self._as.publish_feedback(fb)
                 print "SAVE TO MONGO"
                 exec_msg.time_of_execution = time.time() - starttime
+                exec_msg.covered_distance = self.distance_covered
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
             return True
         #LAST TO BE IMPLEMENTED
