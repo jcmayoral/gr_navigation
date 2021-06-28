@@ -14,6 +14,7 @@ import time
 import dynamic_reconfigure.client
 from mongoutils import MongoManager
 from safety_msgs.msg import ExecutionMetadata
+from actionlib_msgs.msg import GoalStatus
 
 class SimpleTopoPlanner:
     def __init__(self):
@@ -60,6 +61,7 @@ class SimpleTopoPlanner:
         #print "RESULT GOTTEN "
         #self.action_client.get_status()
         #print "after "
+        print self.action_client.get_result()
 
         return #action_client.get_result()
 
@@ -73,11 +75,10 @@ class SimpleTopoPlanner:
     def feedback_cb(self, feedback):
         #print feedback.base_position.header.frame_id, time.time()- self.lastupdate_time
         bp = [feedback.base_position.pose.position.x, feedback.base_position.pose.position.y]
-        if time.time()- self.lastupdate_time > 0.1:
-            if self.last_pose:
-                self.distance_covered +=  self.calc_distance(self.last_pose, bp)
-                rospy.loginfo("Distance covered {} meters".format(self.distance_covered))
-                self.lastupdate_time = time.time()
+        if self.last_pose:
+            self.distance_covered +=  self.calc_distance(self.last_pose, bp)
+            #rospy.loginfo("Distance covered {} meters".format(self.distance_covered))
+            self.lastupdate_time = time.time()
 
         self.last_pose = bp
 
@@ -86,7 +87,9 @@ class SimpleTopoPlanner:
 
     def done_cb(self, state, result):
         print "Goal finished with state ", state
-        print "Goal finished with result ", result
+        if state == GoalStatus.SUCCEEDED:
+            self.distance_covered += self.calc_distance(self.goal[:2], self.last_pose)
+        #print "Goal finished with result ", result
         self.goal_finished = True
 
     def execute_cb(self, goal):
@@ -165,9 +168,10 @@ class SimpleTopoPlanner:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
                 time.sleep(1)
+                self.goal = self.nodes_poses[node]
 
-                self.move_base_server(self.nodes_poses[node])
-                print  self.action_client.get_state()
+                self.move_base_server(self.goal)
+
                 if not self.waitMoveBase():
                     return False
                 else:
@@ -196,7 +200,7 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
 
-                print "moving to ", node
+                print "moving to ", node, " POSE " , self.nodes_poses[node]
 
                 if node == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
@@ -205,8 +209,8 @@ class SimpleTopoPlanner:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
                 time.sleep(1)
-
-                self.move_base_server(self.nodes_poses[node])
+                self.goal =self.nodes_poses[node]
+                self.move_base_server(self.goal)
                 if not self.waitMoveBase():
                     return False
                 else:
@@ -238,8 +242,8 @@ class SimpleTopoPlanner:
 
                 #WAIT FOR MAP UPDATE
                 time.sleep(1)
-
-                self.move_base_server(self.nodes_poses[self.plan[n]])
+                self.goal = self.nodes_poses[self.plan[n]]
+                self.move_base_server(self.goal)
                 if not self.waitMoveBase():
                     return False
                 else:
