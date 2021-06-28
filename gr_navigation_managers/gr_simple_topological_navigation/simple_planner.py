@@ -74,8 +74,10 @@ class SimpleTopoPlanner:
         result.result.suceeded = False
 
         if self.create_graph(goal.plan.markers):
-            print "MY PLAN "
-            self.plan = self.get_topological_plan()
+            print "MY PLAN from {} to {}".format(goal.start_node, goal.goal_node)
+            self.plan = self.get_topological_plan(goal.start_node, goal.goal_node)
+            self.startnode = goal.start_node
+            self.goalnode = goal.goal_node
             #TODO SET TRIGGER
             if self.execute_plan(goal.mode,goal.span):
                 result.result.suceeded = True
@@ -93,7 +95,7 @@ class SimpleTopoPlanner:
         rospy.loginfo("new map arriving")
         if self.create_graph(map.markers):
             print "MY PLAN "
-            self.plan = self.get_topological_plan()
+            self.plan = self.get_topological_plan("start", "end")
             #TODO SET TRIGGER
             self.execute_plan()
 
@@ -130,7 +132,7 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
                 print "moving to " , node
-                if node == "start_node":
+                if node == self.startnode:
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -151,14 +153,14 @@ class SimpleTopoPlanner:
         #priyynt self.nodes_poses["end_node"]
         #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
         elif mode == 1: #GRNavigationAction.JUST_END:
-            goals = ["start_node", "end_node"]
+            goals = [self.startnode, self.goalnode]
             for node in goals:
                 self.goal_received = False
                 self.goal_finished = False
 
                 print "moving to ", node
 
-                if node == "start_node":
+                if node == self.startnode:
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -181,7 +183,7 @@ class SimpleTopoPlanner:
                 self.goal_finished = False
                 print "VISIT_SOME", self.plan[n]
 
-                if self.plan[n] == "start_node":
+                if self.plan[n] == self.startnode:
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -203,8 +205,8 @@ class SimpleTopoPlanner:
 
 
 
-    def get_topological_plan(self):
-        return nx.astar_path(self.networkx_graph, source="start_node", target="end_node")
+    def get_topological_plan(self, startnode, goalnode):
+        return nx.astar_path(self.networkx_graph, source=startnode, target=goalnode)
 
 
     def create_graph(self, amap):
