@@ -32,7 +32,8 @@ class SimpleTopoPlanner:
         self._as.start()
 
     def config_callback(self,config):
-        rospy.loginfo("Config set to ", config)
+        pass
+        #rospy.loginfo("Config se", config)
 
     def move_base_server(self, commands):
         rospy.loginfo("Waiting for Action Server ")
@@ -50,6 +51,9 @@ class SimpleTopoPlanner:
 
         goal.target_pose.header.frame_id = "map"
         goal.target_pose.header.stamp = rospy.Time.now()
+        self.lastupdate_time = time.time()
+        self.last_pose = None
+        self.distance_covered = 0.0
         self.action_client.send_goal(goal, done_cb = self.done_cb, feedback_cb=self.feedback_cb, active_cb=self.active_cb)
         #print "WAITING FOR RESULT"
         #action_client.wait_for_result()
@@ -63,7 +67,19 @@ class SimpleTopoPlanner:
         print "GOAL received"
         self.goal_received = True
 
+    def calc_distance(self,a,b):
+        return np.sqrt(np.power(a[0]-b[0],2)+np.power(a[1]-b[1],2))
+
     def feedback_cb(self, feedback):
+        #print feedback.base_position.header.frame_id, time.time()- self.lastupdate_time
+        bp = [feedback.base_position.pose.position.x, feedback.base_position.pose.position.y]
+        if time.time()- self.lastupdate_time > 0.5:
+            if self.last_pose:
+                self.distance_covered =  self.calc_distance(self.last_pose, bp)
+                rospy.loginfo("Distance covered {} meters".format(self.distance_covered))
+                self.lastupdate_time = time.time()
+
+        self.last_pose = bp
         pass
         #print "FB ", feedback
 
@@ -81,6 +97,8 @@ class SimpleTopoPlanner:
             self.plan = self.get_topological_plan(goal.start_node, goal.goal_node)
             self.startnode = goal.start_node
             self.goalnode = goal.goal_node
+            self.rowid = goal.row_id
+            self.taskid = goal.task_id
             #TODO SET TRIGGER
             if self.execute_plan(goal.mode,goal.span):
                 result.result.suceeded = True
@@ -132,11 +150,15 @@ class SimpleTopoPlanner:
         fb = GRNavigationFeedback()
         if mode == 0:#GRNavigationAction.VISIT_ALL:
             for node in self.plan:
+                starttime = time.time()
                 exec_msg = ExecutionMetadata()
+                exec_msg.rowid = self.rowid
+                exec_msg.action = "RUN"
                 self.goal_received = False
                 self.goal_finished = False
                 print "moving to " , node
                 if node == self.startnode:
+                    exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -151,7 +173,10 @@ class SimpleTopoPlanner:
                     fb.reached_node.data = node
                     #print fb
                     self._as.publish_feedback(fb)
-                self.mongo_utils.insert_in_collection(exec_msg)
+
+                exec_msg.time_of_execution = time.time() - starttime
+                exec_msg.covered_distance = self.distance_covered
+                self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
 
             return True
         #print self.nodes_poses["start_node"]
@@ -162,12 +187,18 @@ class SimpleTopoPlanner:
             goals = [self.startnode, self.goalnode]
             for node in goals:
                 exec_msg = ExecutionMetadata()
+                starttime = time.time()
+                exec_msg.rowid = self.rowid
+                exec_msg.taskid = self.taskid
+                exec_msg.action = "RUN"
+
                 self.goal_received = False
                 self.goal_finished = False
 
                 print "moving to ", node
 
                 if node == self.startnode:
+                    exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -182,18 +213,23 @@ class SimpleTopoPlanner:
                     fb.reached_node.data = node
                     self._as.publish_feedback(fb)
                 print "SAVE TO MONGO"
-                self.mongo_utils.insert_in_collection(exec_msg)
+                exec_msg.time_of_execution = time.time() - starttime
+                self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
             return True
         #LAST TO BE IMPLEMENTED
         elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
             for n in range(0,len(self.plan),span):
                 exec_msg = ExecutionMetadata()
+                exec_msg.rowid = self.rowid
+                exec_msg.taskid = self.taskid
+                exec_msg.action = "RUN"
 
                 self.goal_received = False
                 self.goal_finished = False
                 print "VISIT_SOME", self.plan[n]
 
                 if self.plan[n] == self.startnode:
+                    exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -209,7 +245,7 @@ class SimpleTopoPlanner:
                     print self.plan[n]
                     fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
-                self.mongo_utils.insert_in_collection(exec_msg)
+                self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
         else:
             rospy.logerr("ERROR")
             return False
