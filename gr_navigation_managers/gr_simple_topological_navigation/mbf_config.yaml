@@ -1,0 +1,6 @@
+CUT:
+  planner: carrot
+  controller: mpc
+Collect:
+  planner: carrot
+  controller: mpc

@@ -15,6 +15,7 @@ import dynamic_reconfigure.client
 from mongoutils import MongoManager
 from safety_msgs.msg import ExecutionMetadata
 from actionlib_msgs.msg import GoalStatus
+import yaml
 
 class SimpleTopoPlanner:
     def __init__(self):
@@ -24,6 +25,7 @@ class SimpleTopoPlanner:
         #self._as = actionlib.SimpleActionServer("gr_simple_manager", PolyFitRowAction, execute_cb=self.execute_cb, auto_start = False)
         #self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
         self.action_client = actionlib.SimpleActionClient("move_base_flex/move_base", MoveBaseAction)
+        self.load_movebase_params()
         self.goal_received = False
         self.goal_finished = False
         self.mongo_utils = MongoManager()
@@ -31,6 +33,10 @@ class SimpleTopoPlanner:
         self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=10, config_callback=self.config_callback)
 
         self._as.start()
+
+    def load_movebase_params(self):
+        with open("mbf_config.yaml") as f:
+            self.params = yaml.load(f.read(), Loader=yaml.Loader)
 
     def config_callback(self,config):
         pass
@@ -49,8 +55,8 @@ class SimpleTopoPlanner:
         goal.target_pose.pose.orientation.y = quaternion[1]
         goal.target_pose.pose.orientation.z = quaternion[2]
         goal.target_pose.pose.orientation.w = quaternion[3]
-        goal.controller = "mpc"
-        goal.planner = "carrot"
+        goal.controller = self.params[self.taskid]["controller"]
+        goal.planner = self.params[self.taskid]["planner"]
 
         goal.target_pose.header.frame_id = "map"
         goal.target_pose.header.stamp = rospy.Time.now()
@@ -90,8 +96,19 @@ class SimpleTopoPlanner:
 
     def done_cb(self, state, result):
         print "Goal finished with state ", state
-        if state == GoalStatus.SUCCEEDED:
+        if state == 0:
+            print "SUCCESS"
             self.distance_covered += self.dist2goal#self.calc_distance(self.goal[:2], self.last_pose)
+        if state == 12:
+            print "Collision"
+        if state == 16:
+            print "TF ERROR"
+        if state == 17:
+            print "internal Error"
+        if state == 13:
+            print "oscillation"
+        if state == 10:
+            print "failure"
         #print "Goal finished with result ", result
         self.goal_finished = True
 
