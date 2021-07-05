@@ -42,7 +42,7 @@ class SimpleTopoPlanner:
         pass
         #rospy.loginfo("Config se", config)
 
-    def move_base_server(self, commands):
+    def move_base_server(self, commands, change_row):
         rospy.loginfo("Waiting for Action Server ")
         self.action_client.wait_for_server()
         rospy.loginfo("Action Server Found sending "+ str(commands))
@@ -55,8 +55,15 @@ class SimpleTopoPlanner:
         goal.target_pose.pose.orientation.y = quaternion[1]
         goal.target_pose.pose.orientation.z = quaternion[2]
         goal.target_pose.pose.orientation.w = quaternion[3]
-        goal.controller = self.params[self.taskid]["controller"]
-        goal.planner = self.params[self.taskid]["planner"]
+
+        if change_row:
+            print "CHANGE ROW"
+            goal.controller = self.params["CHANGEROW"]["controller"]
+            goal.planner = self.params["CHANGEROW"]["planner"]
+
+        else:
+            goal.controller = self.params[self.taskid]["controller"]
+            goal.planner = self.params[self.taskid]["planner"]
 
         goal.target_pose.header.frame_id = "map"
         goal.target_pose.header.stamp = rospy.Time.now()
@@ -189,8 +196,8 @@ class SimpleTopoPlanner:
                 #WAIT FOR MAP UPDATE
                 time.sleep(1)
                 self.goal = self.nodes_poses[node]
-
-                self.move_base_server(self.goal)
+                change_row = True if exec_msg.action == "CHANGE_ROW" else False
+                self.move_base_server(self.goal, change_row)
 
                 if not self.waitMoveBase():
                     return False
@@ -230,7 +237,8 @@ class SimpleTopoPlanner:
                 #WAIT FOR MAP UPDATE
                 time.sleep(1)
                 self.goal =self.nodes_poses[node]
-                self.move_base_server(self.goal)
+                change_row = True if exec_msg.action == "CHANGE_ROW" else False
+                self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
                     return False
                 else:
@@ -263,7 +271,8 @@ class SimpleTopoPlanner:
                 #WAIT FOR MAP UPDATE
                 time.sleep(1)
                 self.goal = self.nodes_poses[self.plan[n]]
-                self.move_base_server(self.goal)
+                change_row = True if exec_msg.action == "CHANGE_ROW" else False
+                self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
                     return False
                 else:

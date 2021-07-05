@@ -1,6 +1,9 @@
 CUT:
   planner: carrot
   controller: mpc
-Collect:
+COLLECT:
   planner: carrot
   controller: mpc
+CHANGEROW:
+  planner: carrot
+  controller: dwa
