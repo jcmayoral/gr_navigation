@@ -1,9 +1,9 @@
 CUT:
   planner: carrot
-  controller: mpc
+  controller: car
 COLLECT:
   planner: carrot
-  controller: mpc
+  controller: car
 CHANGEROW:
-  planner: carrot
-  controller: dwa
+  planner: default
+  controller: diff

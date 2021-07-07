@@ -57,7 +57,7 @@ class SimpleTopoPlanner:
         goal.target_pose.pose.orientation.w = quaternion[3]
 
         if change_row:
-            print "CHANGE ROW"
+            print "CHANGE ROW or start"
             goal.controller = self.params["CHANGEROW"]["controller"]
             goal.planner = self.params["CHANGEROW"]["planner"]
 
@@ -194,7 +194,7 @@ class SimpleTopoPlanner:
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
-                time.sleep(1)
+                time.sleep(3)
                 self.goal = self.nodes_poses[node]
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
                 self.move_base_server(self.goal, change_row)
@@ -235,7 +235,7 @@ class SimpleTopoPlanner:
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
-                time.sleep(1)
+                time.sleep(3)
                 self.goal =self.nodes_poses[node]
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
                 self.move_base_server(self.goal, change_row)
@@ -269,7 +269,7 @@ class SimpleTopoPlanner:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
 
                 #WAIT FOR MAP UPDATE
-                time.sleep(1)
+                time.sleep(3)
                 self.goal = self.nodes_poses[self.plan[n]]
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
                 self.move_base_server(self.goal, change_row)
