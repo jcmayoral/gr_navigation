@@ -1,6 +1,9 @@
 #include <mongodb_store/message_store.h>
 #include <gr_map_utils/tf_frame_publisher.h>
 
+# ifndef GR_MAP_UTILS_INTERFACE
+# define GR_MAP_UTILS_INTERFACE
+
 namespace gr_map_utils{
     class MapConverterInterface{
         public:
@@ -39,3 +42,5 @@ namespace gr_map_utils{
             bool is_map_received_;            
     };
 };
+
+#endif

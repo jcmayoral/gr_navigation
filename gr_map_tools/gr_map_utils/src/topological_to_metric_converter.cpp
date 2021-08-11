@@ -6,7 +6,7 @@ namespace gr_map_utils{
                                                                     nodes_value_(127), edges_value_(127),
                                                                     inverted_costmap_(true), map_yaw_(0.0),
                                                                     map_offset_(2.0), cells_neighbors_(3),
-                                                                    map_resolution_(0.1){
+                                                                    map_resolution_(0.1), is_ready_(false){
         ROS_INFO("Initiliazing Node Topological2MetricMap Node");
         gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
         message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
@@ -15,6 +15,8 @@ namespace gr_map_utils{
         //Not implemented yet
         //map_srv_client_ = nh_.serviceClient<geographic_msgs::GetGeographicMap>("get_geographic_map");
         timer_publisher_ = nh_.createTimer(ros::Duration(0.1), &Topological2MetricMap::timer_cb, this);
+        gridmap_pub_ =  nh_.advertise<nav_msgs::OccupancyGrid>("metric_map", 1, true);
+
         dyn_server_cb_ = boost::bind(&Topological2MetricMap::dyn_reconfigureCB, this, _1, _2);
       	dyn_server_.setCallback(dyn_server_cb_);
     }
@@ -151,6 +153,7 @@ namespace gr_map_utils{
         float node_x;
         float node_y;
 
+
         std::vector<CellCoordinates> node_centers;
         std::map<std::string, CellCoordinates > nodes_coordinates;
         std::vector<Edges> edges;
@@ -235,6 +238,21 @@ namespace gr_map_utils{
         //Update costs
         float range_x = max_x - min_x;
         float range_y = max_y - min_y;
+
+        //TO TEST
+        if (!OSMGRIDMAP.exists("example")){
+            ROS_ERROR("ADDING LAYER example");
+            OSMGRIDMAP.setFrameId("map");
+            //TODO Create a setup Gridmap function
+            OSMGRIDMAP.setGeometry(grid_map::Length(range_x, range_y), 0.025);
+            OSMGRIDMAP.add("example", 0);//Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
+            is_ready_ = true;
+        }
+
+        grid_map::Position center;
+        center(0) = 0;//ox+minx;
+        center(1) = 0; //oy+miny;
+        OSMGRIDMAP.setPosition(center);
 
         int index;
         int col;
@@ -328,6 +346,14 @@ namespace gr_map_utils{
 
         //TODO CHECK feasibility condition if already exists do nothing
         gr_tf_publisher_->publishTfTransform();
+         if (is_ready_){
+            grid_map::GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 100,grid_);
+            ROS_INFO_STREAM("MAP INfO " << OSMGRIDMAP["example"]);
+            for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
+                *it = (*it!=0) ? 100: 0;//*it;
+            }
+            gridmap_pub_.publish(grid_);
+        }
     }
 
     void Topological2MetricMap::timer_cb(const ros::TimerEvent& event){

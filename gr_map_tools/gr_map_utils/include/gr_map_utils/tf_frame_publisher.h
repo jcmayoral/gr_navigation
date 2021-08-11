@@ -10,6 +10,8 @@
 //YAML
 #include <yaml-cpp/yaml.h>
 
+# ifndef TF_TRANSFORM_GR
+# define TF_TRANSFORM_GR
 
 namespace gr_map_utils{
     class TfFramePublisher{
@@ -52,3 +54,4 @@ namespace gr_map_utils{
             bool initialize_;
     };
 }
+#endif

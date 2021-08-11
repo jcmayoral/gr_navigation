@@ -70,7 +70,7 @@ namespace gr_map_utils{
             ROS_ERROR("ADDING LAYER example");
             OSMGRIDMAP.setFrameId(map_frame_);
             //TODO Create a setup Gridmap function
-            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 0.025);
+            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 0.5);
             OSMGRIDMAP.add("example", 0);//Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
         }
 
@@ -169,11 +169,11 @@ namespace gr_map_utils{
             OSMGRIDMAP.getIndex(startPose, start);
             OSMGRIDMAP.getIndex(endPose, end);
             if (!OSMGRIDMAP.isInside(startPose)){
-                ROS_ERROR("Start not in map");
+                ROS_ERROR("Start polygon not in map");
                 continue;
             }
             if (!OSMGRIDMAP.isInside(endPose)){
-                ROS_ERROR("End not in map");
+                ROS_ERROR("End polygon not in map");
                 continue;
             }
             for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end); !iterator.isPastEnd(); ++iterator) {
@@ -205,7 +205,7 @@ namespace gr_map_utils{
 
 
         if (!OSMGRIDMAP.isInside(startPose)){
-            ROS_ERROR("Start not in map");
+            ROS_ERROR("Center Start not in map");
             return;
         }
 
@@ -398,14 +398,15 @@ namespace gr_map_utils{
           center(0) = ox+minx;
           center(1) = oy+miny;
           OSMGRIDMAP.setPosition(center);
-          in.header.frame_id = "world";
+          in.header.frame_id = "map";
           in.pose.position.x = minx;
           in.pose.position.y = miny;
-          to_map_transform = tf_buffer_.lookupTransform(map_frame_, "world", ros::Time(0), ros::Duration(1.0) );
-          tf2::doTransform(in, out, to_map_transform);
-          ROS_ERROR_STREAM("CENTER in map coordinates"<<minx << " , " << miny);
+          //to_map_transform = tf_buffer_.lookupTransform(map_frame_, "world", ros::Time(0), ros::Duration(1.0) );
+          //tf2::doTransform(in, out, to_map_transform);
+          ROS_ERROR_STREAM("CENTER in map coordinates"<< ox+minx << " , " << oy+miny);
+          ROS_ERROR_STREAM("min in map coordinates"<< minx << " , " << miny);
 
-          ROS_ERROR_STREAM("CENTER in map coordinates"<<out);
+          //ROS_ERROR_STREAM("CENTER in map coordinates"<<out);
 
         }
         else{

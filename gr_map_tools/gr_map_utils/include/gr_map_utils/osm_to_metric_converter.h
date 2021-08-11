@@ -22,9 +22,12 @@
 #include <yaml-cpp/yaml.h>
 #include <nav_msgs/GetMap.h>
 
-namespace gr_map_utils{
 
+namespace gr_map_utils{
+    #ifndef GR_OSM_GRIDMAP
+    #define GR_OSM_GRIDMAP
     static grid_map::GridMap OSMGRIDMAP{};
+    #endif
 
     class Osm2MetricMap : public MapConverterInterface{
         public:
