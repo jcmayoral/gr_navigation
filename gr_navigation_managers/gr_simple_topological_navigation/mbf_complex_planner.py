@@ -302,7 +302,8 @@ class SimpleTopoPlanner:
                 if not self.waitMoveBase():
                     if self.container_full:
                         self.go_to_unload_zone(self.goal)
-                    return False
+                        rospy.logwarn("Resuming execution")
+                    #return False
                 else:
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
