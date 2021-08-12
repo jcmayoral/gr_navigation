@@ -52,7 +52,7 @@ namespace gr_map_utils{
         return true;
     }
 
-    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file):
+    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file, bool init_dyn):
         nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
         std::cout << "Config file " << config_file << std::endl;
         YAML::Node config = YAML::LoadFile(config_file);
@@ -84,8 +84,11 @@ namespace gr_map_utils{
         is_map_received_ = false;
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
         osm_map_sub_ = nh_.subscribe(in_topic_,10, &Osm2MetricMap::osm_map_cb, this);
-        dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
-      	dyn_server_.setCallback(dyn_server_cb_);
+
+        if (init_dyn){
+            dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
+            dyn_server_.setCallback(dyn_server_cb_);
+        }
     }
 
     bool Osm2MetricMap::mapCallback(nav_msgs::GetMap::Request  &req,
@@ -395,8 +398,8 @@ namespace gr_map_utils{
           ox = (maxx-minx)/2;
           oy = (maxy-miny)/2;
           grid_map::Position center;
-          center(0) = ox+minx;
-          center(1) = oy+miny;
+          center(0) = 0;//ox+minx;
+          center(1) = 0;//oy+miny;
           OSMGRIDMAP.setPosition(center);
           in.header.frame_id = "map";
           in.pose.position.x = minx;
@@ -444,6 +447,7 @@ namespace gr_map_utils{
         if (is_ready_){
             GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 100,grid_);
             //ROS_INFO_STREAM("MAP INfO " << OSMGRIDMAP["example"]);
+            ROS_INFO("Publish OSM");
             for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
                 *it = (*it!=0) ? 100: 0;//*it;
             }

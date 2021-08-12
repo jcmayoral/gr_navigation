@@ -31,7 +31,7 @@ namespace gr_map_utils{
 
     class Osm2MetricMap : public MapConverterInterface{
         public:
-            Osm2MetricMap(ros::NodeHandle nh,std::string config_file="config/default_osm.yaml");
+            Osm2MetricMap(ros::NodeHandle nh,std::string config_file="config/default_osm.yaml" , bool init_dyn=true);
             ~Osm2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();

@@ -8,6 +8,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "osm_to_metric_experimental");
     ros::NodeHandle nh;
     MapManager map_manager(nh);
+    map_manager.prepareMaps();
    
     ros::Rate loop_rate(10);
 

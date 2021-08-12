@@ -13,6 +13,7 @@ namespace gr_map_utils{
             virtual bool getMapFromDatabase() = 0;
 
             bool getMap(){
+                ROS_ERROR("GETMAP FUNCTION");
                 if (getMapFromDatabase()){
                     ROS_INFO("Retrieving map from database");
                     is_map_received_ = true;
@@ -30,6 +31,7 @@ namespace gr_map_utils{
                     is_map_received_ = true;
                     return true;
                 }
+                ROS_ERROR("MAP NOT RETRIEVED");
                 return false;
             };
 

@@ -35,7 +35,7 @@ namespace gr_map_utils{
 
     class Topological2MetricMap : public MapConverterInterface{
         public:
-            Topological2MetricMap(ros::NodeHandle nh, bool initialize_tf =true);
+            Topological2MetricMap(ros::NodeHandle nh, bool initialize_tf =true, bool init_dyn=true);
             ~Topological2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();

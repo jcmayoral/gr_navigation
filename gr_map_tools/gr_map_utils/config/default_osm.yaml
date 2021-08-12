@@ -1,5 +1,5 @@
 topic: "/visualization_marker_array"
-map_topic: "/map"
+map_topic: "map"
 needle: "buildings_osm"
 type : "polygon"
 map_frame: "map"
