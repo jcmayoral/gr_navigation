@@ -191,6 +191,8 @@ class SimpleTopoPlanner:
         #GOING BACK TO LAST KNOW POSE
         self.perform_motion(current_goal, "LAST_GOAL", True)
 
+        rospy.logerr("UNLOADING .... add signal")
+        self.container_full = False
 
     def perform_motion(self,goal, id, constrain_motion):
         starttime = time.time()
