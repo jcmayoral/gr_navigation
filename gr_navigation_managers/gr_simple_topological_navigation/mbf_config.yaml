@@ -1,8 +1,8 @@
 CUT:
-  planner: carrot
+  planner: default
   controller: car
 COLLECT:
-  planner: carrot
+  planner: default
   controller: car
 CHANGEROW:
   planner: default
