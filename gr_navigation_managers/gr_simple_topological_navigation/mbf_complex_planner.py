@@ -74,17 +74,11 @@ class SimpleTopoPlanner:
         self.last_pose = None
         self.distance_covered = 0.0
         self.action_client.send_goal(goal, done_cb = self.done_cb, feedback_cb=self.feedback_cb, active_cb=self.active_cb)
-        #print "WAITING FOR RESULT"
-        #action_client.wait_for_result()
-        #print "RESULT GOTTEN "
-        #self.action_client.get_status()
-        #print "after "
-        print self.action_client.get_result()
 
         return #action_client.get_result()
 
     def active_cb(self):
-        print "GOAL received"
+        rospy.loginfo("GOAL received")
         self.goal_received = True
 
     def calc_distance(self,a,b):
@@ -92,7 +86,6 @@ class SimpleTopoPlanner:
 
     def feedback_cb(self, feedback):
         self.dist2goal = feedback.dist_to_goal
-        #print feedback.base_position.header.frame_id, time.time()- self.lastupdate_time
         q = (feedback.current_pose.pose.orientation.x,
             feedback.current_pose.pose.orientation.y,
             feedback.current_pose.pose.orientation.z,
@@ -107,8 +100,6 @@ class SimpleTopoPlanner:
 
         self.last_pose = bp
 
-        pass
-        #print "FB ", feedback
 
     def done_cb(self, state, result):
         print "Goal finished with state ", state
@@ -125,7 +116,6 @@ class SimpleTopoPlanner:
             print "oscillation"
         if state == 10:
             print "failure"
-        #print "Goal finished with result ", result
         self.goal_finished = True
 
     def execute_cb(self, goal):
@@ -133,7 +123,7 @@ class SimpleTopoPlanner:
         result.result.suceeded = False
 
         if self.create_graph(goal.plan.markers):
-            print "MY PLAN from {} to {}".format(goal.start_node, goal.goal_node)
+            rospy.loginfo("MY PLAN from {} to {}".format(goal.start_node, goal.goal_node))
             self.plan = self.get_topological_plan(goal.start_node, goal.goal_node)
             self.startnode = goal.start_node
             self.goalnode = goal.goal_node
@@ -163,16 +153,16 @@ class SimpleTopoPlanner:
     def waitMoveBase(self, flag = True):
         while not self.goal_finished:
             if self._as.is_preempt_requested():
-                print "Cancel received"
+                rospy.logerr("Cancel received")
                 self.action_client.cancel_all_goals()
                 return False
             if self.container_full and flag:
                 rospy.logerr("container full... going to container location")
-                print (self.container_full)
                 self.action_client.cancel_all_goals()
                 rospy.sleep(2)
                 return False
             time.sleep(1)
+        rospy.loginfo("MOTION suceeded")
         return True
 
     def go_to_unload_zone(self, current_goal):
@@ -203,8 +193,7 @@ class SimpleTopoPlanner:
         exec_msg.action = "GO_TO_"+id
         self.goal_received = False
         self.goal_finished = False
-        rospy.logwarn("moving to " + id + " with coordinates ")
-        print (goal)
+        rospy.logwarn("moving to " + id + " with coordinates " + str(goal))
 
         #TODO ADD OSM MAP STUFF
         self.dynconf_client.update_configuration({"constrain_motion": constrain_motion})
@@ -226,7 +215,6 @@ class SimpleTopoPlanner:
 
 
     def execute_plan(self,mode, span=0):
-        print ("THIS IS MY PLAN " ,self.plan)
         """
         #POLYFIT
         #for p in self.plan:
@@ -252,7 +240,7 @@ class SimpleTopoPlanner:
                 exec_msg.action = "RUN"
                 self.goal_received = False
                 self.goal_finished = False
-                print "moving to " , node
+                rospy.logwarn("moving to " + node)
                 if node == self.startnode:
                     exec_msg.action = "FREE_MOTION"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
@@ -268,7 +256,6 @@ class SimpleTopoPlanner:
                     return False
                 else:
                     fb.reached_node.data = node
-                    #print fb
                     self._as.publish_feedback(fb)
 
                 exec_msg.time_of_execution = time.time() - starttime
@@ -289,7 +276,7 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
 
-                print "moving to ", node, " POSE " , self.nodes_poses[node]
+                rospy.logwarn ("moving to " + node + " POSE " + str(self.nodes_poses[node]))
 
                 if node == self.startnode:
                     exec_msg.action = "FREE_MOTION"
@@ -345,7 +332,6 @@ class SimpleTopoPlanner:
                     return False
                 else:
                     #fb.reached_node = node
-                    print self.plan[n]
                     fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
