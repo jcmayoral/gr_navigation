@@ -1,17 +1,15 @@
 CUT:
-  planner: default
+  planner: carrot
   controller: car
 COLLECT:
-  planner: default
+  planner: carrot
   controller: car
 FREE_MOTION:
-  planner: default
+  planner: inside_planner
   controller: diff
 CONTAINER:
-  x: 0
-  #-16
-  y: 0
-  #-25
+  x: 0 #-16
+  y: 0 #-25
   yaw: 1.571
-  planner: navfn
+  planner: outside_planner
   controller: diff
