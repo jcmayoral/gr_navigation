@@ -221,6 +221,7 @@ class SimpleTopoPlanner:
         exec_msg.time_of_execution = time.time() - starttime
         exec_msg.covered_distance = self.distance_covered
         self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
+        return True
 
 
 
@@ -298,7 +299,7 @@ class SimpleTopoPlanner:
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal =self.nodes_poses[node]
-                nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
+                nav_mode = "FREE_MOTION" if exec_msg.action == "CHANGE_ROW" else self.taskid
                 self.move_base_server(self.goal, nav_mode)
                 if not self.waitMoveBase():
                     if self.container_full:
