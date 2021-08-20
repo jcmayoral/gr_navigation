@@ -4,6 +4,14 @@ CUT:
 COLLECT:
   planner: default
   controller: car
-CHANGEROW:
+FREE_MOTION:
   planner: default
+  controller: diff
+CONTAINER:
+  x: 0
+  #-16
+  y: 0
+  #-25
+  yaw: 1.571
+  planner: navfn
   controller: diff

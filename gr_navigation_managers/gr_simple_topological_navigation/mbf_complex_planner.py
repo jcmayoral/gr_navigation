@@ -4,7 +4,6 @@ import networkx as nx
 import numpy as np
 import tf
 import matplotlib.pyplot as plt
-#from gr_topological_navigation.states.move_base_state import move_base2 as move_base_server
 from gr_topological_navigation.states.move_base_state import polyfit_action_mode as polyfit_server
 import actionlib
 from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult, GRNavigationFeedback, PolyFitRowAction, PolyFitRowResult
@@ -51,7 +50,7 @@ class SimpleTopoPlanner:
         pass
         #rospy.loginfo("Config se", config)
 
-    def move_base_server(self, commands, change_row):
+    def move_base_server(self, commands, nav_mode):
         rospy.loginfo("Waiting for Action Server ")
         self.action_client.wait_for_server()
         rospy.loginfo("Action Server Found sending "+ str(commands))
@@ -65,14 +64,9 @@ class SimpleTopoPlanner:
         goal.target_pose.pose.orientation.z = quaternion[2]
         goal.target_pose.pose.orientation.w = quaternion[3]
 
-        if change_row:
-            print "CHANGE ROW or start"
-            goal.controller = self.params["CHANGEROW"]["controller"]
-            goal.planner = self.params["CHANGEROW"]["planner"]
-
-        else:
-            goal.controller = self.params[self.taskid]["controller"]
-            goal.planner = self.params[self.taskid]["planner"]
+        rospy.logerr("NAV_MODE: " + nav_mode)
+        goal.controller = self.params[nav_mode]["controller"]
+        goal.planner = self.params[nav_mode]["planner"]
 
         goal.target_pose.header.frame_id = "map"
         goal.target_pose.header.stamp = rospy.Time.now()
@@ -185,16 +179,24 @@ class SimpleTopoPlanner:
         last_knownpose = copy.copy(self.last_pose)
 
         #GO TO CONTAINER
-        self.perform_motion([0,0,0], "CONTAINER", False)
+        if not self.perform_motion([self.params["CONTAINER"]["x"],
+                             self.params["CONTAINER"]["y"],
+                             self.params["CONTAINER"]["yaw"]],
+                              "CONTAINER", False, "CONTAINER"):
+            return False
         #GOING BACK TO LAST KNOW POSE
-        self.perform_motion(last_knownpose, "LAST_POSE", False)
+        if not self.perform_motion(last_knownpose, "LAST_POSE", False, "CONTAINER"):
+            return False
         #GOING BACK TO LAST KNOW POSE
-        self.perform_motion(current_goal, "LAST_GOAL", True)
+        if self.perform_motion(current_goal, "LAST_GOAL", True, "FREE_MOTION"):
+            return False
 
         rospy.logerr("UNLOADING .... add signal")
         self.container_full = False
+        return True
 
-    def perform_motion(self,goal, id, constrain_motion):
+    def perform_motion(self,goal, id, constrain_motion, mode):
+        rospy.logwarn("MODE ")
         starttime = time.time()
         exec_msg = ExecutionMetadata()
         exec_msg.rowid = -1
@@ -209,8 +211,9 @@ class SimpleTopoPlanner:
         #WAIT FOR MAP UPDAT
         time.sleep(3)
 
+
         #True/False decides controller type
-        self.move_base_server(goal, True)
+        self.move_base_server(goal, mode)
 
         if not self.waitMoveBase(False):
             return False
@@ -223,7 +226,6 @@ class SimpleTopoPlanner:
 
     def execute_plan(self,mode, span=0):
         print ("THIS IS MY PLAN " ,self.plan)
-        #print "MOVING TO START ", move_base_server(self.nodes_poses["start_node"], self.action_client)
         """
         #POLYFIT
         #for p in self.plan:
@@ -244,21 +246,22 @@ class SimpleTopoPlanner:
             for node in self.plan:
                 starttime = time.time()
                 exec_msg = ExecutionMetadata()
+
                 exec_msg.rowid = self.rowid
                 exec_msg.action = "RUN"
                 self.goal_received = False
                 self.goal_finished = False
                 print "moving to " , node
                 if node == self.startnode:
-                    exec_msg.action = "CHANGE_ROW"
+                    exec_msg.action = "FREE_MOTION"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal = self.nodes_poses[node]
-                change_row = True if exec_msg.action == "CHANGE_ROW" else False
-                self.move_base_server(self.goal, change_row)
+                nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
+                self.move_base_server(self.goal, nav_mode)
 
                 if not self.waitMoveBase():
                     return False
@@ -272,10 +275,6 @@ class SimpleTopoPlanner:
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
 
             return True
-        #print self.nodes_poses["start_node"]
-        #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
-        #priyynt self.nodes_poses["end_node"]
-        #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
         elif mode == 1: #GRNavigationAction.JUST_END:
             goals = [self.startnode, self.goalnode]
 
@@ -292,19 +291,21 @@ class SimpleTopoPlanner:
                 print "moving to ", node, " POSE " , self.nodes_poses[node]
 
                 if node == self.startnode:
-                    exec_msg.action = "CHANGE_ROW"
+                    exec_msg.action = "FREE_MOTION"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal =self.nodes_poses[node]
-                change_row = True if exec_msg.action == "CHANGE_ROW" else False
-                self.move_base_server(self.goal, change_row)
+                nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
+                self.move_base_server(self.goal, nav_mode)
                 if not self.waitMoveBase():
                     if self.container_full:
-                        self.go_to_unload_zone(self.goal)
-                        rospy.logwarn("Resuming execution")
+                        if self.go_to_unload_zone(self.goal):
+                            rospy.logwarn("Resuming execution")
+                        else:
+                            return False
                     #return False
                 else:
                     #fb.feedback.reached_node = node
@@ -328,7 +329,7 @@ class SimpleTopoPlanner:
                 print "VISIT_SOME", self.plan[n]
 
                 if self.plan[n] == self.startnode:
-                    exec_msg.action = "CHANGE_ROW"
+                    exec_msg.action = "FREE_MOTION"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -336,8 +337,8 @@ class SimpleTopoPlanner:
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal = self.nodes_poses[self.plan[n]]
-                change_row = True if exec_msg.action == "CHANGE_ROW" else False
-                self.move_base_server(self.goal, change_row)
+                nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
+                self.move_base_server(self.goal, nav_mode)
                 if not self.waitMoveBase():
                     return False
                 else:
@@ -346,6 +347,7 @@ class SimpleTopoPlanner:
                     fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
+            return Trueg
         else:
             rospy.logerr("ERROR")
             return False
