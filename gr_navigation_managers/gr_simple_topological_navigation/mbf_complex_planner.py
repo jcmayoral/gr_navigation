@@ -187,8 +187,8 @@ class SimpleTopoPlanner:
         #GOING BACK TO LAST KNOW POSE
         if not self.perform_motion(last_knownpose, "LAST_POSE", False, "CONTAINER"):
             return False
-        #GOING BACK TO LAST KNOW POSE
-        if self.perform_motion(current_goal, "LAST_GOAL", True, "FREE_MOTION"):
+        #GOING BACK TO LAST KNOW GOAL
+        if not self.perform_motion(current_goal, "LAST_GOAL", True, "FREE_MOTION"):
             return False
 
         rospy.logerr("UNLOADING .... add signal")
@@ -306,6 +306,7 @@ class SimpleTopoPlanner:
                         if self.go_to_unload_zone(self.goal):
                             rospy.logwarn("Resuming execution")
                         else:
+                            rospy.logerr("something went wrong/")
                             return False
                     #return False
                 else:
