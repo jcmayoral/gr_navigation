@@ -1,3 +1,6 @@
+#ifndef GR_TOPO_CONVERTER_GRIDMAP
+#define GR_TOPO_CONVERTER_GRIDMAP
+
 #include <gr_map_utils/map_converter_interface.h>
 #include <gr_map_utils/UpdateMap.h>
 #include <gr_map_utils/TopologicalMapConverterConfig.h>
@@ -16,15 +19,23 @@
 #include <tf2_ros/transform_listener.h>
 
 
+#include <grid_map_ros/grid_map_ros.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
+#include <grid_map_msgs/GridMap.h>
+
 namespace gr_map_utils{
 
     typedef std::pair<float,float> CellCoordinates;
     typedef std::pair<std::string,std::string> Edges;
 
+    #ifndef GR_OSM_GRIDMAP
+    #define GR_OSM_GRIDMAP
+    static grid_map::GridMap OSMGRIDMAP{};
+    #endif
 
     class Topological2MetricMap : public MapConverterInterface{
         public:
-            Topological2MetricMap(ros::NodeHandle nh, bool initialize_tf =true);
+            Topological2MetricMap(ros::NodeHandle nh, bool initialize_tf =true, bool init_dyn=true);
             ~Topological2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();
@@ -55,9 +66,18 @@ namespace gr_map_utils{
             bool inverted_costmap_;
             int nodes_value_;
             int edges_value_;
+            int invert_value_;
             double map_yaw_;
             double map_resolution_;
             float map_offset_;
             int cells_neighbors_;
+
+            //Reuse gridmap to meteric
+            grid_map::GridMap gridmap_;
+            nav_msgs::OccupancyGrid grid_;
+            ros::Publisher gridmap_pub_;
+            bool is_ready_;
+
     };
 }
+#endif

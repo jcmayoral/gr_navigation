@@ -1,6 +1,9 @@
 #include <mongodb_store/message_store.h>
 #include <gr_map_utils/tf_frame_publisher.h>
 
+# ifndef GR_MAP_UTILS_INTERFACE
+# define GR_MAP_UTILS_INTERFACE
+
 namespace gr_map_utils{
     class MapConverterInterface{
         public:
@@ -10,6 +13,7 @@ namespace gr_map_utils{
             virtual bool getMapFromDatabase() = 0;
 
             bool getMap(){
+                ROS_ERROR("GETMAP FUNCTION");
                 if (getMapFromDatabase()){
                     ROS_INFO("Retrieving map from database");
                     is_map_received_ = true;
@@ -27,6 +31,7 @@ namespace gr_map_utils{
                     is_map_received_ = true;
                     return true;
                 }
+                ROS_ERROR("MAP NOT RETRIEVED");
                 return false;
             };
 
@@ -39,3 +44,5 @@ namespace gr_map_utils{
             bool is_map_received_;            
     };
 };
+
+#endif

@@ -52,7 +52,7 @@ namespace gr_map_utils{
         return true;
     }
 
-    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file):
+    Osm2MetricMap::Osm2MetricMap(ros::NodeHandle nh, std::string config_file, bool init_dyn):
         nh_(nh), osm_map_(), distance_to_origin_(100),tf2_listener_(tf_buffer_), gridmap_({""}), is_ready_(false){
         std::cout << "Config file " << config_file << std::endl;
         YAML::Node config = YAML::LoadFile(config_file);
@@ -70,7 +70,7 @@ namespace gr_map_utils{
             ROS_ERROR("ADDING LAYER example");
             OSMGRIDMAP.setFrameId(map_frame_);
             //TODO Create a setup Gridmap function
-            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 0.025);
+            OSMGRIDMAP.setGeometry(Length(size_x, size_y), 0.5);
             OSMGRIDMAP.add("example", 0);//Matrix::Random(OSMGRIDMAP.getSize()(0), OSMGRIDMAP.getSize()(1)));
         }
 
@@ -84,8 +84,11 @@ namespace gr_map_utils{
         is_map_received_ = false;
         topological_map_pub_ = nh_.advertise<navigation_msgs::TopologicalMap>("topological_map2", 1, true);
         osm_map_sub_ = nh_.subscribe(in_topic_,10, &Osm2MetricMap::osm_map_cb, this);
-        dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
-      	dyn_server_.setCallback(dyn_server_cb_);
+
+        if (init_dyn){
+            dyn_server_cb_ = boost::bind(&Osm2MetricMap::dyn_reconfigureCB, this, _1, _2);
+            dyn_server_.setCallback(dyn_server_cb_);
+        }
     }
 
     bool Osm2MetricMap::mapCallback(nav_msgs::GetMap::Request  &req,
@@ -169,11 +172,11 @@ namespace gr_map_utils{
             OSMGRIDMAP.getIndex(startPose, start);
             OSMGRIDMAP.getIndex(endPose, end);
             if (!OSMGRIDMAP.isInside(startPose)){
-                ROS_ERROR("Start not in map");
+                ROS_ERROR("Start polygon not in map");
                 continue;
             }
             if (!OSMGRIDMAP.isInside(endPose)){
-                ROS_ERROR("End not in map");
+                ROS_ERROR("End polygon not in map");
                 continue;
             }
             for (grid_map::LineIterator iterator(OSMGRIDMAP, start, end); !iterator.isPastEnd(); ++iterator) {
@@ -205,7 +208,7 @@ namespace gr_map_utils{
 
 
         if (!OSMGRIDMAP.isInside(startPose)){
-            ROS_ERROR("Start not in map");
+            ROS_ERROR("Center Start not in map");
             return;
         }
 
@@ -395,17 +398,18 @@ namespace gr_map_utils{
           ox = (maxx-minx)/2;
           oy = (maxy-miny)/2;
           grid_map::Position center;
-          center(0) = ox+minx;
-          center(1) = oy+miny;
+          center(0) = 0;//ox+minx;
+          center(1) = 0;//oy+miny;
           OSMGRIDMAP.setPosition(center);
-          in.header.frame_id = "world";
+          in.header.frame_id = "map";
           in.pose.position.x = minx;
           in.pose.position.y = miny;
-          to_map_transform = tf_buffer_.lookupTransform(map_frame_, "world", ros::Time(0), ros::Duration(1.0) );
-          tf2::doTransform(in, out, to_map_transform);
-          ROS_ERROR_STREAM("CENTER in map coordinates"<<minx << " , " << miny);
+          //to_map_transform = tf_buffer_.lookupTransform(map_frame_, "world", ros::Time(0), ros::Duration(1.0) );
+          //tf2::doTransform(in, out, to_map_transform);
+          ROS_ERROR_STREAM("CENTER in map coordinates"<< ox+minx << " , " << oy+miny);
+          ROS_ERROR_STREAM("min in map coordinates"<< minx << " , " << miny);
 
-          ROS_ERROR_STREAM("CENTER in map coordinates"<<out);
+          //ROS_ERROR_STREAM("CENTER in map coordinates"<<out);
 
         }
         else{
@@ -443,6 +447,7 @@ namespace gr_map_utils{
         if (is_ready_){
             GridMapRosConverter::toOccupancyGrid(OSMGRIDMAP,"example", 0, 100,grid_);
             //ROS_INFO_STREAM("MAP INfO " << OSMGRIDMAP["example"]);
+            ROS_INFO("Publish OSM");
             for (auto it = grid_.data.begin(); it!= grid_.data.end(); it++){
                 *it = (*it!=0) ? 100: 0;//*it;
             }

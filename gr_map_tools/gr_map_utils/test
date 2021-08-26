@@ -1,0 +1,2175 @@
+[0m[ INFO] [1628759243.160348109]: Initiliazing Node Topological2MetricMap Node[0m
+[0m[ INFO] [1628759243.161158178]: skipping tf transform map world[0m
+[0m[ INFO] [1628759243.164309238]: in transform map[0m
+[0m[ INFO] [1628759243.164344615]: map_frame: 
+sizex: 0
+sizey: 0
+robot_radius: 0
+direction: 0
+angle_offset: 0
+[0m
+[0m[ INFO] [1628759243.167571464]: Trying getting map from database[0m
+1
+[0m[ INFO] [1628759243.173561583]: header: 
+  seq: 0
+  stamp: 0.000000000
+  frame_id: map
+map_id: wish_map_move_base
+nodes[]
+  nodes[0]: 
+    name: node_0
+    map: 
+    pose: 
+      position: 
+        x: -0
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_0_node_1
+        node: node_1
+    localise_by_topic: 
+  nodes[1]: 
+    name: node_1
+    map: 
+    pose: 
+      position: 
+        x: -0
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_1_node_2
+        node: node_2
+    localise_by_topic: 
+  nodes[2]: 
+    name: node_10
+    map: 
+    pose: 
+      position: 
+        x: -3
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_10_node_11
+        node: node_11
+    localise_by_topic: 
+  nodes[3]: 
+    name: node_11
+    map: 
+    pose: 
+      position: 
+        x: -3
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[4]: 
+    name: node_12
+    map: 
+    pose: 
+      position: 
+        x: -4
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_12_node_13
+        node: node_13
+    localise_by_topic: 
+  nodes[5]: 
+    name: node_13
+    map: 
+    pose: 
+      position: 
+        x: -4
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_13_node_14
+        node: node_14
+    localise_by_topic: 
+  nodes[6]: 
+    name: node_14
+    map: 
+    pose: 
+      position: 
+        x: -4
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[7]: 
+    name: node_15
+    map: 
+    pose: 
+      position: 
+        x: -5
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_15_node_16
+        node: node_16
+    localise_by_topic: 
+  nodes[8]: 
+    name: node_16
+    map: 
+    pose: 
+      position: 
+        x: -5
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_16_node_17
+        node: node_17
+    localise_by_topic: 
+  nodes[9]: 
+    name: node_17
+    map: 
+    pose: 
+      position: 
+        x: -5
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[10]: 
+    name: node_18
+    map: 
+    pose: 
+      position: 
+        x: -6
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_18_node_19
+        node: node_19
+    localise_by_topic: 
+  nodes[11]: 
+    name: node_19
+    map: 
+    pose: 
+      position: 
+        x: -6
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_19_node_20
+        node: node_20
+    localise_by_topic: 
+  nodes[12]: 
+    name: node_2
+    map: 
+    pose: 
+      position: 
+        x: -0
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[13]: 
+    name: node_20
+    map: 
+    pose: 
+      position: 
+        x: -6
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[14]: 
+    name: node_21
+    map: 
+    pose: 
+      position: 
+        x: -7
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_21_node_22
+        node: node_22
+    localise_by_topic: 
+  nodes[15]: 
+    name: node_22
+    map: 
+    pose: 
+      position: 
+        x: -7
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_22_node_23
+        node: node_23
+    localise_by_topic: 
+  nodes[16]: 
+    name: node_23
+    map: 
+    pose: 
+      position: 
+        x: -7
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[17]: 
+    name: node_24
+    map: 
+    pose: 
+      position: 
+        x: -8
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_24_node_25
+        node: node_25
+    localise_by_topic: 
+  nodes[18]: 
+    name: node_25
+    map: 
+    pose: 
+      position: 
+        x: -8
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_25_node_26
+        node: node_26
+    localise_by_topic: 
+  nodes[19]: 
+    name: node_26
+    map: 
+    pose: 
+      position: 
+        x: -8
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[20]: 
+    name: node_27
+    map: 
+    pose: 
+      position: 
+        x: -9
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_27_node_28
+        node: node_28
+    localise_by_topic: 
+  nodes[21]: 
+    name: node_28
+    map: 
+    pose: 
+      position: 
+        x: -9
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_28_node_29
+        node: node_29
+    localise_by_topic: 
+  nodes[22]: 
+    name: node_29
+    map: 
+    pose: 
+      position: 
+        x: -9
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[23]: 
+    name: node_3
+    map: 
+    pose: 
+      position: 
+        x: -1
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_3_node_4
+        node: node_4
+    localise_by_topic: 
+  nodes[24]: 
+    name: node_30
+    map: 
+    pose: 
+      position: 
+        x: -10
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_30_node_31
+        node: node_31
+    localise_by_topic: 
+  nodes[25]: 
+    name: node_31
+    map: 
+    pose: 
+      position: 
+        x: -10
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_31_node_32
+        node: node_32
+    localise_by_topic: 
+  nodes[26]: 
+    name: node_32
+    map: 
+    pose: 
+      position: 
+        x: -10
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[27]: 
+    name: node_33
+    map: 
+    pose: 
+      position: 
+        x: -11
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_33_node_34
+        node: node_34
+    localise_by_topic: 
+  nodes[28]: 
+    name: node_34
+    map: 
+    pose: 
+      position: 
+        x: -11
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_34_node_35
+        node: node_35
+    localise_by_topic: 
+  nodes[29]: 
+    name: node_35
+    map: 
+    pose: 
+      position: 
+        x: -11
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[30]: 
+    name: node_36
+    map: 
+    pose: 
+      position: 
+        x: -12
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_36_node_37
+        node: node_37
+    localise_by_topic: 
+  nodes[31]: 
+    name: node_37
+    map: 
+    pose: 
+      position: 
+        x: -12
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_37_node_38
+        node: node_38
+    localise_by_topic: 
+  nodes[32]: 
+    name: node_38
+    map: 
+    pose: 
+      position: 
+        x: -12
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[33]: 
+    name: node_39
+    map: 
+    pose: 
+      position: 
+        x: -13
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_39_node_40
+        node: node_40
+    localise_by_topic: 
+  nodes[34]: 
+    name: node_4
+    map: 
+    pose: 
+      position: 
+        x: -1
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_4_node_5
+        node: node_5
+    localise_by_topic: 
+  nodes[35]: 
+    name: node_40
+    map: 
+    pose: 
+      position: 
+        x: -13
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_40_node_41
+        node: node_41
+    localise_by_topic: 
+  nodes[36]: 
+    name: node_41
+    map: 
+    pose: 
+      position: 
+        x: -13
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[37]: 
+    name: node_42
+    map: 
+    pose: 
+      position: 
+        x: -14
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_42_node_43
+        node: node_43
+    localise_by_topic: 
+  nodes[38]: 
+    name: node_43
+    map: 
+    pose: 
+      position: 
+        x: -14
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_43_node_44
+        node: node_44
+    localise_by_topic: 
+  nodes[39]: 
+    name: node_44
+    map: 
+    pose: 
+      position: 
+        x: -14
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[40]: 
+    name: node_45
+    map: 
+    pose: 
+      position: 
+        x: -15
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_45_node_46
+        node: node_46
+    localise_by_topic: 
+  nodes[41]: 
+    name: node_46
+    map: 
+    pose: 
+      position: 
+        x: -15
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_46_node_47
+        node: node_47
+    localise_by_topic: 
+  nodes[42]: 
+    name: node_47
+    map: 
+    pose: 
+      position: 
+        x: -15
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[43]: 
+    name: node_48
+    map: 
+    pose: 
+      position: 
+        x: -16
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_48_node_49
+        node: node_49
+    localise_by_topic: 
+  nodes[44]: 
+    name: node_49
+    map: 
+    pose: 
+      position: 
+        x: -16
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_49_node_50
+        node: node_50
+    localise_by_topic: 
+  nodes[45]: 
+    name: node_5
+    map: 
+    pose: 
+      position: 
+        x: -1
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[46]: 
+    name: node_50
+    map: 
+    pose: 
+      position: 
+        x: -16
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[47]: 
+    name: node_51
+    map: 
+    pose: 
+      position: 
+        x: -17
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_51_node_52
+        node: node_52
+    localise_by_topic: 
+  nodes[48]: 
+    name: node_52
+    map: 
+    pose: 
+      position: 
+        x: -17
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_52_node_53
+        node: node_53
+    localise_by_topic: 
+  nodes[49]: 
+    name: node_53
+    map: 
+    pose: 
+      position: 
+        x: -17
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[50]: 
+    name: node_54
+    map: 
+    pose: 
+      position: 
+        x: -18
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_54_node_55
+        node: node_55
+    localise_by_topic: 
+  nodes[51]: 
+    name: node_55
+    map: 
+    pose: 
+      position: 
+        x: -18
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_55_node_56
+        node: node_56
+    localise_by_topic: 
+  nodes[52]: 
+    name: node_56
+    map: 
+    pose: 
+      position: 
+        x: -18
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[53]: 
+    name: node_57
+    map: 
+    pose: 
+      position: 
+        x: -19
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_57_node_58
+        node: node_58
+    localise_by_topic: 
+  nodes[54]: 
+    name: node_58
+    map: 
+    pose: 
+      position: 
+        x: -19
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_58_node_59
+        node: node_59
+    localise_by_topic: 
+  nodes[55]: 
+    name: node_59
+    map: 
+    pose: 
+      position: 
+        x: -19
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[56]: 
+    name: node_6
+    map: 
+    pose: 
+      position: 
+        x: -2
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_6_node_7
+        node: node_7
+    localise_by_topic: 
+  nodes[57]: 
+    name: node_60
+    map: 
+    pose: 
+      position: 
+        x: -20
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_60_node_61
+        node: node_61
+    localise_by_topic: 
+  nodes[58]: 
+    name: node_61
+    map: 
+    pose: 
+      position: 
+        x: -20
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_61_node_62
+        node: node_62
+    localise_by_topic: 
+  nodes[59]: 
+    name: node_62
+    map: 
+    pose: 
+      position: 
+        x: -20
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[60]: 
+    name: node_63
+    map: 
+    pose: 
+      position: 
+        x: -21
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_63_node_64
+        node: node_64
+    localise_by_topic: 
+  nodes[61]: 
+    name: node_64
+    map: 
+    pose: 
+      position: 
+        x: -21
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_64_node_65
+        node: node_65
+    localise_by_topic: 
+  nodes[62]: 
+    name: node_65
+    map: 
+    pose: 
+      position: 
+        x: -21
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[63]: 
+    name: node_66
+    map: 
+    pose: 
+      position: 
+        x: -22
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_66_node_67
+        node: node_67
+    localise_by_topic: 
+  nodes[64]: 
+    name: node_67
+    map: 
+    pose: 
+      position: 
+        x: -22
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_67_node_68
+        node: node_68
+    localise_by_topic: 
+  nodes[65]: 
+    name: node_68
+    map: 
+    pose: 
+      position: 
+        x: -22
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[66]: 
+    name: node_7
+    map: 
+    pose: 
+      position: 
+        x: -2
+        y: 71.5
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_7_node_8
+        node: node_8
+    localise_by_topic: 
+  nodes[67]: 
+    name: node_8
+    map: 
+    pose: 
+      position: 
+        x: -2
+        y: 143
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: 0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+    localise_by_topic: 
+  nodes[68]: 
+    name: node_9
+    map: 
+    pose: 
+      position: 
+        x: -3
+        y: 0
+        z: 0
+      orientation: 
+        x: 0
+        y: 0
+        z: -0.706825
+        w: 0.707388
+    verts[]
+      verts[0]: 
+            x: -0.25
+        y: 0.25
+      verts[1]: 
+            x: 0.25
+        y: 0.25
+      verts[2]: 
+            x: 0.25
+        y: -0.25
+      verts[3]: 
+            x: -0.25
+        y: -0.25
+    edges[]
+      edges[0]: 
+            edge_id: node_9_node_10
+        node: node_10
+    localise_by_topic: 
+info: 
+  map_frame: map
+  sizex: 23
+  sizey: 143
+  robot_radius: 0.5
+  direction: -1
+  angle_offset: 0
+[0m
+[0m[ INFO] [1628759243.173668877]: Retrieving map from database[0m
+[0m[ INFO] [1628759243.173742847]: in transform map[0m
+[0m[ INFO] [1628759243.173798304]: x: 0
+y: 0
+z: 0
+[0m
+[0m[ INFO] [1628759243.173829779]: x: 0
+y: 71.5
+z: 0
+[0m
+[0m[ INFO] [1628759243.173852651]: x: -3
+y: 71.5
+z: 0
+[0m
+[0m[ INFO] [1628759243.173874077]: x: -3
+y: 143
+z: 0
+[0m
+[0m[ INFO] [1628759243.173892633]: x: -4
+y: 0
+z: 0
+[0m
+[0m[ INFO] [1628759243.173913978]: x: -4
+y: 71.5
+z: 0
+[0m
+[0m[ INFO] [1628759243.173934079]: x: -4
+y: 143
+z: 0
+[0m
+[0m[ INFO] [1628759243.173953344]: x: -5
+y: 0
+z: 0
+[0m
+[0m[ INFO] [1628759243.173971867]: x: -5
+y: 71.5
+z: 0
+[0m
+[0m[ INFO] [1628759243.173991819]: x: -5
+y: 143
+z: 0
+[0m
+[0m[ INFO] [1628759243.174009353]: x: -6
+y: 0
+z: 0
+[0m
+[0m[ INFO] [1628759243.174027479]: x: -6
+y: 71.5
+z: 0
+[0m
+[0m[ INFO] [1628759243.174048015]: x: 0
+y: 143
+z: 0
+[0m
+[0m[ INFO] [1628759243.174066032]: x: -6
+y: 143
+z: 0
+[0m
+[0m[ INFO] [1628759243.174084192]: x: -7
+y: 0
+z: 0
+[0m
+[0m[ INFO] [1628759243.174102993]: x: -7
+y: 71.5
+z: 0
+[0m
+[0m[ INFO] [1628759243.174121181]: x: -7
+y: 143
+z: 0
+[0m
+[0m[ INFO] [1628759243.174141073]: x: -8
+y: 0
+z: 0
+[0m
+[0m[ INFO] [1628759243.174159891]: x: -8
+y: 71.5
+z: 0
+[0m
+[0m[ I

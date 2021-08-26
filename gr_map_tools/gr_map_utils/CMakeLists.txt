@@ -121,6 +121,14 @@ target_link_libraries(experimental_node
 )
 
 
+add_executable(experimental_manager src/experimental_node2.cpp src/osm_to_metric_converter.cpp src/topological_to_metric_converter.cpp  src/tf_frame_publisher.cpp)
+add_dependencies(experimental_manager ${catkin_EXPORTED_TARGETS} gr_map_utils_gencfg gr_map_utils_gencpp)
+target_link_libraries(experimental_manager
+    ${catkin_LIBRARIES}
+    yaml-cpp
+    gr_map_utils
+)
+
 ## Install executables and/or libraries
 install(TARGETS osm_to_topological topological_map_converter osm_metric_converter experimental_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

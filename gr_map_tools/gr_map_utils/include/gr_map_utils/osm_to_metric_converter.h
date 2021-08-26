@@ -22,13 +22,16 @@
 #include <yaml-cpp/yaml.h>
 #include <nav_msgs/GetMap.h>
 
-namespace gr_map_utils{
 
+namespace gr_map_utils{
+    #ifndef GR_OSM_GRIDMAP
+    #define GR_OSM_GRIDMAP
     static grid_map::GridMap OSMGRIDMAP{};
+    #endif
 
     class Osm2MetricMap : public MapConverterInterface{
         public:
-            Osm2MetricMap(ros::NodeHandle nh,std::string config_file="config/default_osm.yaml");
+            Osm2MetricMap(ros::NodeHandle nh,std::string config_file="config/default_osm.yaml" , bool init_dyn=true);
             ~Osm2MetricMap();
             virtual bool storeMap();
             virtual bool getMapFromTopic();
