@@ -1,9 +1,9 @@
 CUT:
-  planner: carrot
-  controller: car
+  planner: inside_planner
+  controller: diff
 COLLECT:
-  planner: carrot
-  controller: car
+  planner: inside_planner
+  controller: diff
 FREE_MOTION:
   planner: inside_planner
   controller: diff
