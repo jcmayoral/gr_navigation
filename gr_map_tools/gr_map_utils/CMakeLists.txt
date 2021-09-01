@@ -31,7 +31,7 @@ find_package(Boost REQUIRED COMPONENTS
   filesystem
 )
 
-find_package(YAML-CPP 0.6.0 REQUIRED)
+find_package(YAML-CPP REQUIRED)
 
 find_package(PkgConfig)
 pkg_check_modules(NEW_YAMLCPP yaml-cpp>=0.5)

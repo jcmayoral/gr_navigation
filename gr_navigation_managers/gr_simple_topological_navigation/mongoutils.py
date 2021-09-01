@@ -30,7 +30,7 @@ class MongoManager(object):
 
     def insert_in_collection(self,rosmsg, collname):
         collection = self.get_collection(collname)
-        jsonmsg = json.dumps(yaml.load(str(rosmsg), Loader=yaml.FullLoader))
+        jsonmsg = json.dumps(yaml.load(str(rosmsg), Loader=yaml.Loader))
         jsonmsg2 = json.loads(jsonmsg)
         collection.insert(jsonmsg2)
 

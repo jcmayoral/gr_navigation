@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(gr_line_trajectory_planner)
 
-find_package(PCL 1.9 REQUIRED)
+find_package(PCL REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   #dependencies
