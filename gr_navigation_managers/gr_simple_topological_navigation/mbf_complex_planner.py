@@ -17,6 +17,7 @@ from actionlib_msgs.msg import GoalStatus
 import yaml
 from std_msgs.msg import Bool
 import copy
+from tools.utils import ToolInterface
 
 class SimpleTopoPlanner:
     def __init__(self):
@@ -129,6 +130,10 @@ class SimpleTopoPlanner:
             self.goalnode = goal.goal_node
             self.rowid = goal.row_id
             self.taskid = goal.task_id
+            
+            #Interface to tool TO BE TESTED
+            self.tool_interface = ToolInterface(**self.params[self.taskid]["tool_info"])
+
             #TODO SET TRIGGER
             if self.execute_plan(goal.mode,goal.span):
                 result.result.suceeded = True
@@ -183,6 +188,9 @@ class SimpleTopoPlanner:
 
         rospy.logerr("UNLOADING .... add signal")
         self.container_full = False
+        
+        #RESTART TOOL
+        self.tool_interface.start()
         return True
 
     def perform_motion(self,goal, id, constrain_motion, mode):
@@ -287,16 +295,24 @@ class SimpleTopoPlanner:
                 time.sleep(3)
                 self.goal =self.nodes_poses[node]
                 nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
+
+                #START TOOL
+                if nav_mode != "FREE_MOTION" and nav_mode != "CONTAINER":
+                    self.tool_interface.start()
+                
                 self.move_base_server(self.goal, nav_mode)
                 if not self.waitMoveBase():
+                    self.tool_interface.stop()
                     if self.container_full:
                         if self.go_to_unload_zone(self.goal):
                             rospy.logwarn("Resuming execution")
                         else:
                             rospy.logerr("something went wrong/")
                             return False
-                    #return False
+                    
+                    return False
                 else:
+                    self.tool_interface.stop()
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
                     self._as.publish_feedback(fb)

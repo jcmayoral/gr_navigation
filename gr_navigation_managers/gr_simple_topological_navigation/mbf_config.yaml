@@ -1,9 +1,19 @@
 CUT:
   planner: inside_planner
   controller: diff
+  tool_info:
+    topic: "/tool_cut"
+    type: int
+    high_value: 120
+    low_value: 0
 COLLECT:
   planner: inside_planner
   controller: diff
+  tool_info:
+    topic: "/tool_cut"
+    type: int
+    high_value: 120
+    low_value: 0
 FREE_MOTION:
   planner: inside_planner
   controller: diff
