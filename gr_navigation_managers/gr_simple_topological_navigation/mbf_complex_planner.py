@@ -17,7 +17,7 @@ from actionlib_msgs.msg import GoalStatus
 import yaml
 from std_msgs.msg import Bool
 import copy
-from tools.utils import ToolInterface
+from tools_utils import ToolInterface
 
 class SimpleTopoPlanner:
     def __init__(self):
