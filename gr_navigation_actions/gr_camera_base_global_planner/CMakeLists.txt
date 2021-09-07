@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(gr_line_trajectory_planner)
+#cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.2.0)
+project(gr_camera_base_global_planner)
 
 find_package(PCL REQUIRED)
 
@@ -15,18 +16,11 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   move_base_msgs
   tf2_ros
+  tf
   tf2_geometry_msgs
+  nav_core
 )
 
-# Find SBPL from sbpl_lattice_planner
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SBPL REQUIRED sbpl)
-find_library(SBPL_LIBRARY NAMES sbpl PATHS ${SBPL_LIBRARY_DIRS} NO_DEFAULT_PATH)
-set(SBPL_LIBRARIES ${SBPL_LIBRARY})
-
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 
 
 include_directories(
@@ -38,34 +32,29 @@ include_directories(
 
 catkin_package(
   INCLUDE_DIRS include/${PROJECT_NAME}
-  LIBRARIES gr_line_trajectory_planner
   CATKIN_DEPENDS roscpp std_msgs nav_msgs costmap_2d geometry_msgs nav_msgs 
-                  actionlib actionlib_msgs move_base_msgs tf2_ros tf2_geometry_msgs
-  DEPENDS SBPL
+                  actionlib actionlib_msgs move_base_msgs tf2_ros tf tf2_geometry_msgs
+		  nav_core
 )
 
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-   src/line_trajectory_planner.cpp
+   src/gr_camera_base_global_planner.cpp
 )
 
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(${PROJECT_NAME}_node src/line_planner_node.cpp src/line_trajectory_planner.cpp )
 
-link_directories(${SBPL_LIBRARY_DIRS})
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
+## Specify libraries to link a library oddr executable target against
+target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
-   ${SBPL_LIBRARIES}
-   ${PROJECT_NAME}
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_node ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME}
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
