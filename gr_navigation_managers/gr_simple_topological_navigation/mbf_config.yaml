@@ -10,7 +10,7 @@ COLLECT:
   planner: inside_planner
   controller: diff
   tool_info:
-    topic: "/tool_cut"
+    topic: "/Pickup"
     type: int
     high_value: 120
     low_value: 0

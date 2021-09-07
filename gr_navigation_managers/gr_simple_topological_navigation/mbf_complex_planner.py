@@ -25,6 +25,7 @@ class SimpleTopoPlanner:
         self.container_full = False
         #self.map_sub = rospy.Subscriber("/`current_topological_map`", MarkerArray, self.map_cb)
         self.map_sub = rospy.Subscriber("/container_full", Bool, self.container_cb)
+        self.unload_sub = rospy.Subscriber("/unload_finished", Bool, self.unload_cb)
 
         self._as = actionlib.SimpleActionServer("gr_simple_manager", GRNavigationAction, execute_cb=self.execute_cb, auto_start = False)
         #self._as = actionlib.SimpleActionServer("gr_simple_manager", PolyFitRowAction, execute_cb=self.execute_cb, auto_start = False)
@@ -179,19 +180,33 @@ class SimpleTopoPlanner:
                              self.params["CONTAINER"]["yaw"]],
                               "CONTAINER", False, "CONTAINER"):
             return False
+
+        rospy.logerr("CONTAINER SEQUENCE MUST BE MANUAL")
+        rospy.logerr("UNLOADING .... waiting for signal")
+        self.wait_for_unload()
+        self.container_full = False
+
         #GOING BACK TO LAST KNOW POSE
         if not self.perform_motion(last_knownpose, "LAST_POSE", False, "CONTAINER"):
             return False
+        #RESTART TOOL
+        self.tool_interface.start()
+
         #GOING BACK TO LAST KNOW GOAL
         if not self.perform_motion(current_goal, "LAST_GOAL", True, "FREE_MOTION"):
             return False
 
-        rospy.logerr("UNLOADING .... add signal")
-        self.container_full = False
         
-        #RESTART TOOL
-        self.tool_interface.start()
         return True
+
+    def wait_for_unload(self):
+        self.finished_unload = False
+        while not self.finished_unload:
+            rospy.sleep(1)
+
+    def unload_cb(self,msg):
+        self.finished_unload = True
+
 
     def perform_motion(self,goal, id, constrain_motion, mode):
         rospy.logwarn("MODE ")
