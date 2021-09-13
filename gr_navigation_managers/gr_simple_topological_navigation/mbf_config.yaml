@@ -3,7 +3,7 @@ CUT:
   controller: diff
   tool_info:
     topic: "/tool_cut"
-    type: int
+    type_str: int
     high_value: 120
     low_value: 0
 COLLECT:
@@ -11,7 +11,7 @@ COLLECT:
   controller: diff
   tool_info:
     topic: "/Pickup"
-    type: int
+    type_str: int
     high_value: 120
     low_value: 0
 FREE_MOTION:
@@ -21,5 +21,5 @@ CONTAINER:
   x: 0 #-16
   y: 0 #-25
   yaw: 1.571
-  planner: outside_planner
+  planner: carrot
   controller: diff

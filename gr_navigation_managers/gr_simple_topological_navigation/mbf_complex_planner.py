@@ -131,7 +131,7 @@ class SimpleTopoPlanner:
             self.goalnode = goal.goal_node
             self.rowid = goal.row_id
             self.taskid = goal.task_id
-            
+
             #Interface to tool TO BE TESTED
             self.tool_interface = ToolInterface(**self.params[self.taskid]["tool_info"])
 
@@ -196,7 +196,7 @@ class SimpleTopoPlanner:
         if not self.perform_motion(current_goal, "LAST_GOAL", True, "FREE_MOTION"):
             return False
 
-        
+
         return True
 
     def wait_for_unload(self):
@@ -314,17 +314,18 @@ class SimpleTopoPlanner:
                 #START TOOL
                 if nav_mode != "FREE_MOTION" and nav_mode != "CONTAINER":
                     self.tool_interface.start()
-                
+
                 self.move_base_server(self.goal, nav_mode)
                 if not self.waitMoveBase():
                     self.tool_interface.stop()
                     if self.container_full:
                         if self.go_to_unload_zone(self.goal):
                             rospy.logwarn("Resuming execution")
+                            continue
                         else:
                             rospy.logerr("something went wrong/")
                             return False
-                    
+
                     return False
                 else:
                     self.tool_interface.stop()

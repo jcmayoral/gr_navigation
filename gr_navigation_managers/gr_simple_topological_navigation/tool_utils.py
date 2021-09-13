@@ -2,7 +2,7 @@ import rospy
 from std_msgs.msg import Int16, String
 
 class ToolInterface:
-    def __init__(self, topic=None, type=None, high_value=0, low_value=0):
+    def __init__(self, topic=None, type_str=None, high_value=0, low_value=0):
         print ("TOPIC {} type{}".format(topic, type_str))
         self.high_value = high_value
         self.low_value = low_value
