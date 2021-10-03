@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>gr_cutting_global_planner</name>
+  <version>0.0.1</version>
+  <description>
+      Cutting Grass Global Planner
+  </description>
+
+  <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
+
+  <license>MIT</license>
+  <author >Jose Mayoral</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>move_base_msgs</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+  <build_depend>nav_core</build_depend>
+
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>costmap_2d</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>move_base_msgs</exec_depend>
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>actionlib_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+  <exec_depend>nav_core</exec_depend>
+
+  <export>
+    <nav_core plugin="${prefix}/global_planner_plugin.xml" />
+  </export>
+
+</package>
