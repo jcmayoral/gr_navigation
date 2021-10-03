@@ -7,7 +7,7 @@
  using namespace std;
 
  //Default Constructor
- namespace gr_camera_base_global_planner {
+ namespace gr_cutting_global_planner {
 
  GlobalPlanner::GlobalPlanner (){
 
@@ -19,12 +19,13 @@
 
 
  void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
-
+   costmap_ = boost::make_shared<costmap_2d::Costmap2D>(*costmap_ros->getCostmap());
  }
 
  bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,  std::vector<geometry_msgs::PoseStamped>& plan ){
 
     plan.push_back(start);
+    /*
    for (int i=0; i<20; i++){
      geometry_msgs::PoseStamped new_goal = goal;
      tf::Quaternion goal_quat = tf::createQuaternionFromYaw(1.54);
@@ -39,6 +40,7 @@
 
    plan.push_back(new_goal);
    }
+   */
    plan.push_back(goal);
   return true;
  }

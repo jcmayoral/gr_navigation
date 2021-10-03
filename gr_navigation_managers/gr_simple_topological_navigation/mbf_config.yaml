@@ -1,5 +1,5 @@
 CUT:
-  planner: inside_planner
+  planner: cutting
   controller: diff
   tool_info:
     topic: "/tool_cut"

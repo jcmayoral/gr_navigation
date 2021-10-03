@@ -8,29 +8,29 @@
  #include <angles/angles.h>
  #include <base_local_planner/world_model.h>
  #include <base_local_planner/costmap_model.h>
+#include <costmap_2d/costmap_2d.h>
 
  #include <tf/tf.h>
 
  using std::string;
 
- #ifndef GLOBAL_PLANNER_CPP
- #define GLOBAL_PLANNER_CPP
+ #ifndef GR_CUTTING_GLOBAL_PLANNER_CPP
+ #define GR_CUTTING_GLOBAL_PLANNER_CPP
 
- namespace gr_cutting_global_planner {
+namespace gr_cutting_global_planner {
+    class GlobalPlanner : public nav_core::BaseGlobalPlanner {
+        public:
+        GlobalPlanner();
+        GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
- class GlobalPlanner : public nav_core::BaseGlobalPlanner {
- public:
-
-  GlobalPlanner();
-  GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
-
-  /** overridden classes from interface nav_core::BaseGlobalPlanner **/
-  void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
-  bool makePlan(const geometry_msgs::PoseStamped& start,
-                const geometry_msgs::PoseStamped& goal,
-                std::vector<geometry_msgs::PoseStamped>& plan
-               );
-  };
- };
+          /** overridden classes from interface nav_core::BaseGlobalPlanner **/
+          void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+          bool makePlan(const geometry_msgs::PoseStamped& start,
+                        const geometry_msgs::PoseStamped& goal,
+                        std::vector<geometry_msgs::PoseStamped>& plan);
+        private: 
+        boost::shared_ptr<costmap_2d::Costmap2D> costmap_;
+    };
+};
  #endif
 
