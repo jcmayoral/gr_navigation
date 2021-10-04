@@ -23,11 +23,13 @@ namespace gr_cutting_global_planner {
         GlobalPlanner();
         GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
 
-          /** overridden classes from interface nav_core::BaseGlobalPlanner **/
-          void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
-          bool makePlan(const geometry_msgs::PoseStamped& start,
-                        const geometry_msgs::PoseStamped& goal,
-                        std::vector<geometry_msgs::PoseStamped>& plan);
+        /** overridden classes from interface nav_core::BaseGlobalPlanner **/
+        void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
+        bool makePlan(const geometry_msgs::PoseStamped& start,
+                      const geometry_msgs::PoseStamped& goal,
+                      std::vector<geometry_msgs::PoseStamped>& plan);
+        bool worldToMap(double wx, double wy, double& mx, double& my);
+
         private: 
         boost::shared_ptr<costmap_2d::Costmap2D> costmap_;
     };
