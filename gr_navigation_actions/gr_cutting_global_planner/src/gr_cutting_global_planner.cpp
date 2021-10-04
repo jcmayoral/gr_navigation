@@ -13,25 +13,7 @@
   }
   GlobalPlanner::GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
      initialize(name, costmap_ros);
-    }
-  
-  bool GlobalPlanner::worldToMap(double wx, double wy, double& mx, double& my) {
-    double origin_x = costmap_->getOriginX(), origin_y = costmap_->getOriginY();
-    double resolution = costmap_->getResolution();
-    float convert_offset = 0.0;
-
-    if (wx < origin_x || wy < origin_y)
-        return false;
-
-    mx = (wx - origin_x) / resolution - convert_offset;
-    my = (wy - origin_y) / resolution - convert_offset;
-
-    if (mx < costmap_->getSizeInCellsX() && my < costmap_->getSizeInCellsY())
-        return true;
-
-    return false;
-}
-
+  }
 
   void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
     costmap_ = boost::make_shared<costmap_2d::Costmap2D>(*costmap_ros->getCostmap());
@@ -39,30 +21,48 @@
 
   bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,  std::vector<geometry_msgs::PoseStamped>& plan ){
     
-    double wx = start.pose.position.x;
-    double wy = start.pose.position.y;
+    double wxs = start.pose.position.x;
+    double wys = start.pose.position.y;
 
-    unsigned int start_x_i, start_y_i, goal_x_i, goal_y_i;
+    unsigned int start_x_i, start_y_i, goal_x_i, goal_y_i, mid_x_i, mid_y_i;
     double start_x, start_y, goal_x, goal_y;
 
-    if (!costmap_->worldToMap(wx, wy, start_x_i, start_y_i)) {
+    if (!costmap_->worldToMap(wxs, wys, start_x_i, start_y_i)) {
         ROS_WARN("The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
         return false;
     }
 
     plan.push_back(start);
-    ROS_INFO_STREAM("MAP COORDS " << start_x_i  << " " << start_y_i);
+    ROS_INFO_STREAM("Start WORLD COORDS " << wxs << " " << wys);
+    ROS_INFO_STREAM("Start MAP COORDS " << start_x_i  << " " << start_y_i);
 
-    wx = goal.pose.position.x;
-    wy = goal.pose.position.y;
+    double wxg = goal.pose.position.x;
+    double wyg = goal.pose.position.y;
 
-    if (!costmap_->worldToMap(wx, wy, goal_x_i, goal_y_i)) {
+    if (!costmap_->worldToMap(wxg, wyg, goal_x_i, goal_y_i)) {
         ROS_WARN_THROTTLE(1.0,
                 "The goal sent to the global planner is off the global costmap. Planning will always fail to this goal.");
         return false;
     }
 
-    ROS_INFO_STREAM("MAP COORDS " << goal_x_i  << " " << goal_y_i);
+    ROS_INFO_STREAM("Goal WORLD COORDS " << wxg << " " << wyg);
+    ROS_INFO_STREAM("Goal MAP COORDS " << goal_x_i  << " " << goal_y_i);
+
+    double midx = wxs + (wxg-wxs)/2;
+    double midy = wys + (wyg-wys)/2;
+    ROS_WARN_STREAM("mid "<< midx <<  " "  << midy);
+
+    costmap_->worldToMap(midx,midy, mid_x_i, mid_y_i);
+    ROS_INFO_STREAM("MID COORDS " << mid_x_i  << " " << mid_y_i);
+    ROS_INFO_STREAM("Middle WORLD COORDS " << midx  << " " << midy);
+
+    geometry_msgs::PoseStamped mid_pose;
+    mid_pose.header = goal.header;
+    mid_pose.pose.position.x = midx;
+    mid_pose.pose.position.y = midy;
+    mid_pose.pose.orientation = goal.pose.orientation;
+    
+    plan.push_back(goal);
 
     /*
    for (int i=0; i<20; i++){

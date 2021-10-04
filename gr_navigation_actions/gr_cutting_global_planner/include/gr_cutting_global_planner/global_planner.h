@@ -28,7 +28,6 @@ namespace gr_cutting_global_planner {
         bool makePlan(const geometry_msgs::PoseStamped& start,
                       const geometry_msgs::PoseStamped& goal,
                       std::vector<geometry_msgs::PoseStamped>& plan);
-        bool worldToMap(double wx, double wy, double& mx, double& my);
 
         private: 
         boost::shared_ptr<costmap_2d::Costmap2D> costmap_;
