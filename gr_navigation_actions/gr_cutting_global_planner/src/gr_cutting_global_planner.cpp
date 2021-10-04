@@ -8,7 +8,7 @@
 
  //Default Constructor
  namespace gr_cutting_global_planner {
-  GlobalPlanner::GlobalPlanner (){
+  GlobalPlanner::GlobalPlanner (): initialized_{false}{
 
   }
   GlobalPlanner::GlobalPlanner(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
@@ -16,8 +16,37 @@
   }
 
   void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros){
+    if (initialized_){
+      return;
+    }
+    ros::NodeHandle private_nh("~/" + name);
     costmap_ = boost::make_shared<costmap_2d::Costmap2D>(*costmap_ros->getCostmap());
+    plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
+    initialized_ = true;
   }
+
+  void GlobalPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped>& path, const string frame_id) {
+    if (!initialized_) {
+        ROS_ERROR(
+                "This planner has not been initialized yet, but it is being used, please call initialize() before use");
+        return;
+    }
+
+    //create a message for the plan
+    nav_msgs::Path gui_path;
+    gui_path.poses.resize(path.size());
+
+    gui_path.header.frame_id = frame_id;
+    gui_path.header.stamp = ros::Time::now();
+
+    // Extract the plan in world co-ordinates, we assume the path is all in the same frame
+    for (unsigned int i = 0; i < path.size(); i++) {
+        gui_path.poses[i] = path[i];
+    }
+
+    plan_pub_.publish(gui_path);
+}
+
 
   bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,  std::vector<geometry_msgs::PoseStamped>& plan ){
     
@@ -63,11 +92,10 @@
     mid_pose.pose.orientation = goal.pose.orientation;
     
     plan.push_back(goal);
-
     /*
-   for (int i=0; i<20; i++){
-     geometry_msgs::PoseStamped new_goal = goal;
-     tf::Quaternion goal_quat = tf::createQuaternionFromYaw(1.54);
+    for (int i=0; i<20; i++){
+      geometry_msgs::PoseStamped new_goal = goal;
+      tf::Quaternion goal_quat = tf::createQuaternionFromYaw(1.54);
 
       new_goal.pose.position.x = -2.5+(0.05*i);
       new_goal.pose.position.y = -3.5+(0.05*i);
@@ -76,12 +104,12 @@
       new_goal.pose.orientation.y = goal_quat.y();
       new_goal.pose.orientation.z = goal_quat.z();
       new_goal.pose.orientation.w = goal_quat.w();
-
-   plan.push_back(new_goal);
-   }
-   */
-   plan.push_back(goal);
-  return true;
+      plan.push_back(new_goal);
+    }
+    */
+    plan.push_back(goal);
+    publishPlan(plan, goal.header.frame_id);
+    return true;
  }
 };
 
