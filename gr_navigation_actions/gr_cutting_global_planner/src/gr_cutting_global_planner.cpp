@@ -23,8 +23,8 @@
     if (wx < origin_x || wy < origin_y)
         return false;
 
-    mx = (wx - origin_x) / resolution - convert_offset_;
-    my = (wy - origin_y) / resolution - convert_offset_;
+    mx = (wx - origin_x) / resolution - convert_offset;
+    my = (wy - origin_y) / resolution - convert_offset;
 
     if (mx < costmap_->getSizeInCellsX() && my < costmap_->getSizeInCellsY())
         return true;
