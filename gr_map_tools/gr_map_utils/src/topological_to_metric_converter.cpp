@@ -140,17 +140,18 @@ namespace gr_map_utils{
 
 
     void Topological2MetricMap::transformMap(){
-      ROS_INFO("in transform map");
+        ROS_INFO("in transform map");
         std::unique_lock<std::mutex> lk(mutex_);
         created_map_.data.clear();
         created_map_.header.frame_id = topological_map_.info.map_frame; //TODO this should be a param
         created_map_.info.resolution = map_resolution_;
+        ROS_ERROR_STREAM("INFO "<< topological_map_.info);
 
         float min_x = std::numeric_limits<float>::max();
         float min_y = std::numeric_limits<float>::max();
 
-        float max_x = 0.0;
-        float max_y = 0.0;
+        float max_x = -std::numeric_limits<float>::max();
+        float max_y = -std::numeric_limits<float>::max();
 
         float node_x;
         float node_y;
@@ -215,6 +216,11 @@ namespace gr_map_utils{
         geometry_msgs::Pose origin;
         origin.position.x = min_x - map_offset_/2;
         origin.position.y = min_y - map_offset_/2;
+
+        if(topological_map_.info.direction == 1){
+            std::cout <<  topological_map_.info.sizex <<  ":::::: " <<map_resolution_<<std::endl;
+            origin.position.x = topological_map_.info.sizex * map_resolution_ - map_offset_/2;
+        }
 
         //No rule map must match orientation of map frame
         tf2::Quaternion tmp_quaternion;
@@ -341,7 +347,6 @@ namespace gr_map_utils{
     }
 
     void Topological2MetricMap::publishMaps(){
-        ROS_ERROR("publish topo");
         created_map_.header.stamp = ros::Time::now();
         created_map_.info.map_load_time = ros::Time::now();
 
