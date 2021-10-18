@@ -195,6 +195,10 @@ namespace gr_map_utils{
                 max_y = node_y;
             }
 
+            if(topological_map_.info.direction == 1){
+                node_x = -node_x;
+            }
+
             node_centers.emplace_back(node_x, node_y);
             nodes_coordinates[it->name] = CellCoordinates(node_x,node_y);
 
@@ -214,12 +218,15 @@ namespace gr_map_utils{
         }
 
         geometry_msgs::Pose origin;
-        origin.position.x = min_x - map_offset_/2;
-        origin.position.y = min_y - map_offset_/2;
+        origin.position.x = min_x - map_offset_;
+        origin.position.y = min_y - map_offset_;
+
+
 
         if(topological_map_.info.direction == 1){
-            std::cout <<  topological_map_.info.sizex <<  ":::::: " <<map_resolution_<<std::endl;
-            origin.position.x = topological_map_.info.sizex * map_resolution_ - map_offset_/2;
+            origin.position.x = max_x - map_offset_/2;//-origin.position.x/2.0;
+            origin.position.y = - map_offset_;//-origin.position.x/2.0;
+
         }
 
         //No rule map must match orientation of map frame
@@ -229,8 +236,8 @@ namespace gr_map_utils{
         origin.orientation = tf2::toMsg(tmp_quaternion);
 
         created_map_.info.origin = origin;
-        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
-        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + int(map_offset_/created_map_.info.resolution);
+        created_map_.info.width = int( (max_x - min_x)/created_map_.info.resolution ) + 2*int(map_offset_/created_map_.info.resolution);
+        created_map_.info.height =  int( (max_y - min_y)/created_map_.info.resolution ) + 2*int(map_offset_/created_map_.info.resolution);
 
         if (inverted_costmap_)
             created_map_.data.resize(created_map_.info.width * created_map_.info.height, invert_value_);
@@ -320,6 +327,7 @@ namespace gr_map_utils{
                         //To Index
                         row = round((init_x + r_x - origin.position.x)/res);
                         col = round((init_y + r_y - origin.position.y)/res);
+
                         index = int(row+inflation + created_map_.info.width *(col+inflation));
                         if (index > created_map_.data.size()){
                             continue;
