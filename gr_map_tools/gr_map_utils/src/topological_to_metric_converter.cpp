@@ -196,7 +196,7 @@ namespace gr_map_utils{
             }
 
             if(topological_map_.info.direction == 1){
-                node_x = -node_x;
+                //node_x = -node_x;
             }
 
             node_centers.emplace_back(node_x, node_y);
@@ -224,7 +224,7 @@ namespace gr_map_utils{
 
 
         if(topological_map_.info.direction == 1){
-            origin.position.x = max_x - map_offset_;//-origin.position.x/2.0;
+            origin.position.x = -map_offset_;//-origin.position.x/2.0;
             origin.position.y = - map_offset_;//-origin.position.x/2.0;
 
         }
