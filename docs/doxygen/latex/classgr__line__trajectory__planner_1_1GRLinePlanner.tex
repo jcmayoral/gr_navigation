@@ -1,0 +1,48 @@
+\hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner}{}\section{gr\+\_\+line\+\_\+trajectory\+\_\+planner\+:\+:G\+R\+Line\+Planner Class Reference}
+\label{classgr__line__trajectory__planner_1_1GRLinePlanner}\index{gr\+\_\+line\+\_\+trajectory\+\_\+planner\+::\+G\+R\+Line\+Planner@{gr\+\_\+line\+\_\+trajectory\+\_\+planner\+::\+G\+R\+Line\+Planner}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_a88d48d486912cd2111a37cd9ee8e6b41}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_a88d48d486912cd2111a37cd9ee8e6b41}} 
+unsigned char {\bfseries cost\+Map\+Cost\+To\+S\+B\+P\+L\+Cost} (unsigned char newcost)
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_a3926e3c5d09fc3e305cbb0d0482d6849}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_a3926e3c5d09fc3e305cbb0d0482d6849}} 
+bool {\bfseries make\+Plan} (geometry\+\_\+msgs\+::\+Pose\+Stamped start, geometry\+\_\+msgs\+::\+Pose\+Stamped goal)
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_a63d08d3230618e2a9ebafbec6adc2902}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_a63d08d3230618e2a9ebafbec6adc2902}} 
+void {\bfseries point\+\_\+cb} (const geometry\+\_\+msgs\+::\+Point\+Stamped\+Const\+Ptr msg)
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_ae858beef29eabea796e9e04817a73a77}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_ae858beef29eabea796e9e04817a73a77}} 
+void {\bfseries execute\+CB} (const move\+\_\+base\+\_\+msgs\+::\+Move\+Base\+Goal\+Const\+Ptr \&goal)
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_aca31ac592682f8711bfb1e62d3bdcd6e}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_aca31ac592682f8711bfb1e62d3bdcd6e}} 
+bool {\bfseries execute\+Path} ()
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_aba069d975df5aef6cb14a287fd9597eb}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_aba069d975df5aef6cb14a287fd9597eb}} 
+void {\bfseries odom\+\_\+cb} (const nav\+\_\+msgs\+::\+Odometry\+Const\+Ptr odom\+\_\+msg)
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_ab6d45c340d3fbef152526965b7df1694}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_ab6d45c340d3fbef152526965b7df1694}} 
+void {\bfseries set\+Start} ()
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_a327e4fac6dc19a81b9bb1b89e5523e0f}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_a327e4fac6dc19a81b9bb1b89e5523e0f}} 
+void {\bfseries stop} ()
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_a681775de390df9533712b2eb5dff2a48}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_a681775de390df9533712b2eb5dff2a48}} 
+double {\bfseries get\+Rotation\+In\+Frame} (geometry\+\_\+msgs\+::\+Pose\+Stamped \&pose, std\+::string frame)
+\item 
+\mbox{\Hypertarget{classgr__line__trajectory__planner_1_1GRLinePlanner_aee6532aefe21ef5cf6bc64d5a8b40f0b}\label{classgr__line__trajectory__planner_1_1GRLinePlanner_aee6532aefe21ef5cf6bc64d5a8b40f0b}} 
+double {\bfseries dist2goal} (const geometry\+\_\+msgs\+::\+Pose goal, const geometry\+\_\+msgs\+::\+Pose pose)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+Definition at line 31 of file line\+\_\+trajectory\+\_\+planner.\+h.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/home/jose/ros\+\_\+ws/src/gr\+\_\+navigation/gr\+\_\+navigation\+\_\+actions/gr\+\_\+line\+\_\+trajectory\+\_\+planner/include/gr\+\_\+line\+\_\+trajectory\+\_\+planner/line\+\_\+trajectory\+\_\+planner.\+h\item 
+/home/jose/ros\+\_\+ws/src/gr\+\_\+navigation/gr\+\_\+navigation\+\_\+actions/gr\+\_\+line\+\_\+trajectory\+\_\+planner/src/line\+\_\+trajectory\+\_\+planner.\+cpp\end{DoxyCompactItemize}

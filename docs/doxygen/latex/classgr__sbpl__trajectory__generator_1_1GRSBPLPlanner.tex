@@ -1,0 +1,48 @@
+\hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner}{}\section{gr\+\_\+sbpl\+\_\+trajectory\+\_\+generator\+:\+:G\+R\+S\+B\+P\+L\+Planner Class Reference}
+\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner}\index{gr\+\_\+sbpl\+\_\+trajectory\+\_\+generator\+::\+G\+R\+S\+B\+P\+L\+Planner@{gr\+\_\+sbpl\+\_\+trajectory\+\_\+generator\+::\+G\+R\+S\+B\+P\+L\+Planner}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a74c44dce2e6cc0ba2638e69fee037240}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a74c44dce2e6cc0ba2638e69fee037240}} 
+unsigned char {\bfseries cost\+Map\+Cost\+To\+S\+B\+P\+L\+Cost} (unsigned char newcost)
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a62f3abfb02b63ad5f86c2a01b4804f22}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a62f3abfb02b63ad5f86c2a01b4804f22}} 
+bool {\bfseries make\+Plan} (geometry\+\_\+msgs\+::\+Pose\+Stamped start, geometry\+\_\+msgs\+::\+Pose\+Stamped goal)
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a62e7982c686bf2b232789399bb71a1ec}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a62e7982c686bf2b232789399bb71a1ec}} 
+void {\bfseries point\+\_\+cb} (const geometry\+\_\+msgs\+::\+Point\+Stamped\+Const\+Ptr msg)
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a2491c5d67e909546c09fa3c9c5966749}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a2491c5d67e909546c09fa3c9c5966749}} 
+void {\bfseries execute\+CB} (const move\+\_\+base\+\_\+msgs\+::\+Move\+Base\+Goal\+Const\+Ptr \&goal)
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a736f1960b6dfbeb1e554e590e25a80dc}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a736f1960b6dfbeb1e554e590e25a80dc}} 
+bool {\bfseries execute\+Path} ()
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_ab0c9d8baa6c27ce771d2d8fa630882e1}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_ab0c9d8baa6c27ce771d2d8fa630882e1}} 
+void {\bfseries odom\+\_\+cb} (const nav\+\_\+msgs\+::\+Odometry\+Const\+Ptr odom\+\_\+msg)
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_af1167b856f9bb17b2ad2337726f94209}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_af1167b856f9bb17b2ad2337726f94209}} 
+void {\bfseries set\+Start} ()
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_adb56bd9cd625ad10c048a82d8898860c}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_adb56bd9cd625ad10c048a82d8898860c}} 
+void {\bfseries stop} ()
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a7956e2577d749607d1babf2b7821ec0e}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a7956e2577d749607d1babf2b7821ec0e}} 
+double {\bfseries get\+Rotation\+In\+Frame} (geometry\+\_\+msgs\+::\+Pose\+Stamped \&pose, std\+::string frame)
+\item 
+\mbox{\Hypertarget{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a8fc1bca78a23e51ecc02fa119582dc7c}\label{classgr__sbpl__trajectory__generator_1_1GRSBPLPlanner_a8fc1bca78a23e51ecc02fa119582dc7c}} 
+double {\bfseries distance2\+Goal} (const geometry\+\_\+msgs\+::\+Pose\+Stamped \&pose)
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+
+
+Definition at line 31 of file spbl\+\_\+planner\+\_\+wrapper.\+h.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/home/jose/ros\+\_\+ws/src/gr\+\_\+navigation/gr\+\_\+navigation\+\_\+actions/gr\+\_\+sbpl\+\_\+trajectory\+\_\+generator/include/gr\+\_\+sbpl\+\_\+trajectory\+\_\+generator/spbl\+\_\+planner\+\_\+wrapper.\+h\item 
+/home/jose/ros\+\_\+ws/src/gr\+\_\+navigation/gr\+\_\+navigation\+\_\+actions/gr\+\_\+sbpl\+\_\+trajectory\+\_\+generator/src/sbpl\+\_\+planner\+\_\+wrapper.\+cpp\end{DoxyCompactItemize}

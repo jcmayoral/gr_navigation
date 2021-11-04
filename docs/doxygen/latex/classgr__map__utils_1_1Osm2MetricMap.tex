@@ -1,0 +1,78 @@
+\hypertarget{classgr__map__utils_1_1Osm2MetricMap}{}\section{gr\+\_\+map\+\_\+utils\+:\+:Osm2\+Metric\+Map Class Reference}
+\label{classgr__map__utils_1_1Osm2MetricMap}\index{gr\+\_\+map\+\_\+utils\+::\+Osm2\+Metric\+Map@{gr\+\_\+map\+\_\+utils\+::\+Osm2\+Metric\+Map}}
+
+
+Inheritance diagram for gr\+\_\+map\+\_\+utils\+:\+:Osm2\+Metric\+Map\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=230pt]{classgr__map__utils_1_1Osm2MetricMap__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for gr\+\_\+map\+\_\+utils\+:\+:Osm2\+Metric\+Map\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=235pt]{classgr__map__utils_1_1Osm2MetricMap__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_a4391a81c50b65140bb99e5b309b96a22}\label{classgr__map__utils_1_1Osm2MetricMap_a4391a81c50b65140bb99e5b309b96a22}} 
+{\bfseries Osm2\+Metric\+Map} (ros\+::\+Node\+Handle nh, std\+::string config\+\_\+file=\char`\"{}config/default\+\_\+osm.\+yaml\char`\"{}, bool init\+\_\+dyn=true)
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_aaf96863289eacb03fa2a87e285d803d1}\label{classgr__map__utils_1_1Osm2MetricMap_aaf96863289eacb03fa2a87e285d803d1}} 
+virtual bool {\bfseries store\+Map} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_a67377f8e1f6a456d58632b79549a5e58}\label{classgr__map__utils_1_1Osm2MetricMap_a67377f8e1f6a456d58632b79549a5e58}} 
+virtual bool {\bfseries get\+Map\+From\+Topic} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_adeb6cf8a79bbf0ff13efc1f376b1b2bd}\label{classgr__map__utils_1_1Osm2MetricMap_adeb6cf8a79bbf0ff13efc1f376b1b2bd}} 
+virtual bool {\bfseries get\+Map\+From\+Service} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_a594d6074b3760b51be4f7a2d1fafc7fc}\label{classgr__map__utils_1_1Osm2MetricMap_a594d6074b3760b51be4f7a2d1fafc7fc}} 
+virtual bool {\bfseries get\+Map\+From\+Database} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_aa2d77040708a5b215b8bdb89324503ff}\label{classgr__map__utils_1_1Osm2MetricMap_aa2d77040708a5b215b8bdb89324503ff}} 
+virtual void {\bfseries transform\+Map} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_aba7b3d48e16bbdc61756672e807d67ce}\label{classgr__map__utils_1_1Osm2MetricMap_aba7b3d48e16bbdc61756672e807d67ce}} 
+virtual void {\bfseries publish\+Maps} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_a5f117b4a2c6779116ec14d859d40ee61}\label{classgr__map__utils_1_1Osm2MetricMap_a5f117b4a2c6779116ec14d859d40ee61}} 
+void {\bfseries publish\+Transform} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_a2b526463b77e2bdf782c8e19a6f4ce4a}\label{classgr__map__utils_1_1Osm2MetricMap_a2b526463b77e2bdf782c8e19a6f4ce4a}} 
+bool {\bfseries add\+O\+S\+M\+Regions} ()
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_aab4ab1aae454c9ac5b16c831d0027a47}\label{classgr__map__utils_1_1Osm2MetricMap_aab4ab1aae454c9ac5b16c831d0027a47}} 
+void {\bfseries osm\+\_\+map\+\_\+cb} (const visualization\+\_\+msgs\+::\+Marker\+Array\+::\+Const\+Ptr \&map)
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_aea6fd2fc9227cf972d675c20e8564a53}\label{classgr__map__utils_1_1Osm2MetricMap_aea6fd2fc9227cf972d675c20e8564a53}} 
+void {\bfseries dyn\+\_\+reconfigure\+CB} (O\+S\+M\+Map\+Converter\+Config \&config, uint32\+\_\+t level)
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_a0d2437bf5b13131e3bf943a9e582ffbb}\label{classgr__map__utils_1_1Osm2MetricMap_a0d2437bf5b13131e3bf943a9e582ffbb}} 
+void {\bfseries fill\+Polygon} (std\+::vector$<$ double $>$x, std\+::vector$<$ double $>$ y)
+\item 
+\mbox{\Hypertarget{classgr__map__utils_1_1Osm2MetricMap_ad37912f4dcd36142fadfae69ed9fc178}\label{classgr__map__utils_1_1Osm2MetricMap_ad37912f4dcd36142fadfae69ed9fc178}} 
+bool {\bfseries map\+Callback} (nav\+\_\+msgs\+::\+Get\+Map\+::\+Request \&req, nav\+\_\+msgs\+::\+Get\+Map\+::\+Response \&res)
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+
+
+Definition at line 32 of file osm\+\_\+to\+\_\+metric\+\_\+converter.\+h.
+
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/home/jose/ros\+\_\+ws/src/gr\+\_\+navigation/gr\+\_\+map\+\_\+tools/gr\+\_\+map\+\_\+utils/include/gr\+\_\+map\+\_\+utils/osm\+\_\+to\+\_\+metric\+\_\+converter.\+h\item 
+/home/jose/ros\+\_\+ws/src/gr\+\_\+navigation/gr\+\_\+map\+\_\+tools/gr\+\_\+map\+\_\+utils/src/osm\+\_\+to\+\_\+metric\+\_\+converter.\+cpp\end{DoxyCompactItemize}
