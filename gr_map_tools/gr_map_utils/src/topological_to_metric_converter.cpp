@@ -9,7 +9,8 @@ namespace gr_map_utils{
                                                                     map_resolution_(0.1), is_ready_(false){
         ROS_INFO("Initiliazing Node Topological2MetricMap Node");
         gr_tf_publisher_ = new TfFramePublisher(initialize_tf);
-        message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
+        //message_store_ = new mongodb_store::MessageStoreProxy(nh,"topological_maps");
+        mongo_connection_.connect();
         map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("map", 1, true);
         metadata_pub_ = nh_.advertise<nav_msgs::MapMetaData>("map_metadata", 1, true);
         //Not implemented yet
@@ -62,8 +63,71 @@ namespace gr_map_utils{
         return true;
     }
 
+    void Topological2MetricMap::parseMessage(navigation_msgs::TopologicalMap& map, TopoMapMetaPtr msg){
+      map.header.frame_id = msg->lookupString("frame_id");
+      map.map_id = msg->lookupString("map_id");
+      int nnodes = msg->lookupInt("nsize");
+
+      for (auto i=0; i<nnodes;i++){
+        ROS_INFO("0");
+        navigation_msgs::TopologicalNode node;
+        node.name =  msg->lookupString("node_name_" + std::to_string(i));
+        node.map =  msg->lookupString("node_map_" + std::to_string(i));
+        ROS_INFO("1");
+        node.pose.position.x = msg->lookupDouble("node_x_" + std::to_string(i));
+        node.pose.position.y = msg->lookupDouble("node_y_" + std::to_string(i));
+        node.pose.position.z = msg->lookupDouble("node_z_" + std::to_string(i));
+        node.pose.orientation.x = msg->lookupDouble("node_ox_" + std::to_string(i));
+        node.pose.orientation.y = msg->lookupDouble("node_oy_" + std::to_string(i));
+        node.pose.orientation.z = msg->lookupDouble("node_oz_" + std::to_string(i));
+        node.pose.orientation.w = msg->lookupDouble("node_ow_" + std::to_string(i));
+        ROS_INFO("2");
+        int nverts = msg->lookupInt("nverts_"+ std::to_string(i));
+
+        for (auto j=0; j<nverts; j++){
+          navigation_msgs::Vertex verts;
+          verts.x = msg->lookupDouble("node_"+ std::to_string(i)+"_vx_"+std::to_string(j));
+          verts.y = msg->lookupDouble("node_"+ std::to_string(i)+"_vy_"+std::to_string(j));
+          node.verts.push_back(verts);
+        }
+
+        int nedges = msg->lookupInt("nedges_"+ std::to_string(i));
+
+        for (auto v =0; v<nedges ; v++){
+          navigation_msgs::Edge edge;
+          edge.edge_id=msg->lookupString("node_"+ std::to_string(i)+"_ex_"+std::to_string(v));
+          edge.node = msg->lookupString("node_"+ std::to_string(i)+"_ey_"+std::to_string(v));
+          node.edges.push_back(edge);
+        }
+
+        map.nodes.push_back(node);
+      }
+
+      map.info.map_frame=msg->lookupString("info_mapframe");
+      map.info.sizex=msg->lookupDouble("info_sizex");
+      map.info.sizey=msg->lookupDouble("info_sizey");
+      map.info.robot_radius=msg->lookupDouble("info_rrs");
+      map.info.direction=msg->lookupInt("info_direction");
+      map.info.angle_offset=msg->lookupDouble("info_angleoffset");
+
+      ROS_INFO_STREAM(map);
+    }
+
+
     bool Topological2MetricMap::getMapFromDatabase(){
         ROS_INFO_STREAM("Trying getting map from database");
+
+
+
+        TopoMapCollection mongo_coll = mongo_connection_.openCollection<navigation_msgs::TopologicalMap>("my_db", "maps");
+        warehouse_ros::Query::Ptr q1 = mongo_coll.createQuery();
+        q1->append("name", "wish_map4");
+        std::vector<TopoMapMetaPtr> res = mongo_coll.queryList(q1, true);
+        ROS_INFO_STREAM("SIZE " << res.size());
+        parseMessage(topological_map_, res[0]);
+
+        return true;
+
         std::vector< boost::shared_ptr<navigation_msgs::TopologicalMap> > results_map;
         std::vector< boost::shared_ptr<navigation_msgs::TopologicalNode> > results_node;
 
@@ -268,7 +332,7 @@ namespace gr_map_utils{
         grid_map::Position center;
         center(0) = min_x - map_offset_/2;;
         center(1) = min_y - map_offset_/2;;
-        
+
         OSMGRIDMAP.setPosition(center);
         */
         int index;

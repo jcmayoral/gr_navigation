@@ -46,6 +46,7 @@ namespace gr_map_utils{
             bool updateMap(UpdateMap::Request &req, UpdateMap::Response &resp);
             void timer_cb(const ros::TimerEvent& event);
             void dyn_reconfigureCB(TopologicalMapConverterConfig &config, uint32_t level);
+            void parseMessage(navigation_msgs::TopologicalMap& map, TopoMapMetaPtr msg);
 
         private:
             navigation_msgs::TopologicalMap topological_map_;

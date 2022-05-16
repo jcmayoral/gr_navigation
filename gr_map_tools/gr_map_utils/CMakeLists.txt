@@ -25,6 +25,7 @@ find_package(catkin REQUIRED
         geodesy
         grid_map_ros
         grid_map_msgs
+        warehouse_ros_mongo
 )
 
 find_package(Boost REQUIRED COMPONENTS
@@ -77,6 +78,7 @@ catkin_package(
         geodesy
         grid_map_ros
         grid_map_msgs
+        warehouse_ros_mongo
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS}   ${EIGEN3_INCLUDE_DIR})
