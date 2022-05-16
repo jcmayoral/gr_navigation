@@ -104,20 +104,20 @@ class SimpleTopoPlanner:
 
 
     def done_cb(self, state, result):
-        print "Goal finished with state ", state
+        print ("Goal finished with state ", state)
         if state == 0:
-            print "SUCCESS"
+            print ("SUCCESS")
             self.distance_covered += self.dist2goal#self.calc_distance(self.goal[:2], self.last_pose)
         if state == 12:
-            print "Collision"
+            print ("Collision")
         if state == 16:
-            print "TF ERROR"
+            print ("TF ERROR")
         if state == 17:
-            print "internal Error"
+            print ("internal Error")
         if state == 13:
-            print "oscillation"
+            print ("oscillation")
         if state == 10:
-            print "failure"
+            print ("failure")
         self.goal_finished = True
 
     def execute_cb(self, goal):
@@ -151,7 +151,7 @@ class SimpleTopoPlanner:
     def map_cb(self, map):
         rospy.loginfo("new map arriving")
         if self.create_graph(map.markers):
-            print "MY PLAN "
+            print ("MY PLAN ")
             self.plan = self.get_topological_plan("start", "end")
             #TODO SET TRIGGER
             self.execute_plan()
@@ -332,7 +332,7 @@ class SimpleTopoPlanner:
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
                     self._as.publish_feedback(fb)
-                print "SAVE TO MONGO"
+                print ("SAVE TO MONGO")
                 exec_msg.time_of_execution = time.time() - starttime
                 exec_msg.covered_distance = self.distance_covered
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
@@ -347,7 +347,7 @@ class SimpleTopoPlanner:
 
                 self.goal_received = False
                 self.goal_finished = False
-                print "VISIT_SOME", self.plan[n]
+                print ("VISIT_SOME", self.plan[n])
 
                 if self.plan[n] == self.startnode:
                     exec_msg.action = "FREE_MOTION"
