@@ -57,7 +57,7 @@ class SimpleTopoPlanner:
         goal.target_pose.pose.orientation.w = quaternion[3]
 
         if change_row:
-            print "CHANGE ROW or start"
+            print ("CHANGE ROW or start")
             goal.controller = self.params["CHANGEROW"]["controller"]
             goal.planner = self.params["CHANGEROW"]["planner"]
 
@@ -76,12 +76,12 @@ class SimpleTopoPlanner:
         #print "RESULT GOTTEN "
         #self.action_client.get_status()
         #print "after "
-        print self.action_client.get_result()
+        print (self.action_client.get_result())
 
         return #action_client.get_result()
 
     def active_cb(self):
-        print "GOAL received"
+        print ("GOAL received")
         self.goal_received = True
 
     def calc_distance(self,a,b):
@@ -102,20 +102,20 @@ class SimpleTopoPlanner:
         #print "FB ", feedback
 
     def done_cb(self, state, result):
-        print "Goal finished with state ", state
+        print ("Goal finished with state ", state)
         if state == 0:
-            print "SUCCESS"
+            print ("SUCCESS")
             self.distance_covered += self.dist2goal#self.calc_distance(self.goal[:2], self.last_pose)
         if state == 12:
-            print "Collision"
+            print ("Collision")
         if state == 16:
-            print "TF ERROR"
+            print ("TF ERROR")
         if state == 17:
-            print "internal Error"
+            print ("internal Error")
         if state == 13:
-            print "oscillation"
+            print ("oscillation")
         if state == 10:
-            print "failure"
+            print ("failure")
         #print "Goal finished with result ", result
         self.goal_finished = True
 
@@ -124,7 +124,7 @@ class SimpleTopoPlanner:
         result.result.suceeded = False
 
         if self.create_graph(goal.plan.markers):
-            print "MY PLAN from {} to {}".format(goal.start_node, goal.goal_node)
+            print ("MY PLAN from {} to {}".format(goal.start_node, goal.goal_node))
             self.plan = self.get_topological_plan(goal.start_node, goal.goal_node)
             self.startnode = goal.start_node
             self.goalnode = goal.goal_node
@@ -154,7 +154,7 @@ class SimpleTopoPlanner:
     def waitMoveBase(self):
         while not self.goal_finished:
             if self._as.is_preempt_requested():
-                print "Cancel received"
+                print ("Cancel received")
                 self.action_client.cancel_all_goals()
                 return False
             time.sleep(1)
