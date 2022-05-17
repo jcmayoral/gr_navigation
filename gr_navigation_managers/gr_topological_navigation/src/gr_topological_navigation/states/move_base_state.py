@@ -71,11 +71,11 @@ def move_base2(commands,action_client):
 
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
-    print action_client.send_goal(goal)
+    print (action_client.send_goal(goal))
     #print "WAITING FOR RESULT"
     #action_client.wait_for_result()
     #print "RESULT GOTTEN "
-    print action_client.get_status()
+    print (action_client.get_status())
     #print "after "
 
     return #action_client.get_result()
@@ -105,19 +105,19 @@ def sbpl_action_mode(commands):
 
 
 def polyfit_action_mode(poses, action_client):
-    print "polyfit action mode2"
+    print ("polyfit action mode2")
     goal = PolyFitRowGoal()
     goal.x = poses[:,0]
     goal.y = poses[:,1]
     goal.yaw = poses[:,2]
     action_client.send_goal(goal)
-    print "GOAL SENT"
+    print ("GOAL SENT")
     action_client.wait_for_result()
-    print "AAAAAAALLLLLLLLl"
+    print ("AAAAAAALLLLLLLLl")
 
 
 def polyfit_action_modeold(poses):
-    print "polyfit action mode"
+    print ("polyfit action mode")
     action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
     goal = PolyFitRowGoal()
     for p in poses:
@@ -127,4 +127,4 @@ def polyfit_action_modeold(poses):
     print (goal)
     action_client.send_goal(goal)
     action_client.wait_for_result()
-    print "AAAAAAALLLLLLLLl"
+    print ("AAAAAAALLLLLLLLl")
