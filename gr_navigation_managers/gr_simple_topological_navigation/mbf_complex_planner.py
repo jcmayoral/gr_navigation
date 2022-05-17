@@ -67,6 +67,9 @@ class SimpleTopoPlanner:
         goal.target_pose.pose.orientation.w = quaternion[3]
 
         rospy.logerr("NAV_MODE: " + nav_mode)
+        rospy.logwarn("NAV_MODE: " + self.params[nav_mode]["controller"])
+        rospy.logwarn("NAV_MODE: " + self.params[nav_mode]["planner"])
+
         goal.controller = self.params[nav_mode]["controller"]
         goal.planner = self.params[nav_mode]["planner"]
 
@@ -406,6 +409,7 @@ class SimpleTopoPlanner:
 
         rospy.loginfo("%d Nodes found", self.networkx_graph.number_of_nodes())
         rospy.loginfo("%d Edges found", self.networkx_graph.number_of_edges())
+        print(self.nodes_poses)
 
         if False: #self.gui:
             nx.draw(self.networkx_graph, pos=n_poses,with_labels=True, font_weight='bold')

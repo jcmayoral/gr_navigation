@@ -15,7 +15,7 @@ class bcolors:
 
 class MongoManager(object):
     def __init__(self, dbname="execution_data"):
-        self.client = pymongo.MongoClient(host="localhost", port=62345)
+        self.client = pymongo.MongoClient(host="localhost", port=27017)
         if dbname in self.client.list_database_names():
             self.database = self.client.get_database(dbname)
         else:
@@ -42,17 +42,17 @@ class MongoManager(object):
             exec_time +=entry["time_of_execution"]
             covered_distance +=entry["covered_distance"]
 
-        print bcolors.OKCYAN + "Execution Time {} seconds".format(exec_time)
-        print bcolors.OKCYAN + "Covered Distance {} m".format(covered_distance)
+        print( bcolors.OKCYAN + "Execution Time {} seconds".format(exec_time))
+        print (bcolors.OKCYAN + "Covered Distance {} m".format(covered_distance))
 
 if __name__ == "__main__":
     mm = MongoManager()
     tasks = ["CUT", "Collect"]
     for t in tasks:
-        print bcolors.HEADER + "TASK " , t
-        print bcolors.OKBLUE + "WORKING Mode"
+        print (bcolors.HEADER + "TASK " , t)
+        print (bcolors.OKBLUE + "WORKING Mode")
         mm.query(t, {"action":"RUN"})
-        print bcolors.OKBLUE + "Change row Mode"
+        print (bcolors.OKBLUE + "Change row Mode")
         mm.query(t, {"action":"CHANGE_ROW"})
-        print bcolors.OKBLUE + "TOTAL"
+        print (bcolors.OKBLUE + "TOTAL")
         mm.query(t)

@@ -61,12 +61,12 @@ class SimpleTopoPlanner:
         #print "RESULT GOTTEN "
         #self.action_client.get_status()
         #print "after "
-        print self.action_client.get_result()
+        print (self.action_client.get_result())
 
         return #action_client.get_result()
 
     def active_cb(self):
-        print "GOAL received"
+        print ("GOAL received")
         self.goal_received = True
 
     def calc_distance(self,a,b):
@@ -86,7 +86,7 @@ class SimpleTopoPlanner:
         #print "FB ", feedback
 
     def done_cb(self, state, result):
-        print "Goal finished with state ", state
+        print ("Goal finished with state ", state)
         if state == GoalStatus.SUCCEEDED:
             self.distance_covered += self.calc_distance(self.goal[:2], self.last_pose)
         #print "Goal finished with result ", result
@@ -97,7 +97,7 @@ class SimpleTopoPlanner:
         result.result.suceeded = False
 
         if self.create_graph(goal.plan.markers):
-            print "MY PLAN from {} to {}".format(goal.start_node, goal.goal_node)
+            print ("MY PLAN from {} to {}".format(goal.start_node, goal.goal_node))
             self.plan = self.get_topological_plan(goal.start_node, goal.goal_node)
             self.startnode = goal.start_node
             self.goalnode = goal.goal_node
@@ -119,7 +119,7 @@ class SimpleTopoPlanner:
     def map_cb(self, map):
         rospy.loginfo("new map arriving")
         if self.create_graph(map.markers):
-            print "MY PLAN "
+            print ("MY PLAN ")
             self.plan = self.get_topological_plan("start", "end")
             #TODO SET TRIGGER
             self.execute_plan()
@@ -127,7 +127,7 @@ class SimpleTopoPlanner:
     def waitMoveBase(self):
         while not self.goal_finished:
             if self._as.is_preempt_requested():
-                print "Cancel received"
+                print ("Cancel received")
                 self.action_client.cancel_all_goals()
                 return False
             time.sleep(1)
@@ -160,7 +160,7 @@ class SimpleTopoPlanner:
                 exec_msg.action = "RUN"
                 self.goal_received = False
                 self.goal_finished = False
-                print "moving to " , node
+                print ("moving to " , node)
                 if node == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
@@ -200,7 +200,7 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
 
-                print "moving to ", node, " POSE " , self.nodes_poses[node]
+                print ("moving to ", node, " POSE " , self.nodes_poses[node])
 
                 if node == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
@@ -217,7 +217,7 @@ class SimpleTopoPlanner:
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
                     self._as.publish_feedback(fb)
-                print "SAVE TO MONGO"
+                print ("SAVE TO MONGO")
                 exec_msg.time_of_execution = time.time() - starttime
                 exec_msg.covered_distance = self.distance_covered
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
@@ -232,7 +232,7 @@ class SimpleTopoPlanner:
 
                 self.goal_received = False
                 self.goal_finished = False
-                print "VISIT_SOME", self.plan[n]
+                print ("VISIT_SOME", self.plan[n])
 
                 if self.plan[n] == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
@@ -248,7 +248,7 @@ class SimpleTopoPlanner:
                     return False
                 else:
                     #fb.reached_node = node
-                    print self.plan[n]
+                    print (self.plan[n])
                     fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
