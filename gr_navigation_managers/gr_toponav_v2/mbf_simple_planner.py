@@ -4,6 +4,7 @@ import networkx as nx
 import numpy as np
 import tf
 import matplotlib.pyplot as plt
+from std_srvs.msg import SetBool, SetBoolResponse
 #from gr_topological_navigation.states.move_base_state import move_base2 as move_base_server
 from gr_topological_navigation.states.move_base_state import polyfit_action_mode as polyfit_server
 import actionlib
@@ -22,7 +23,7 @@ class SimpleTopoPlanner:
         self.temporal_map = None
         #self.map_sub = rospy.Subscriber("/current_topological_map", MarkerArray, self.map_cb)
         self._as = actionlib.SimpleActionServer("gr_simple_manager", GRNavigationAction, execute_cb=self.execute_cb, auto_start = False)
-        #self._as = actionlib.SimpleActionServer("gr_simple_manager", PolyFitRowAction, execute_cb=self.execute_cb, auto_start = False)
+        self._safety_as = rospy.Service("gr_human_intervention", SetBool, self.safety_human_intervention)
         #self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
         self.action_client = actionlib.SimpleActionClient("move_base_flex/move_base", MoveBaseAction)
         self.load_movebase_params()
@@ -33,6 +34,9 @@ class SimpleTopoPlanner:
         self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=10, config_callback=self.config_callback)
 
         self._as.start()
+
+    def safety_human_intervention(self, req):
+        return SetBoolResponse(sucess=True, message="Human Intervention required")
 
     def load_movebase_params(self):
         with open("mbf_config.yaml") as f:
@@ -146,7 +150,7 @@ class SimpleTopoPlanner:
     def map_cb(self, map):
         rospy.loginfo("new map arriving")
         if self.create_graph(map.markers):
-            print "MY PLAN "
+            print ("MY PLAN ")
             self.plan = self.get_topological_plan("start", "end")
             #TODO SET TRIGGER
             self.execute_plan()
@@ -187,7 +191,7 @@ class SimpleTopoPlanner:
                 exec_msg.action = "RUN"
                 self.goal_received = False
                 self.goal_finished = False
-                print "moving to " , node
+                print ("moving to " , node)
                 if node == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
@@ -227,7 +231,7 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
 
-                print "moving to ", node, " POSE " , self.nodes_poses[node]
+                print ("moving to ", node, " POSE " , self.nodes_poses[node])
 
                 if node == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
@@ -245,7 +249,7 @@ class SimpleTopoPlanner:
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
                     self._as.publish_feedback(fb)
-                print "SAVE TO MONGO"
+                print ("SAVE TO MONGO")
                 exec_msg.time_of_execution = time.time() - starttime
                 exec_msg.covered_distance = self.distance_covered
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
@@ -260,7 +264,7 @@ class SimpleTopoPlanner:
 
                 self.goal_received = False
                 self.goal_finished = False
-                print "VISIT_SOME", self.plan[n]
+                print ("VISIT_SOME", self.plan[n])
 
                 if self.plan[n] == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
@@ -277,7 +281,7 @@ class SimpleTopoPlanner:
                     return False
                 else:
                     #fb.reached_node = node
-                    print self.plan[n]
+                    print (self.plan[n])
                     fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)

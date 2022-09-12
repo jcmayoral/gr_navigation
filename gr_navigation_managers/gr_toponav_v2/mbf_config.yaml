@@ -1,5 +1,5 @@
 CUT:
-  planner: cutting
+  planner: carrot
   controller: diff
   tool_info:
     topic: "/tool_cut"
@@ -7,7 +7,7 @@ CUT:
     high_value: 120
     low_value: 0
 COLLECT:
-  planner: inside_planner
+  planner: carrot
   controller: diff
   tool_info:
     topic: "/Pickup"

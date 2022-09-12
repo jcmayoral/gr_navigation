@@ -5,7 +5,7 @@ from catkin_pkg.python_setup import generate_distutils_setup
 
 # fetch values from package.xml
 d = generate_distutils_setup(
-    packages=['gr_topological_navigation'],
+    packages=['gr_toponav_v1'],
     package_dir={'': 'src'}
 )
 

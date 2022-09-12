@@ -1,6 +1,7 @@
 import pymongo
 import yaml
 import json
+import time
 
 class bcolors:
     HEADER = '\033[95m'
@@ -42,17 +43,34 @@ class MongoManager(object):
             exec_time +=entry["time_of_execution"]
             covered_distance +=entry["covered_distance"]
 
-        print( bcolors.OKCYAN + "Execution Time {} seconds".format(exec_time))
-        print (bcolors.OKCYAN + "Covered Distance {} m".format(covered_distance))
+        #print(exec_time, covered_distance)
+        mystring =  "Execution Time {} seconds \n ".format(exec_time) + "\n Covered Distance {} \n".format(covered_distance)
+        print(mystring)
+        return mystring
+        return bcolors.OKCYAN + "Execution Time {} seconds".format(exec_time) + bcolors.OKCYAN + "Covered Distance {} \n".format(covered_distance)
 
 if __name__ == "__main__":
     mm = MongoManager()
-    tasks = ["CUT", "Collect"]
-    for t in tasks:
-        print (bcolors.HEADER + "TASK " , t)
-        print (bcolors.OKBLUE + "WORKING Mode")
-        mm.query(t, {"action":"RUN"})
-        print (bcolors.OKBLUE + "Change row Mode")
-        mm.query(t, {"action":"CHANGE_ROW"})
-        print (bcolors.OKBLUE + "TOTAL")
-        mm.query(t)
+    tasks = ["CUT", "COLLECT"]
+    while True:
+        with open('/var/www/www.grassrobotics/example.txt','r+') as myfile:
+            data = myfile.read()
+            myfile.seek(0)
+            for t in tasks:
+                #print (bcolors.HEADER + "TASK " , t)
+                myfile.write("Stats during {} \n ".format(t))
+                myfile.write("\n")
+                #print (bcolors.OKBLUE + "WORKING Mode")
+                myfile.write("Working Stats \n ")
+                myfile.write(mm.query(t, {"action":"RUN"}))
+                myfile.write("\n")
+                #print (bcolors.OKBLUE + "Change row Mode")
+                myfile.write("Stats during Change Row \n")
+                myfile.write(mm.query(t, {"action":"CHANGE_ROW"}))
+                myfile.write("\n")
+                #print (bcolors.OKBLUE + "TOTAL")
+                myfile.write("TOTAL stats for mode {} \n". format(t))
+                myfile.write(mm.query(t))
+                myfile.write("\n \n")
+            myfile.truncate()
+        time.sleep(30)
