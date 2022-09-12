@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(gr_toponav_v1)
+project(gr_toponav_v2)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
@@ -7,15 +7,10 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
-catkin_python_setup()
-
 catkin_package(
   CATKIN_DEPENDS
     rospy
     navigation_msgs
     std_msgs
 )
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+catkin_python_setup()

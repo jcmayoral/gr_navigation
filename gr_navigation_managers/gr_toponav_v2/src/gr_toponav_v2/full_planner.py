@@ -1,34 +1,29 @@
-from visualization_msgs.msg import MarkerArray, Marker
+import tf
 import rospy
 import networkx as nx
 import numpy as np
-import tf
+import yaml
 import matplotlib.pyplot as plt
-from gr_topological_navigation.states.move_base_state import polyfit_action_mode as polyfit_server
 import actionlib
-from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult, GRNavigationFeedback, PolyFitRowAction, PolyFitRowResult
-from mbf_msgs.msg import MoveBaseAction, MoveBaseGoal
-from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
 import time
+
+from gr_toponav_v1.states.move_base_state import polyfit_action_mode as polyfit_server
+from gr_toponav_v2.mongoutils import MongoManager
+
 import dynamic_reconfigure.client
-from mongoutils import MongoManager
+from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNavigationActionResult, GRNavigationFeedback, PolyFitRowAction, PolyFitRowResult
 from safety_msgs.msg import ExecutionMetadata
 from actionlib_msgs.msg import GoalStatus
-import yaml
-from std_msgs.msg import Bool
-import copy
-from tool_utils import ToolInterface
+from visualization_msgs.msg import MarkerArray, Marker
+from std_srvs.srv import SetBool, SetBoolResponse
+from mbf_msgs.msg import MoveBaseAction, MoveBaseGoal
+from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
 
-class SimpleTopoPlanner:
+class FullTopoPlanner:
     def __init__(self):
         self.temporal_map = None
-        self.container_full = False
-        #self.map_sub = rospy.Subscriber("/`current_topological_map`", MarkerArray, self.map_cb)
-        self.map_sub = rospy.Subscriber("/container_full", Bool, self.container_cb)
-        self.unload_sub = rospy.Subscriber("/unload_finished", Bool, self.unload_cb)
-
         self._as = actionlib.SimpleActionServer("gr_simple_manager", GRNavigationAction, execute_cb=self.execute_cb, auto_start = False)
-        #self._as = actionlib.SimpleActionServer("gr_simple_manager", PolyFitRowAction, execute_cb=self.execute_cb, auto_start = False)
+        self._safety_as = rospy.Service("gr_human_intervention", SetBool, self.safety_human_intervention)
         #self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
         self.action_client = actionlib.SimpleActionClient("move_base_flex/move_base", MoveBaseAction)
         self.load_movebase_params()
@@ -40,19 +35,21 @@ class SimpleTopoPlanner:
 
         self._as.start()
 
-    def container_cb(self, is_full):
-        rospy.logwarn("CONTAINER SIGNAL "+ str(is_full))
-        self.container_full = is_full.data
+    def safety_human_intervention(self, req):
+        return SetBoolResponse(success=True, message="Human Intervention required")
 
     def load_movebase_params(self):
-        with open("mbf_config.yaml") as f:
+        import rospkg 
+        r = rospkg.RosPack()
+        localpath = r.get_path('gr_toponav_v2')
+        with open(localpath + "/config/mbf_config.yaml") as f:
             self.params = yaml.load(f.read(), Loader=yaml.Loader)
 
     def config_callback(self,config):
         pass
         #rospy.loginfo("Config se", config)
-
-    def move_base_server(self, commands, nav_mode):
+ 
+    def move_base_server(self, commands, change_row):
         rospy.loginfo("Waiting for Action Server ")
         self.action_client.wait_for_server()
         rospy.loginfo("Action Server Found sending "+ str(commands))
@@ -66,12 +63,14 @@ class SimpleTopoPlanner:
         goal.target_pose.pose.orientation.z = quaternion[2]
         goal.target_pose.pose.orientation.w = quaternion[3]
 
-        rospy.logerr("NAV_MODE: " + nav_mode)
-        rospy.logwarn("NAV_MODE: " + self.params[nav_mode]["controller"])
-        rospy.logwarn("NAV_MODE: " + self.params[nav_mode]["planner"])
+        if change_row:
+            print ("CHANGE ROW or start")
+            goal.controller = self.params["CHANGEROW"]["controller"]
+            goal.planner = self.params["CHANGEROW"]["planner"]
 
-        goal.controller = self.params[nav_mode]["controller"]
-        goal.planner = self.params[nav_mode]["planner"]
+        else:
+            goal.controller = self.params[self.taskid]["controller"]
+            goal.planner = self.params[self.taskid]["planner"]
 
         goal.target_pose.header.frame_id = "map"
         goal.target_pose.header.stamp = rospy.Time.now()
@@ -79,11 +78,17 @@ class SimpleTopoPlanner:
         self.last_pose = None
         self.distance_covered = 0.0
         self.action_client.send_goal(goal, done_cb = self.done_cb, feedback_cb=self.feedback_cb, active_cb=self.active_cb)
+        #print "WAITING FOR RESULT"
+        #action_client.wait_for_result()
+        #print "RESULT GOTTEN "
+        #self.action_client.get_status()
+        #print "after "
+        print (self.action_client.get_result())
 
         return #action_client.get_result()
 
     def active_cb(self):
-        rospy.loginfo("GOAL received")
+        print ("GOAL received")
         self.goal_received = True
 
     def calc_distance(self,a,b):
@@ -91,13 +96,8 @@ class SimpleTopoPlanner:
 
     def feedback_cb(self, feedback):
         self.dist2goal = feedback.dist_to_goal
-        q = (feedback.current_pose.pose.orientation.x,
-            feedback.current_pose.pose.orientation.y,
-            feedback.current_pose.pose.orientation.z,
-            feedback.current_pose.pose.orientation.w)
-        yaw = tf.transformations.euler_from_quaternion(q)[2]
-        bp = [feedback.current_pose.pose.position.x, feedback.current_pose.pose.position.y, yaw]
-
+        #print feedback.base_position.header.frame_id, time.time()- self.lastupdate_time
+        bp = [feedback.current_pose.pose.position.x, feedback.current_pose.pose.position.y]
         if self.last_pose:
             self.distance_covered +=  self.calc_distance(self.last_pose, bp)
             #rospy.loginfo("Distance covered {} meters".format(self.distance_covered))
@@ -105,6 +105,8 @@ class SimpleTopoPlanner:
 
         self.last_pose = bp
 
+        pass
+        #print "FB ", feedback
 
     def done_cb(self, state, result):
         print ("Goal finished with state ", state)
@@ -121,6 +123,7 @@ class SimpleTopoPlanner:
             print ("oscillation")
         if state == 10:
             print ("failure")
+        #print "Goal finished with result ", result
         self.goal_finished = True
 
     def execute_cb(self, goal):
@@ -128,16 +131,12 @@ class SimpleTopoPlanner:
         result.result.suceeded = False
 
         if self.create_graph(goal.plan.markers):
-            rospy.loginfo("MY PLAN from {} to {}".format(goal.start_node, goal.goal_node))
+            print ("MY PLAN from {} to {}".format(goal.start_node, goal.goal_node))
             self.plan = self.get_topological_plan(goal.start_node, goal.goal_node)
             self.startnode = goal.start_node
             self.goalnode = goal.goal_node
             self.rowid = goal.row_id
             self.taskid = goal.task_id
-
-            #Interface to tool TO BE TESTED
-            self.tool_interface = ToolInterface(**self.params[self.taskid]["tool_info"])
-
             #TODO SET TRIGGER
             if self.execute_plan(goal.mode,goal.span):
                 result.result.suceeded = True
@@ -159,88 +158,18 @@ class SimpleTopoPlanner:
             #TODO SET TRIGGER
             self.execute_plan()
 
-    def waitMoveBase(self, flag = True):
+    def waitMoveBase(self):
         while not self.goal_finished:
             if self._as.is_preempt_requested():
-                rospy.logerr("Cancel received")
+                print ("Cancel received")
                 self.action_client.cancel_all_goals()
-                return False
-            if self.container_full and flag:
-                rospy.logerr("container full... going to container location")
-                self.action_client.cancel_all_goals()
-                rospy.sleep(2)
                 return False
             time.sleep(1)
-        rospy.loginfo("MOTION suceeded")
         return True
-
-    def go_to_unload_zone(self, current_goal):
-        last_knownpose = copy.copy(self.last_pose)
-
-        #GO TO CONTAINER
-        if not self.perform_motion([self.params["CONTAINER"]["x"],
-                             self.params["CONTAINER"]["y"],
-                             self.params["CONTAINER"]["yaw"]],
-                              "CONTAINER", False, "CONTAINER"):
-            return False
-
-        rospy.logerr("CONTAINER SEQUENCE MUST BE MANUAL")
-        rospy.logerr("UNLOADING .... waiting for signal")
-        self.wait_for_unload()
-        self.container_full = False
-
-        #GOING BACK TO LAST KNOW POSE
-        if not self.perform_motion(last_knownpose, "LAST_POSE", False, "CONTAINER"):
-            return False
-        #RESTART TOOL
-        self.tool_interface.start()
-
-        #GOING BACK TO LAST KNOW GOAL
-        if not self.perform_motion(current_goal, "LAST_GOAL", True, "FREE_MOTION"):
-            return False
-
-
-        return True
-
-    def wait_for_unload(self):
-        self.finished_unload = False
-        while not self.finished_unload:
-            rospy.sleep(1)
-
-    def unload_cb(self,msg):
-        self.finished_unload = True
-
-
-    def perform_motion(self,goal, id, constrain_motion, mode):
-        rospy.logwarn("MODE ")
-        starttime = time.time()
-        exec_msg = ExecutionMetadata()
-        exec_msg.rowid = -1
-        exec_msg.action = "GO_TO_"+id
-        self.goal_received = False
-        self.goal_finished = False
-        rospy.logwarn("moving to " + id + " with coordinates " + str(goal))
-
-        #TODO ADD OSM MAP STUFF
-        self.dynconf_client.update_configuration({"constrain_motion": constrain_motion})
-        #WAIT FOR MAP UPDAT
-        time.sleep(3)
-
-
-        #True/False decides controller type
-        self.move_base_server(goal, mode)
-
-        if not self.waitMoveBase(False):
-            return False
-
-        exec_msg.time_of_execution = time.time() - starttime
-        exec_msg.covered_distance = self.distance_covered
-        self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
-        return True
-
-
 
     def execute_plan(self,mode, span=0):
+        print ("THIS IS MY PLAN " ,self.plan)
+        #print "MOVING TO START ", move_base_server(self.nodes_poses["start_node"], self.action_client)
         """
         #POLYFIT
         #for p in self.plan:
@@ -261,27 +190,27 @@ class SimpleTopoPlanner:
             for node in self.plan:
                 starttime = time.time()
                 exec_msg = ExecutionMetadata()
-
                 exec_msg.rowid = self.rowid
                 exec_msg.action = "RUN"
                 self.goal_received = False
                 self.goal_finished = False
-                rospy.logwarn("moving to " + node)
+                print ("moving to " , node)
                 if node == self.startnode:
-                    exec_msg.action = "FREE_MOTION"
+                    exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal = self.nodes_poses[node]
-                nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
-                self.move_base_server(self.goal, nav_mode)
+                change_row = True if exec_msg.action == "CHANGE_ROW" else False
+                self.move_base_server(self.goal, change_row)
 
                 if not self.waitMoveBase():
                     return False
                 else:
                     fb.reached_node.data = node
+                    #print fb
                     self._as.publish_feedback(fb)
 
                 exec_msg.time_of_execution = time.time() - starttime
@@ -289,9 +218,12 @@ class SimpleTopoPlanner:
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
 
             return True
+        #print self.nodes_poses["start_node"]
+        #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
+        #priyynt self.nodes_poses["end_node"]
+        #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
         elif mode == 1: #GRNavigationAction.JUST_END:
             goals = [self.startnode, self.goalnode]
-
             for node in goals:
                 exec_msg = ExecutionMetadata()
                 starttime = time.time()
@@ -302,36 +234,21 @@ class SimpleTopoPlanner:
                 self.goal_received = False
                 self.goal_finished = False
 
-                rospy.logwarn ("moving to " + node + " POSE " + str(self.nodes_poses[node]))
+                print ("moving to ", node, " POSE " , self.nodes_poses[node])
 
                 if node == self.startnode:
-                    exec_msg.action = "FREE_MOTION"
+                    exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal =self.nodes_poses[node]
-                nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
-
-                #START TOOL
-                if nav_mode != "FREE_MOTION" and nav_mode != "CONTAINER":
-                    self.tool_interface.start()
-
-                self.move_base_server(self.goal, nav_mode)
+                change_row = True if exec_msg.action == "CHANGE_ROW" else False
+                self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
-                    self.tool_interface.stop()
-                    if self.container_full:
-                        if self.go_to_unload_zone(self.goal):
-                            rospy.logwarn("Resuming execution")
-                            continue
-                        else:
-                            rospy.logerr("something went wrong/")
-                            return False
-
                     return False
                 else:
-                    self.tool_interface.stop()
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
                     self._as.publish_feedback(fb)
@@ -353,7 +270,7 @@ class SimpleTopoPlanner:
                 print ("VISIT_SOME", self.plan[n])
 
                 if self.plan[n] == self.startnode:
-                    exec_msg.action = "FREE_MOTION"
+                    exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
                     self.dynconf_client.update_configuration({"constrain_motion": True})
@@ -361,16 +278,16 @@ class SimpleTopoPlanner:
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal = self.nodes_poses[self.plan[n]]
-                nav_mode = "FREE_MOTION" if exec_msg.action == "FREE_MOTION" else self.taskid
-                self.move_base_server(self.goal, nav_mode)
+                change_row = True if exec_msg.action == "CHANGE_ROW" else False
+                self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
                     return False
                 else:
                     #fb.reached_node = node
+                    print (self.plan[n])
                     fb.reached_node.data = self.plan[n]
                     self._as.publish_feedback(fb)
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
-            return Trueg
         else:
             rospy.logerr("ERROR")
             return False
@@ -409,7 +326,6 @@ class SimpleTopoPlanner:
 
         rospy.loginfo("%d Nodes found", self.networkx_graph.number_of_nodes())
         rospy.loginfo("%d Edges found", self.networkx_graph.number_of_edges())
-        print(self.nodes_poses)
 
         if False: #self.gui:
             nx.draw(self.networkx_graph, pos=n_poses,with_labels=True, font_weight='bold')
@@ -417,9 +333,3 @@ class SimpleTopoPlanner:
             nx.draw_networkx_edges(self.networkx_graph, pos = nx.spring_layout(self.networkx_graph))
             plt.show()
         return True
-
-
-if __name__ == "__main__":
-    rospy.init_node("simple_topoplanner")
-    planner = SimpleTopoPlanner()
-    rospy.spin()
