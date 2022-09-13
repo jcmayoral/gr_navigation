@@ -160,18 +160,18 @@ class FullTopoPlanner:
             execution_result = self.execute_plan(goal.mode,goal.span)
             print (execution_result)
 
-            if execution_result == NavResult.SUCCESS:
-                result.result.suceeded = True
-                result.result.intervention = False
-                result.result.safety_msgs.data = "Normal State"
-            elif execution_result == NavResult.FAILURE:
-                result.result.suceeded = False
-                result.result.intervention = False
-                result.result.safety_msgs.data = "Navigation Error"
-            else:
-                result.result.suceeded = False
-                result.result.intervention = True
-                result.result.safety_msgs.data = "Human Intervention Requested"
+        if execution_result == NavResult.SUCCESS:
+            result.result.suceeded = True
+            result.result.intervention = False
+            result.result.safety_msg.data = "Normal State"
+        elif execution_result == NavResult.FAILURE:
+            result.result.suceeded = False
+            result.result.intervention = False
+            result.result.safety_msg.data = "Navigation Error"
+        else:
+            result.result.suceeded = False
+            result.result.intervention = True
+            result.result.safety_msg.data = "Human Intervention Requested"
         #NOT so sure why this crashes
         #self._as.set_succeeded(result)
         if result.result.suceeded:
@@ -222,6 +222,7 @@ class FullTopoPlanner:
                     return NavResult.HRI if self.human_intervention_requested else NavResult.FAILURE
                 else:
                     fb.reached_node.data = node
+                    fb.safety_msg.data = "Normal State"
                     #print fb
                     self._as.publish_feedback(fb)
 
@@ -263,6 +264,8 @@ class FullTopoPlanner:
                 else:
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
+                    fb.safety_msg.data = "Peforming without errors"
+                    fb.executing_time = time.time() - starttime
                     self._as.publish_feedback(fb)
                 print ("SAVE TO MONGO")
                 exec_msg.time_of_execution = time.time() - starttime
