@@ -14,7 +14,7 @@ COLLECT:
     type_str: int
     high_value: 120
     low_value: 0
-FREE_MOTION:
+CHANGEROW:
   planner: inside_planner
   controller: diff
 CONTAINER:

@@ -25,7 +25,7 @@ from enum import Enum
 class NavResult(Enum):
     FAILURE = 0
     HRI = 1
-    SUCESS = 2
+    SUCCESS = 2
 
 class NavMode(Enum):
     VISIT_ALL = 0
@@ -60,6 +60,7 @@ class FullTopoPlanner:
         localpath = r.get_path('gr_toponav_v2')
         with open(localpath + "/config/mbf_config.yaml") as f:
             self.params = yaml.load(f.read(), Loader=yaml.Loader)
+        print(self.params)
 
     def config_callback(self,config):
         pass
@@ -156,13 +157,20 @@ class FullTopoPlanner:
             self.rowid = goal.row_id
             self.taskid = goal.task_id
             #TODO SET TRIGGER
-            execution_result = self.execute_plan(goal.mode,goal.span):
+            execution_result = self.execute_plan(goal.mode,goal.span)
+            print (execution_result)
 
-            if execution_result == NavResult.SUCCESS
+            if execution_result == NavResult.SUCCESS:
                 result.result.suceeded = True
+                result.result.intervention = False
+                result.result.safety_msgs.data = "Normal State"
             elif execution_result == NavResult.FAILURE:
                 result.result.suceeded = False
+                result.result.intervention = False
+                result.result.safety_msgs.data = "Navigation Error"
             else:
+                result.result.suceeded = False
+                result.result.intervention = True
                 result.result.safety_msgs.data = "Human Intervention Requested"
         #NOT so sure why this crashes
         #self._as.set_succeeded(result)
@@ -184,12 +192,13 @@ class FullTopoPlanner:
         return True
 
     def execute_plan(self,mode, span=0):
-        print ("THIS IS MY PLAN {} using mode {}"%(self.plan, mode))
+        print ("THIS IS MY PLAN {} using mode {}".format(self.plan, mode))
+        print(mode == NavMode.JUST_END.value, NavMode.JUST_END.value)
         self.goal_received = False
         self.goal_finished = False
 
         fb = GRNavigationFeedback()
-        if mode == NavMode.VISIT_ALL:
+        if mode == NavMode.VISIT_ALL.value:
             for node in self.plan:
                 starttime = time.time()
                 exec_msg = ExecutionMetadata()
@@ -221,7 +230,8 @@ class FullTopoPlanner:
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
 
             return True
-         elif mode == NavMode.JUST_END:
+        elif mode == NavMode.JUST_END.value:
+            print("JUST END")
             #LIMIT TO START AND END
             for node in [self.startnode, self.goalnode]:
                 exec_msg = ExecutionMetadata()
@@ -261,7 +271,7 @@ class FullTopoPlanner:
             return NavResult.SUCCESS
 
         #LAST TO BE IMPLEMENTED
-        elif mode == NavMode.VISIT_SOME:
+        elif mode == NavMode.VISIT_SOME.value:
             for n in range(0,len(self.plan),span):
                 exec_msg = ExecutionMetadata()
                 exec_msg.rowid = self.rowid
