@@ -19,6 +19,20 @@ from std_srvs.srv import SetBool, SetBoolResponse
 from mbf_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
 
+
+from enum import Enum
+
+class NavResult(Enum):
+    FAILURE = 0
+    HRI = 1
+    SUCESS = 2
+
+class NavMode(Enum):
+    VISIT_ALL = 0
+    JUST_END = 1
+    VISIT_SOME = 2
+
+
 class FullTopoPlanner:
     def __init__(self):
         self.temporal_map = None
@@ -30,12 +44,14 @@ class FullTopoPlanner:
         self.goal_received = False
         self.goal_finished = False
         self.mongo_utils = MongoManager()
+        self.human_intervention_requested = False
 
         self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=10, config_callback=self.config_callback)
 
         self._as.start()
 
     def safety_human_intervention(self, req):
+        self.human_intervention_requested = req.data
         return SetBoolResponse(success=True, message="Human Intervention required")
 
     def load_movebase_params(self):
@@ -129,6 +145,8 @@ class FullTopoPlanner:
     def execute_cb(self, goal):
         result = GRNavigationActionResult()
         result.result.suceeded = False
+        if self.human_intervention_requested:
+            self._as.set_aborted()
 
         if self.create_graph(goal.plan.markers):
             print ("MY PLAN from {} to {}".format(goal.start_node, goal.goal_node))
@@ -138,10 +156,14 @@ class FullTopoPlanner:
             self.rowid = goal.row_id
             self.taskid = goal.task_id
             #TODO SET TRIGGER
-            if self.execute_plan(goal.mode,goal.span):
+            execution_result = self.execute_plan(goal.mode,goal.span):
+
+            if execution_result == NavResult.SUCCESS
                 result.result.suceeded = True
-            else:
+            elif execution_result == NavResult.FAILURE:
                 result.result.suceeded = False
+            else:
+                result.result.safety_msgs.data = "Human Intervention Requested"
         #NOT so sure why this crashes
         #self._as.set_succeeded(result)
         if result.result.suceeded:
@@ -149,44 +171,25 @@ class FullTopoPlanner:
             return
         self._as.set_aborted()
 
-
-    def map_cb(self, map):
-        rospy.loginfo("new map arriving")
-        if self.create_graph(map.markers):
-            print ("MY PLAN ")
-            self.plan = self.get_topological_plan("start", "end")
-            #TODO SET TRIGGER
-            self.execute_plan()
-
     def waitMoveBase(self):
         while not self.goal_finished:
             if self._as.is_preempt_requested():
                 print ("Cancel received")
                 self.action_client.cancel_all_goals()
                 return False
+            if self.human_intervention_requested:
+                self.action_client.cancel_all_goals()
+                return False
             time.sleep(1)
         return True
 
     def execute_plan(self,mode, span=0):
-        print ("THIS IS MY PLAN " ,self.plan)
-        #print "MOVING TO START ", move_base_server(self.nodes_poses["start_node"], self.action_client)
-        """
-        #POLYFIT
-        #for p in self.plan:
-        poses = []
-
-        for n in self.plan:
-            p = self.nodes_poses[n]
-            poses.append([p[0], p[1],p[2]])
-        print ("poses", np.asarray(poses).shape)
-        polyfit_server(np.asarray(poses), self.action_client)
-        return
-        """
+        print ("THIS IS MY PLAN {} using mode {}"%(self.plan, mode))
         self.goal_received = False
         self.goal_finished = False
 
         fb = GRNavigationFeedback()
-        if mode == 0:#GRNavigationAction.VISIT_ALL:
+        if mode == NavMode.VISIT_ALL:
             for node in self.plan:
                 starttime = time.time()
                 exec_msg = ExecutionMetadata()
@@ -207,7 +210,7 @@ class FullTopoPlanner:
                 self.move_base_server(self.goal, change_row)
 
                 if not self.waitMoveBase():
-                    return False
+                    return NavResult.HRI if self.human_intervention_requested else NavResult.FAILURE
                 else:
                     fb.reached_node.data = node
                     #print fb
@@ -218,13 +221,9 @@ class FullTopoPlanner:
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
 
             return True
-        #print self.nodes_poses["start_node"]
-        #print move_base_server(self.nodes_poses["start_node"], "sbpl_action")
-        #priyynt self.nodes_poses["end_node"]
-        #print move_base_server(self.nodes_poses["end_node"], "sbpl_action")
-        elif mode == 1: #GRNavigationAction.JUST_END:
-            goals = [self.startnode, self.goalnode]
-            for node in goals:
+         elif mode == NavMode.JUST_END:
+            #LIMIT TO START AND END
+            for node in [self.startnode, self.goalnode]:
                 exec_msg = ExecutionMetadata()
                 starttime = time.time()
                 exec_msg.rowid = self.rowid
@@ -236,18 +235,21 @@ class FullTopoPlanner:
 
                 print ("moving to ", node, " POSE " , self.nodes_poses[node])
 
+                #IF START NODE
                 if node == self.startnode:
                     exec_msg.action = "CHANGE_ROW"
                     self.dynconf_client.update_configuration({"constrain_motion": False})
                 else:
+                    #IF END
                     self.dynconf_client.update_configuration({"constrain_motion": True})
+
                 #WAIT FOR MAP UPDATE
                 time.sleep(3)
                 self.goal =self.nodes_poses[node]
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
                 self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
-                    return False
+                    return NavResult.HRI if self.human_intervention_requested else NavResult.FAILURE
                 else:
                     #fb.feedback.reached_node = node
                     fb.reached_node.data = node
@@ -256,9 +258,10 @@ class FullTopoPlanner:
                 exec_msg.time_of_execution = time.time() - starttime
                 exec_msg.covered_distance = self.distance_covered
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
-            return True
+            return NavResult.SUCCESS
+
         #LAST TO BE IMPLEMENTED
-        elif mode == 2: #GRNavigationActionGoal.VISIT_SOME:
+        elif mode == NavMode.VISIT_SOME:
             for n in range(0,len(self.plan),span):
                 exec_msg = ExecutionMetadata()
                 exec_msg.rowid = self.rowid
@@ -281,7 +284,7 @@ class FullTopoPlanner:
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
                 self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
-                    return False
+                    return NavResult.HRI if self.human_intervention_requested else NavResult.FAILURE
                 else:
                     #fb.reached_node = node
                     print (self.plan[n])
@@ -290,7 +293,7 @@ class FullTopoPlanner:
                 self.mongo_utils.insert_in_collection(exec_msg, self.taskid)
         else:
             rospy.logerr("ERROR")
-            return False
+            return NavResult.FAILURE
 
 
 
@@ -313,7 +316,6 @@ class FullTopoPlanner:
                 if not self.networkx_graph.has_edge(startnode, endnode):
                     self.networkx_graph.add_edge(startnode, endnode, edge_id=n.text)
                 continue
-
 
             quaternion = (n.pose.orientation.x,
                           n.pose.orientation.y,
