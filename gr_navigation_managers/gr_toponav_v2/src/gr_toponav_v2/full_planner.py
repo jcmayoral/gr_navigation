@@ -15,7 +15,7 @@ from gr_action_msgs.msg import GRNavigationAction, GRNavigationActionGoal, GRNav
 from safety_msgs.msg import ExecutionMetadata
 from actionlib_msgs.msg import GoalStatus
 from visualization_msgs.msg import MarkerArray, Marker
-from std_srvs.srv import SetBool, SetBoolResponse
+from std_srvs.srv import Trigger, TriggerResponse
 from mbf_msgs.msg import MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalID, GoalStatus, GoalStatusArray
 
@@ -37,25 +37,33 @@ class FullTopoPlanner:
     def __init__(self):
         self.temporal_map = None
         self._as = actionlib.SimpleActionServer("gr_simple_manager", GRNavigationAction, execute_cb=self.execute_cb, auto_start = False)
-        self._safety_as = rospy.Service("gr_human_intervention", SetBool, self.safety_human_intervention)
+        self._safety_as = rospy.Service("gr_human_intervention/set", Trigger, self.set_safety_human_intervention)
+        self._safety_as2 = rospy.Service("gr_human_intervention/reset", Trigger, self.reset_safety_human_intervention)
+
         #self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
         self.action_client = actionlib.SimpleActionClient("move_base_flex/move_base", MoveBaseAction)
         self.load_movebase_params()
         self.goal_received = False
         self.goal_finished = False
         self.mongo_utils = MongoManager()
-        self.human_intervention_requested = False
+            self.human_intervention_requested = False
 
         self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=10, config_callback=self.config_callback)
 
         self._as.start()
 
-    def safety_human_intervention(self, req):
-        self.human_intervention_requested = req.data
-        return SetBoolResponse(success=True, message="Human Intervention required")
+    def set_safety_human_intervention(self, req):
+        rospy.logerr("in safety intervention set")
+        self.human_intervention_requested = True#req.data
+        return TriggerResponse(success=True, message="Human Intervention required")
+
+    def reset_safety_human_intervention(self, req):
+        rospy.logerr("in safety intervention reset ")
+        self.human_intervention_requested = False
+        return TriggerResponse(success=True, message="Human Intervention required")
 
     def load_movebase_params(self):
-        import rospkg 
+        import rospkg
         r = rospkg.RosPack()
         localpath = r.get_path('gr_toponav_v2')
         with open(localpath + "/config/mbf_config.yaml") as f:
@@ -65,7 +73,7 @@ class FullTopoPlanner:
     def config_callback(self,config):
         pass
         #rospy.loginfo("Config se", config)
- 
+
     def move_base_server(self, commands, change_row):
         rospy.loginfo("Waiting for Action Server ")
         self.action_client.wait_for_server()
@@ -148,6 +156,7 @@ class FullTopoPlanner:
         result.result.suceeded = False
         if self.human_intervention_requested:
             self._as.set_aborted()
+            return
 
         if self.create_graph(goal.plan.markers):
             print ("MY PLAN from {} to {}".format(goal.start_node, goal.goal_node))
@@ -186,6 +195,7 @@ class FullTopoPlanner:
                 self.action_client.cancel_all_goals()
                 return False
             if self.human_intervention_requested:
+                rospy.logerr("cancelling all goals")
                 self.action_client.cancel_all_goals()
                 return False
             time.sleep(1)
@@ -216,7 +226,13 @@ class FullTopoPlanner:
                 time.sleep(3)
                 self.goal = self.nodes_poses[node]
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
+
+                fb.reached_node.data = node
+                fb.safety_msg.data = "Robot has been commanded MODE:  " + str(exec_msg.action)
+                print ("FB", fb)
+                self._as.publish_feedback(fb)
                 self.move_base_server(self.goal, change_row)
+
 
                 if not self.waitMoveBase():
                     return NavResult.HRI if self.human_intervention_requested else NavResult.FAILURE
@@ -258,6 +274,13 @@ class FullTopoPlanner:
                 time.sleep(3)
                 self.goal =self.nodes_poses[node]
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
+
+
+                fb.reached_node.data = node
+                fb.safety_msg.data = "Robot has been commanded MODE:  " + str(exec_msg.action)
+                print ("FB", fb)
+                self._as.publish_feedback(fb)
+
                 self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
                     return NavResult.HRI if self.human_intervention_requested else NavResult.FAILURE
@@ -295,6 +318,13 @@ class FullTopoPlanner:
                 time.sleep(3)
                 self.goal = self.nodes_poses[self.plan[n]]
                 change_row = True if exec_msg.action == "CHANGE_ROW" else False
+
+
+                fb.reached_node.data = node
+                fb.safety_msg.data = "Robot has been commanded MODE:  " + str(exec_msg.action)
+                print ("FB", fb)
+                self._as.publish_feedback(fb)
+
                 self.move_base_server(self.goal, change_row)
                 if not self.waitMoveBase():
                     return NavResult.HRI if self.human_intervention_requested else NavResult.FAILURE

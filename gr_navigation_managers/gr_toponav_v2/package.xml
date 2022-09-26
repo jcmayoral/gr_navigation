@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>gr_toponav_v2</name>
-  <version>0.7.1</version>
+  <version>0.7.2</version>
   <description>gr_topological_navigation package</description>
   <maintainer email="jose.carlos.mayoral.banos@nmbu.no">Jose Mayoral</maintainer>
   <license>MIT</license>
