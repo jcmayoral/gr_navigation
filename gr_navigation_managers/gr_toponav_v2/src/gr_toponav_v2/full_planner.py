@@ -48,7 +48,7 @@ class FullTopoPlanner:
         self.mongo_utils = MongoManager()
         self.human_intervention_requested = False
 
-        self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=10, config_callback=self.config_callback)
+        self.dynconf_client = dynamic_reconfigure.client.Client("topological_to_metric_converter", timeout=20, config_callback=self.config_callback)
 
         self._as.start()
 
