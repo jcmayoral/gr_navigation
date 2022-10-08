@@ -40,8 +40,11 @@ class FullTopoPlanner:
         self._safety_as = rospy.Service("gr_human_intervention/set", Trigger, self.set_safety_human_intervention)
         self._safety_as2 = rospy.Service("gr_human_intervention/reset", Trigger, self.reset_safety_human_intervention)
 
+
         #self.action_client = actionlib.SimpleActionClient('polyfit_action', PolyFitRowAction)
         self.action_client = actionlib.SimpleActionClient("move_base_flex/move_base", MoveBaseAction)
+        self.action_client.wait_for_server()
+
         self.load_movebase_params()
         self.goal_received = False
         self.goal_finished = False
@@ -196,7 +199,8 @@ class FullTopoPlanner:
                 return False
             if self.human_intervention_requested:
                 rospy.logerr("cancelling all goals")
-                self.action_client.cancel_all_goals()
+                rospy.sleep(2.0)
+                #self.action_client.cancel_all_goals()
                 return False
             time.sleep(1)
         return True
